@@ -1679,13 +1679,6 @@ export function resolveCard(name: string): CardMetadata {
     imageUrl: dynamicImageUrl
   };
 }
-    name: name || 'Pokémon',
-    category: 'pokemon',
-    stage: norm.includes('ex') ? 'EX' : 'BÁSICO',
-    hp: norm.includes('ex') ? 280 : 70,
-    imageUrl: dynamicImageUrl
-  };
-}
 
 export function getCardImageUrl(name: string): string {
   return resolveCard(name).imageUrl;
