@@ -85,6 +85,39 @@ export const CARD_IMAGE_DATABASE: Record<string, CardMetadata> = {
     setCode: 'OBF',
     setNumber: '135'
   },
+  'budew': {
+    id: 'me2-5-221',
+    name: 'Budew',
+    category: 'pokemon',
+    energyType: 'grass',
+    stage: 'BÁSICO',
+    hp: 30,
+    imageUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/406.png',
+    setCode: 'ME2',
+    setNumber: '221'
+  },
+  'budew me2-5-221': {
+    id: 'me2-5-221',
+    name: 'Budew',
+    category: 'pokemon',
+    energyType: 'grass',
+    stage: 'BÁSICO',
+    hp: 30,
+    imageUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/406.png',
+    setCode: 'ME2',
+    setNumber: '221'
+  },
+  'budew me2 221': {
+    id: 'me2-5-221',
+    name: 'Budew',
+    category: 'pokemon',
+    energyType: 'grass',
+    stage: 'BÁSICO',
+    hp: 30,
+    imageUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/406.png',
+    setCode: 'ME2',
+    setNumber: '221'
+  },
   'pidgey': {
     id: 'sv3-162',
     name: 'Pidgey',
@@ -1319,7 +1352,9 @@ export const POKEMON_DEX_MAP: Record<string, number> = {
   'bidoof': 399,
   'noctowl': 164,
   'hoothoot': 163,
-  'bouffalant': 626
+  'bouffalant': 626,
+  'budew': 406,
+  'absol': 359
 };
 
 // Clean card or string name to search key
@@ -1350,8 +1385,208 @@ export function getBasePokemonName(name: string): string {
   return candidates[0] || 'substitute';
 }
 
+// Dedicated PTCGL Card ID Registry to guarantee exact sprite and card injection
+export const PTCGL_CARD_ID_MAP: Record<string, CardMetadata> = {};
+
+// Helper to register IDs in map
+function registerCardId(key: string, card: CardMetadata) {
+  if (!key) return;
+  const normalizedKey = key.toLowerCase().trim();
+  PTCGL_CARD_ID_MAP[normalizedKey] = card;
+  // Also register with dashes replaced by spaces and vice versa
+  PTCGL_CARD_ID_MAP[normalizedKey.replace(/\s+/g, '-')] = card;
+  PTCGL_CARD_ID_MAP[normalizedKey.replace(/-/g, ' ')] = card;
+  PTCGL_CARD_ID_MAP[normalizedKey.replace(/[^a-z0-9]/g, '')] = card;
+}
+
+// Auto-register canonical database cards by ID and Set+Number
+Object.values(CARD_IMAGE_DATABASE).forEach(card => {
+  if (card.id) registerCardId(card.id, card);
+  if (card.setCode && card.setNumber) {
+    registerCardId(`${card.setCode} ${card.setNumber}`, card);
+    registerCardId(`${card.setCode}-${card.setNumber}`, card);
+    registerCardId(`${card.setCode} #${card.setNumber}`, card);
+  }
+});
+
+// Explicit PTCGL Card ID mappings for key staples & requested edge cases
+// Pidgeot ex (Obsidian Flames / Paldean Fates)
+registerCardId('sv3-164', CARD_IMAGE_DATABASE['pidgeot ex']);
+registerCardId('obf-164', CARD_IMAGE_DATABASE['pidgeot ex']);
+registerCardId('obf 164', CARD_IMAGE_DATABASE['pidgeot ex']);
+registerCardId('sv3-225', CARD_IMAGE_DATABASE['pidgeot ex']);
+registerCardId('obf-225', CARD_IMAGE_DATABASE['pidgeot ex']);
+registerCardId('obf 225', CARD_IMAGE_DATABASE['pidgeot ex']);
+
+// Absol ex (Obsidian Flames #135 / #214)
+registerCardId('sv3-135', CARD_IMAGE_DATABASE['absol ex']);
+registerCardId('obf-135', CARD_IMAGE_DATABASE['absol ex']);
+registerCardId('obf 135', CARD_IMAGE_DATABASE['absol ex']);
+registerCardId('sv3-214', CARD_IMAGE_DATABASE['absol ex']);
+registerCardId('obf-214', CARD_IMAGE_DATABASE['absol ex']);
+registerCardId('obf 214', CARD_IMAGE_DATABASE['absol ex']);
+
+// Budew (Mega Evolution series ME2.5 / ME2 #221 / #016)
+registerCardId('me2-5-221', CARD_IMAGE_DATABASE['budew']);
+registerCardId('me2.5-221', CARD_IMAGE_DATABASE['budew']);
+registerCardId('me2-5 221', CARD_IMAGE_DATABASE['budew']);
+registerCardId('me2-221', CARD_IMAGE_DATABASE['budew']);
+registerCardId('me2 221', CARD_IMAGE_DATABASE['budew']);
+registerCardId('me2-016', CARD_IMAGE_DATABASE['budew']);
+registerCardId('me2 016', CARD_IMAGE_DATABASE['budew']);
+registerCardId('me2-16', CARD_IMAGE_DATABASE['budew']);
+
+// Charizard ex (Obsidian Flames / Paldean Fates)
+registerCardId('sv3-125', CARD_IMAGE_DATABASE['charizard ex']);
+registerCardId('obf-125', CARD_IMAGE_DATABASE['charizard ex']);
+registerCardId('obf 125', CARD_IMAGE_DATABASE['charizard ex']);
+registerCardId('paf-54', CARD_IMAGE_DATABASE['charizard ex']);
+registerCardId('paf 54', CARD_IMAGE_DATABASE['charizard ex']);
+
+// Dragapult ex (Twilight Masquerade #130)
+registerCardId('sv6-130', CARD_IMAGE_DATABASE['dragapult ex']);
+registerCardId('twm-130', CARD_IMAGE_DATABASE['dragapult ex']);
+registerCardId('twm 130', CARD_IMAGE_DATABASE['dragapult ex']);
+
+// Dusknoir (Shrouded Fable #20)
+registerCardId('sv6pt5-20', CARD_IMAGE_DATABASE['dusknoir']);
+registerCardId('sfa-20', CARD_IMAGE_DATABASE['dusknoir']);
+registerCardId('sfa 20', CARD_IMAGE_DATABASE['dusknoir']);
+
+// Verification interface and method to validate PTCGL ID injection
+export interface PTCGLCardVerification {
+  input: string;
+  isValid: boolean;
+  isPTCGLMapped: boolean;
+  card: CardMetadata;
+  setCode?: string;
+  setNumber?: string;
+  resolvedName: string;
+  verificationStatus: 'verified_ptcgl' | 'fuzzy_matched' | 'generated_fallback';
+}
+
+export function verifyPTCGLCardMapping(cardNameOrId: string): PTCGLCardVerification {
+  if (!cardNameOrId) {
+    const fallbackCard = resolveCard('substitute');
+    return {
+      input: '',
+      isValid: false,
+      isPTCGLMapped: false,
+      card: fallbackCard,
+      resolvedName: 'Pokémon',
+      verificationStatus: 'generated_fallback'
+    };
+  }
+
+  const clean = cardNameOrId.toLowerCase().trim();
+  const cleanId = clean.replace(/[^a-z0-9.-]/g, '');
+
+  // 1. Direct match in PTCGL ID map
+  if (PTCGL_CARD_ID_MAP[cleanId] || PTCGL_CARD_ID_MAP[clean]) {
+    const card = PTCGL_CARD_ID_MAP[cleanId] || PTCGL_CARD_ID_MAP[clean];
+    return {
+      input: cardNameOrId,
+      isValid: true,
+      isPTCGLMapped: true,
+      card,
+      setCode: card.setCode,
+      setNumber: card.setNumber,
+      resolvedName: card.name,
+      verificationStatus: 'verified_ptcgl'
+    };
+  }
+
+  // 2. Direct exact match in CARD_IMAGE_DATABASE
+  const norm = normalizeCardName(cardNameOrId);
+  if (CARD_IMAGE_DATABASE[norm]) {
+    const card = CARD_IMAGE_DATABASE[norm];
+    return {
+      input: cardNameOrId,
+      isValid: true,
+      isPTCGLMapped: !!card.setCode,
+      card,
+      setCode: card.setCode,
+      setNumber: card.setNumber,
+      resolvedName: card.name,
+      verificationStatus: 'verified_ptcgl'
+    };
+  }
+
+  // 3. Composite check (e.g. "Budew Me2-5-221", "Pidgeot ex OBF 164")
+  const compositeMatch = cardNameOrId.match(/^(.+?)\s*(?:\((?:[a-z0-9.-]+)\s*#?(\d+)\)|([a-z0-9.-]{2,6})[- ]+(\d+))$/i);
+  if (compositeMatch) {
+    const setCode = (compositeMatch[3] || '').toUpperCase();
+    const setNum = compositeMatch[2] || compositeMatch[4];
+    const key = `${setCode} ${setNum}`.toLowerCase();
+    if (PTCGL_CARD_ID_MAP[key]) {
+      const card = PTCGL_CARD_ID_MAP[key];
+      return {
+        input: cardNameOrId,
+        isValid: true,
+        isPTCGLMapped: true,
+        card,
+        setCode: card.setCode,
+        setNumber: card.setNumber,
+        resolvedName: card.name,
+        verificationStatus: 'verified_ptcgl'
+      };
+    }
+  }
+
+  // 4. Resolved through full resolver
+  const resolved = resolveCard(cardNameOrId);
+  const isFallback = resolved.id.startsWith('custom-');
+
+  return {
+    input: cardNameOrId,
+    isValid: !isFallback,
+    isPTCGLMapped: !isFallback && !!resolved.setCode,
+    card: resolved,
+    setCode: resolved.setCode,
+    setNumber: resolved.setNumber,
+    resolvedName: resolved.name,
+    verificationStatus: isFallback ? 'generated_fallback' : 'fuzzy_matched'
+  };
+}
+
 // Resolve card info & image
 export function resolveCard(name: string): CardMetadata {
+  if (!name) {
+    return {
+      id: 'substitute',
+      name: 'Pokémon',
+      category: 'pokemon',
+      stage: 'BÁSICO',
+      hp: 70,
+      imageUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png'
+    };
+  }
+
+  // 1. Check PTCGL Card ID Registry first (e.g. "sv3-164", "obf 164", "me2-5-221", "me2 221")
+  const cleanId = name.toLowerCase().trim().replace(/[^a-z0-9.-]/g, '');
+  if (PTCGL_CARD_ID_MAP[cleanId]) {
+    return PTCGL_CARD_ID_MAP[cleanId];
+  }
+  const cleanSpaced = name.toLowerCase().trim();
+  if (PTCGL_CARD_ID_MAP[cleanSpaced]) {
+    return PTCGL_CARD_ID_MAP[cleanSpaced];
+  }
+
+  // 2. Check compound PTCGL format like "Budew Me2-5-221" or "Pidgeot ex OBF 164"
+  const ptcglCompoundMatch = name.match(/^(.+?)\s+(?:\[|\()?([a-z0-9.-]{2,8})[- #]+(\d+)(?:\]|\))?$/i);
+  if (ptcglCompoundMatch) {
+    const rawMonName = ptcglCompoundMatch[1].trim();
+    const setCode = ptcglCompoundMatch[2].toLowerCase();
+    const setNum = ptcglCompoundMatch[3];
+    const comboKey = `${setCode}-${setNum}`;
+    const comboKey2 = `${setCode} ${setNum}`;
+    if (PTCGL_CARD_ID_MAP[comboKey]) return PTCGL_CARD_ID_MAP[comboKey];
+    if (PTCGL_CARD_ID_MAP[comboKey2]) return PTCGL_CARD_ID_MAP[comboKey2];
+    // Check clean name
+    const normMon = normalizeCardName(rawMonName);
+    if (CARD_IMAGE_DATABASE[normMon]) return CARD_IMAGE_DATABASE[normMon];
+  }
+
   const norm = normalizeCardName(name);
 
   // Exact match in database
@@ -1359,11 +1594,23 @@ export function resolveCard(name: string): CardMetadata {
     return CARD_IMAGE_DATABASE[norm];
   }
 
-  // Targeted archetype & name matches
+  // Targeted archetype & name matches with strict priority:
+  // Pidgeot family ALWAYS takes priority and NEVER maps to Absol or other Pokémon
   if (norm.includes('pidgeotto')) return CARD_IMAGE_DATABASE['pidgeotto'];
   if (norm.includes('pidgeot')) return CARD_IMAGE_DATABASE['pidgeot ex'];
   if (norm.includes('pidgey')) return CARD_IMAGE_DATABASE['pidgey'];
-  if (norm.includes('absol')) return CARD_IMAGE_DATABASE['absol ex'];
+
+  // Budew (ME2.5 / Ascended Heroes #221)
+  if (/\bbudew\b/i.test(norm) || norm.includes('budew')) {
+    return CARD_IMAGE_DATABASE['budew'];
+  }
+
+  // Absol ex: STRICT word-boundary check to prevent false-positive matching
+  // and strictly forbid matching if string refers to Pidgeot, Charizard, etc.
+  if (/\babsol\b/i.test(norm) && !norm.includes('pidgeot') && !norm.includes('charizard') && !norm.includes('dragapult')) {
+    return CARD_IMAGE_DATABASE['absol ex'];
+  }
+
   if (norm.includes('charizard')) return CARD_IMAGE_DATABASE['charizard ex'];
   if (norm.includes('charmeleon')) return CARD_IMAGE_DATABASE['charmeleon'];
   if (norm.includes('charmander')) return CARD_IMAGE_DATABASE['charmander'];
@@ -1425,6 +1672,13 @@ export function resolveCard(name: string): CardMetadata {
 
   return {
     id: `custom-${norm.slice(0, 10)}`,
+    name: name || 'Pokémon',
+    category: 'pokemon',
+    stage: norm.includes('ex') ? 'EX' : 'BÁSICO',
+    hp: norm.includes('ex') ? 280 : 70,
+    imageUrl: dynamicImageUrl
+  };
+}
     name: name || 'Pokémon',
     category: 'pokemon',
     stage: norm.includes('ex') ? 'EX' : 'BÁSICO',
