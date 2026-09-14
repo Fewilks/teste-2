@@ -1513,7 +1513,7 @@ export const SET_LOCAL_TO_TPCI_MAP: Record<string, { tpciCode: string; name: str
   'sv3': { tpciCode: 'OBF', name: 'Obsidian Flames', localId: 'sv3' },
   'sv3pt5': { tpciCode: 'MEW', name: '151', localId: 'sv3pt5' },
   'mew': { tpciCode: 'MEW', name: '151', localId: 'sv3pt5' },
-  'me1': { tpciCode: 'MEW', name: '151', localId: 'sv3pt5' },
+  '151': { tpciCode: 'MEW', name: '151', localId: 'sv3pt5' },
   'sv4': { tpciCode: 'PAR', name: 'Paradox Rift', localId: 'sv4' },
   'sv45': { tpciCode: 'PAF', name: 'Paldean Fates', localId: 'sv45' },
   'sv4pt5': { tpciCode: 'PAF', name: 'Paldean Fates', localId: 'sv45' },
@@ -1571,7 +1571,34 @@ export const SET_LOCAL_TO_TPCI_MAP: Record<string, { tpciCode: string; name: str
   'swsh12': { tpciCode: 'SIT', name: 'Silver Tempest', localId: 'swsh12' },
   'sit': { tpciCode: 'SIT', name: 'Silver Tempest', localId: 'swsh12' },
   'swsh12pt5': { tpciCode: 'CRZ', name: 'Crown Zenith', localId: 'swsh12pt5' },
-  'crz': { tpciCode: 'CRZ', name: 'Crown Zenith', localId: 'swsh12pt5' }
+  'crz': { tpciCode: 'CRZ', name: 'Crown Zenith', localId: 'swsh12pt5' },
+
+  // XY & Mega Evolution Series
+  'me1': { tpciCode: 'ME1', name: 'Mega Evolution', localId: 'me1' },
+  'xy12': { tpciCode: 'EVO', name: 'XY - Evolutions (Mega Evoluções)', localId: 'xy12' },
+  'evo': { tpciCode: 'EVO', name: 'XY - Evolutions (Mega Evoluções)', localId: 'xy12' },
+  'xy4': { tpciCode: 'PHF', name: 'XY - Phantom Forces (Mega Gengar)', localId: 'xy4' },
+  'phf': { tpciCode: 'PHF', name: 'XY - Phantom Forces (Mega Gengar)', localId: 'xy4' },
+  'xy2': { tpciCode: 'FLF', name: 'XY - Flashfire (Mega Charizard)', localId: 'xy2' },
+  'flf': { tpciCode: 'FLF', name: 'XY - Flashfire (Mega Charizard)', localId: 'xy2' },
+  'xy6': { tpciCode: 'ROS', name: 'XY - Roaring Skies (Mega Rayquaza)', localId: 'xy6' },
+  'ros': { tpciCode: 'ROS', name: 'XY - Roaring Skies (Mega Rayquaza)', localId: 'xy6' },
+  'xy5': { tpciCode: 'PRC', name: 'XY - Primal Clash (Primal & Mega)', localId: 'xy5' },
+  'prc': { tpciCode: 'PRC', name: 'XY - Primal Clash (Primal & Mega)', localId: 'xy5' },
+  'xy3': { tpciCode: 'FFI', name: 'XY - Furious Fists (Mega Lucario)', localId: 'xy3' },
+  'ffi': { tpciCode: 'FFI', name: 'XY - Furious Fists (Mega Lucario)', localId: 'xy3' },
+  'xy7': { tpciCode: 'AOR', name: 'XY - Ancient Origins (Mega Rayquaza)', localId: 'xy7' },
+  'aor': { tpciCode: 'AOR', name: 'XY - Ancient Origins (Mega Rayquaza)', localId: 'xy7' },
+  'xy8': { tpciCode: 'BKT', name: 'XY - BREAKthrough (Mega Mewtwo)', localId: 'xy8' },
+  'bkt': { tpciCode: 'BKT', name: 'XY - BREAKthrough (Mega Mewtwo)', localId: 'xy8' },
+  'xy9': { tpciCode: 'BKP', name: 'XY - BREAKpoint (Mega Gyarados)', localId: 'xy9' },
+  'bkp': { tpciCode: 'BKP', name: 'XY - BREAKpoint (Mega Gyarados)', localId: 'xy9' },
+  'xy10': { tpciCode: 'FCO', name: 'XY - Fates Collide (Mega Alakazam)', localId: 'xy10' },
+  'fco': { tpciCode: 'FCO', name: 'XY - Fates Collide (Mega Alakazam)', localId: 'xy10' },
+  'xy11': { tpciCode: 'STS', name: 'XY - Steam Siege (Mega Gardevoir)', localId: 'xy11' },
+  'sts': { tpciCode: 'STS', name: 'XY - Steam Siege (Mega Gardevoir)', localId: 'xy11' },
+  'xy1': { tpciCode: 'XY', name: 'XY Base Set (Mega Blastoise/Venusaur)', localId: 'xy1' },
+  'xy': { tpciCode: 'XY', name: 'XY Base Set (Mega Blastoise/Venusaur)', localId: 'xy1' }
 };
 
 // Reverse map: TPCi official 3-letter code -> pokemontcg.io local set code
@@ -1590,6 +1617,7 @@ export const SET_TPCI_TO_LOCAL_MAP: Record<string, string> = {
   'PRE': 'sv8pt5',
   'SVE': 'sve',
   'SVP': 'svp',
+  'ME1': 'me1',
   'ME2': 'me2',
   'SSH': 'swsh1',
   'RCL': 'swsh2',
@@ -1607,7 +1635,19 @@ export const SET_TPCI_TO_LOCAL_MAP: Record<string, string> = {
   'LOR': 'swsh11',
   'CEL': 'cel',
   'SIT': 'swsh12',
-  'CRZ': 'swsh12pt5'
+  'CRZ': 'swsh12pt5',
+  'EVO': 'xy12',
+  'PHF': 'xy4',
+  'FLF': 'xy2',
+  'ROS': 'xy6',
+  'PRC': 'xy5',
+  'FFI': 'xy3',
+  'AOR': 'xy7',
+  'BKT': 'xy8',
+  'BKP': 'xy9',
+  'FCO': 'xy10',
+  'STS': 'xy11',
+  'XY': 'xy1'
 };
 
 /**
