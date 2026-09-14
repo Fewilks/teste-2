@@ -59,6 +59,10 @@ export default function Decks({ currentMember }: DecksProps) {
     'Gholdengo ex',
     'Iron Valiant ex',
     'Terapagos ex',
+    'Mega Lucario ex (Heróis Excelsos)',
+    'Mega Charizard X ex (Fogo Fantasmagórico)',
+    'Mega Zygarde ex (Ordem Perfeita)',
+    'Eevee / Stellar Sylveon ex (Evoluções Prismáticas)',
     'Outro'
   ];
 

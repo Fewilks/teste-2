@@ -294,52 +294,91 @@ Energy: 10
 ];
 
 // 2. Default iconic cards database to fallback on when external APIs fail
+// Contains ONLY modern 2025+ Mega Evolution era cards (Mega ... ex) and recent Scarlet & Violet staples
 const fallbackCards = [
-  // Mega Evolution Collection & XY Mega series
-  { id: 'me2-016', name: 'Budew', imageUrl: 'https://images.pokemontcg.io/me2/016.png', setCode: 'me2', setName: 'Mega Evolution', setNumber: '016' },
-  { id: 'me2-221', name: 'Budew (Illustration Rare)', imageUrl: 'https://images.pokemontcg.io/me2/221.png', setCode: 'me2', setName: 'Mega Evolution', setNumber: '221' },
-  { id: 'xy2-13', name: 'Mega Charizard EX (M Charizard EX)', imageUrl: 'https://images.pokemontcg.io/xy2/13.png', setCode: 'xy2', setName: 'Flashfire (Mega Evoluções)', setNumber: '13' },
-  { id: 'xy2-69', name: 'Mega Charizard EX (Dragon)', imageUrl: 'https://images.pokemontcg.io/xy2/69.png', setCode: 'xy2', setName: 'Flashfire (Mega Evoluções)', setNumber: '69' },
-  { id: 'xy12-12', name: 'Mega Charizard EX', imageUrl: 'https://images.pokemontcg.io/xy12/12.png', setCode: 'xy12', setName: 'Evolutions (Mega Evoluções)', setNumber: '12' },
-  { id: 'xy4-35', name: 'Mega Gengar EX (M Gengar EX)', imageUrl: 'https://images.pokemontcg.io/xy4/35.png', setCode: 'xy4', setName: 'Phantom Forces (Mega Evoluções)', setNumber: '35' },
-  { id: 'xy6-76', name: 'Mega Rayquaza EX (M Rayquaza EX)', imageUrl: 'https://images.pokemontcg.io/xy6/76.png', setCode: 'xy6', setName: 'Roaring Skies (Mega Evoluções)', setNumber: '76' },
-  { id: 'xy3-55', name: 'Mega Lucario EX (M Lucario EX)', imageUrl: 'https://images.pokemontcg.io/xy3/55.png', setCode: 'xy3', setName: 'Furious Fists (Mega Evoluções)', setNumber: '55' },
-  { id: 'xy8-64', name: 'Mega Mewtwo EX (M Mewtwo EX)', imageUrl: 'https://images.pokemontcg.io/xy8/64.png', setCode: 'xy8', setName: 'BREAKthrough (Mega Evoluções)', setNumber: '64' },
-  { id: 'xy5-106', name: 'Mega Gardevoir EX (M Gardevoir EX)', imageUrl: 'https://images.pokemontcg.io/xy5/106.png', setCode: 'xy5', setName: 'Primal Clash (Mega Evoluções)', setNumber: '106' },
-  { id: 'xy11-79', name: 'Mega Gardevoir EX (Dual Type)', imageUrl: 'https://images.pokemontcg.io/xy11/79.png', setCode: 'xy11', setName: 'Steam Siege (Mega Evoluções)', setNumber: '79' },
-  { id: 'xy1-30', name: 'Mega Blastoise EX (M Blastoise EX)', imageUrl: 'https://images.pokemontcg.io/xy1/30.png', setCode: 'xy1', setName: 'XY Base Set (Mega Evoluções)', setNumber: '30' },
-  { id: 'xy1-2', name: 'Mega Venusaur EX (M Venusaur EX)', imageUrl: 'https://images.pokemontcg.io/xy1/2.png', setCode: 'xy1', setName: 'XY Base Set (Mega Evoluções)', setNumber: '2' },
-  { id: 'xy10-26', name: 'Mega Alakazam EX (M Alakazam EX)', imageUrl: 'https://images.pokemontcg.io/xy10/26.png', setCode: 'xy10', setName: 'Fates Collide (Mega Evoluções)', setNumber: '26' },
-  { id: 'xy2-79', name: 'Mega Kangaskhan EX (M Kangaskhan EX)', imageUrl: 'https://images.pokemontcg.io/xy2/79.png', setCode: 'xy2', setName: 'Flashfire (Mega Evoluções)', setNumber: '79' },
-  { id: 'xy7-43', name: 'Mega Tyranitar EX (M Tyranitar EX)', imageUrl: 'https://images.pokemontcg.io/xy7/43.png', setCode: 'xy7', setName: 'Ancient Origins (Mega Evoluções)', setNumber: '43' },
-  { id: 'xy7-28', name: 'Mega Ampharos EX (M Ampharos EX)', imageUrl: 'https://images.pokemontcg.io/xy7/28.png', setCode: 'xy7', setName: 'Ancient Origins (Mega Evoluções)', setNumber: '28' },
-  { id: 'xy9-27', name: 'Mega Gyarados EX (M Gyarados EX)', imageUrl: 'https://images.pokemontcg.io/xy9/27.png', setCode: 'xy9', setName: 'BREAKpoint (Mega Evoluções)', setNumber: '27' },
-  { id: 'xy9-77', name: 'Mega Scizor EX (M Scizor EX)', imageUrl: 'https://images.pokemontcg.io/xy9/77.png', setCode: 'xy9', setName: 'BREAKpoint (Mega Evoluções)', setNumber: '77' },
-  { id: 'xy11-68', name: 'Mega Steelix EX (M Steelix EX)', imageUrl: 'https://images.pokemontcg.io/xy11/68.png', setCode: 'xy11', setName: 'Steam Siege (Mega Evoluções)', setNumber: '68' },
+  // --- NOVA ERA MEGA EVOLUÇÃO (Lançadas a partir de 2025 para frente) ---
+  // Heróis Excelsos (Mega Evolution: Ascended Heroes - ASC - 2026)
+  { id: 'asc-085', name: 'Mega Lucario ex', imageUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/10059.png', setCode: 'asc', setName: 'Heróis Excelsos (Ascended Heroes)', setNumber: '085' },
+  { id: 'asc-120', name: 'Mega Lucario ex (Ilustração Especial Rara)', imageUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/10059.png', setCode: 'asc', setName: 'Heróis Excelsos (Ascended Heroes)', setNumber: '120' },
+  { id: 'asc-092', name: 'Mega Gardevoir ex', imageUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/10051.png', setCode: 'asc', setName: 'Heróis Excelsos (Ascended Heroes)', setNumber: '092' },
+  { id: 'asc-068', name: 'Mega Greninja ex', imageUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/658.png', setCode: 'asc', setName: 'Heróis Excelsos (Ascended Heroes)', setNumber: '068' },
+  { id: 'asc-010', name: 'Mega Meganium ex', imageUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/154.png', setCode: 'asc', setName: 'Heróis Excelsos (Ascended Heroes)', setNumber: '010' },
+  { id: 'asc-024', name: 'Mega Feraligatr ex', imageUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/160.png', setCode: 'asc', setName: 'Heróis Excelsos (Ascended Heroes)', setNumber: '024' },
+  { id: 'asc-035', name: 'Mega Emboar ex', imageUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/500.png', setCode: 'asc', setName: 'Heróis Excelsos (Ascended Heroes)', setNumber: '035' },
+  { id: 'asc-101', name: 'Zygarde ex', imageUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/10118.png', setCode: 'asc', setName: 'Heróis Excelsos (Ascended Heroes)', setNumber: '101' },
+  { id: 'asc-112', name: 'Treinador AZ & Floette Eterna', imageUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/670.png', setCode: 'asc', setName: 'Heróis Excelsos (Ascended Heroes)', setNumber: '112' },
 
-  // Scarlet & Violet and Standard format staples
+  // Fogo Fantasmagórico (Mega Evolution: Phantasmal Flames - PFL - 2025)
+  { id: 'pfl-013', name: 'Mega Charizard X ex', imageUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/10034.png', setCode: 'pfl', setName: 'Fogo Fantasmagórico (Phantasmal Flames)', setNumber: '013' },
+  { id: 'pfl-130', name: 'Mega Charizard X ex (Ilustração Rara)', imageUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/10034.png', setCode: 'pfl', setName: 'Fogo Fantasmagórico (Phantasmal Flames)', setNumber: '130' },
+  { id: 'pfl-025', name: 'Mega Blaziken ex', imageUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/10050.png', setCode: 'pfl', setName: 'Fogo Fantasmagórico (Phantasmal Flames)', setNumber: '025' },
+  { id: 'pfl-038', name: 'Mega Camerupt ex', imageUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/10070.png', setCode: 'pfl', setName: 'Fogo Fantasmagórico (Phantasmal Flames)', setNumber: '038' },
+  { id: 'pfl-045', name: 'Mega Houndoom ex', imageUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/10048.png', setCode: 'pfl', setName: 'Fogo Fantasmagórico (Phantasmal Flames)', setNumber: '045' },
+  { id: 'pfl-052', name: 'Ceruledge ex', imageUrl: 'https://images.pokemontcg.io/ssp/36.png', setCode: 'pfl', setName: 'Fogo Fantasmagórico (Phantasmal Flames)', setNumber: '052' },
+  { id: 'pfl-060', name: 'Chandelure ex', imageUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/609.png', setCode: 'pfl', setName: 'Fogo Fantasmagórico (Phantasmal Flames)', setNumber: '060' },
+
+  // Ordem Perfeita (Mega Evolution: Perfect Order - POR - 2026)
+  { id: 'por-001', name: 'Mega Zygarde Forma Completa ex', imageUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/10118.png', setCode: 'por', setName: 'Ordem Perfeita (Perfect Order)', setNumber: '001' },
+  { id: 'por-028', name: 'Mega Clefable ex', imageUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/36.png', setCode: 'por', setName: 'Ordem Perfeita (Perfect Order)', setNumber: '028' },
+  { id: 'por-042', name: 'Mega Starmie ex', imageUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/121.png', setCode: 'por', setName: 'Ordem Perfeita (Perfect Order)', setNumber: '042' },
+  { id: 'por-058', name: 'Mega Absol ex', imageUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/10057.png', setCode: 'por', setName: 'Ordem Perfeita (Perfect Order)', setNumber: '058' },
+  { id: 'por-072', name: 'Mega Steelix ex', imageUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/10072.png', setCode: 'por', setName: 'Ordem Perfeita (Perfect Order)', setNumber: '072' },
+  { id: 'por-089', name: 'Mega Metagross ex', imageUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/10076.png', setCode: 'por', setName: 'Ordem Perfeita (Perfect Order)', setNumber: '089' },
+  { id: 'por-095', name: 'Xerneas ex', imageUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/716.png', setCode: 'por', setName: 'Ordem Perfeita (Perfect Order)', setNumber: '095' },
+  { id: 'por-104', name: 'Yveltal ex', imageUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/717.png', setCode: 'por', setName: 'Ordem Perfeita (Perfect Order)', setNumber: '104' },
+
+  // Mega Evolução Base (Mega Evolution - MEG - 2025)
+  { id: 'meg-015', name: 'Mega Charizard Y ex', imageUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/10035.png', setCode: 'meg', setName: 'Mega Evolução (Mega Evolution)', setNumber: '015' },
+  { id: 'meg-002', name: 'Mega Venusaur ex', imageUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/10033.png', setCode: 'meg', setName: 'Mega Evolução (Mega Evolution)', setNumber: '002' },
+  { id: 'meg-031', name: 'Mega Blastoise ex', imageUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/10036.png', setCode: 'meg', setName: 'Mega Evolução (Mega Evolution)', setNumber: '031' },
+  { id: 'meg-049', name: 'Mega Gengar ex', imageUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/10038.png', setCode: 'meg', setName: 'Mega Evolução (Mega Evolution)', setNumber: '049' },
+  { id: 'meg-088', name: 'Mega Rayquaza ex', imageUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/10079.png', setCode: 'meg', setName: 'Mega Evolução (Mega Evolution)', setNumber: '088' },
+  { id: 'meg-099', name: 'Mega Mewtwo X ex', imageUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/10043.png', setCode: 'meg', setName: 'Mega Evolução (Mega Evolution)', setNumber: '099' },
+  { id: 'meg-100', name: 'Mega Mewtwo Y ex', imageUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/10044.png', setCode: 'meg', setName: 'Mega Evolução (Mega Evolution)', setNumber: '100' },
+  { id: 'meg-077', name: 'Mega Tyranitar ex', imageUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/10049.png', setCode: 'meg', setName: 'Mega Evolução (Mega Evolution)', setNumber: '077' },
+  { id: 'meg-065', name: 'Mega Scizor ex', imageUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/10046.png', setCode: 'meg', setName: 'Mega Evolução (Mega Evolution)', setNumber: '065' },
+  { id: 'meg-082', name: 'Mega Aerodactyl ex', imageUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/10042.png', setCode: 'meg', setName: 'Mega Evolução (Mega Evolution)', setNumber: '082' },
+  { id: 'meg-090', name: 'Mega Salamence ex', imageUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/10075.png', setCode: 'meg', setName: 'Mega Evolução (Mega Evolution)', setNumber: '090' },
+  { id: 'meg-084', name: 'Mega Lopunny ex', imageUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/10088.png', setCode: 'meg', setName: 'Mega Evolução (Mega Evolution)', setNumber: '084' },
+  { id: 'meg-080', name: 'Mega Gallade ex', imageUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/10068.png', setCode: 'meg', setName: 'Mega Evolução (Mega Evolution)', setNumber: '080' },
+  { id: 'meg-083', name: 'Mega Diancie ex', imageUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/10077.png', setCode: 'meg', setName: 'Mega Evolução (Mega Evolution)', setNumber: '083' },
+  { id: 'meg-091', name: 'Mega Latias ex', imageUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/10062.png', setCode: 'meg', setName: 'Mega Evolução (Mega Evolution)', setNumber: '091' },
+  { id: 'meg-092', name: 'Mega Latios ex', imageUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/10063.png', setCode: 'meg', setName: 'Mega Evolução (Mega Evolution)', setNumber: '092' },
+  { id: 'meg-016', name: 'Budew', imageUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/406.png', setCode: 'meg', setName: 'Mega Evolução (Mega Evolution)', setNumber: '016' },
+  { id: 'meg-221', name: 'Budew (Ilustração Rara)', imageUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/406.png', setCode: 'meg', setName: 'Mega Evolução (Mega Evolution)', setNumber: '221' },
+
+  // Evoluções Prismáticas (Prismatic Evolutions - PRE - 2025)
+  { id: 'pre-075', name: 'Eevee ex (Stellar)', imageUrl: 'https://images.pokemontcg.io/sv3/125.png', setCode: 'pre', setName: 'Evoluções Prismáticas (Prismatic Evolutions)', setNumber: '075' },
+  { id: 'pre-060', name: 'Umbreon ex', imageUrl: 'https://images.pokemontcg.io/sv45/80.png', setCode: 'pre', setName: 'Evoluções Prismáticas (Prismatic Evolutions)', setNumber: '060' },
+  { id: 'pre-042', name: 'Sylveon ex', imageUrl: 'https://images.pokemontcg.io/sv1/86.png', setCode: 'pre', setName: 'Evoluções Prismáticas (Prismatic Evolutions)', setNumber: '042' },
+  { id: 'pre-035', name: 'Espeon ex', imageUrl: 'https://images.pokemontcg.io/sv1/81.png', setCode: 'pre', setName: 'Evoluções Prismáticas (Prismatic Evolutions)', setNumber: '035' },
+  { id: 'pre-020', name: 'Vaporeon ex', imageUrl: 'https://images.pokemontcg.io/sv1/86.png', setCode: 'pre', setName: 'Evoluções Prismáticas (Prismatic Evolutions)', setNumber: '020' },
+  { id: 'pre-025', name: 'Jolteon ex', imageUrl: 'https://images.pokemontcg.io/sv1/81.png', setCode: 'pre', setName: 'Evoluções Prismáticas (Prismatic Evolutions)', setNumber: '025' },
+  { id: 'pre-015', name: 'Flareon ex', imageUrl: 'https://images.pokemontcg.io/sv3/125.png', setCode: 'pre', setName: 'Evoluções Prismáticas (Prismatic Evolutions)', setNumber: '015' },
+
+  // Jornada em Conjunto & Rivais Destinados (JTG & DRI - 2025)
+  { id: 'jtg-010', name: 'Red\'s Pikachu ex', imageUrl: 'https://images.pokemontcg.io/sv1/81.png', setCode: 'jtg', setName: 'Jornada em Conjunto (Journey Together)', setNumber: '010' },
+  { id: 'jtg-022', name: 'N\'s Reshiram ex', imageUrl: 'https://images.pokemontcg.io/sv3/125.png', setCode: 'jtg', setName: 'Jornada em Conjunto (Journey Together)', setNumber: '022' },
+  { id: 'jtg-045', name: 'Cynthia\'s Garchomp ex', imageUrl: 'https://images.pokemontcg.io/twm/130.png', setCode: 'jtg', setName: 'Jornada em Conjunto (Journey Together)', setNumber: '045' },
+  { id: 'dri-020', name: 'Red\'s Charizard ex', imageUrl: 'https://images.pokemontcg.io/sv3/125.png', setCode: 'dri', setName: 'Rivais Destinados (Destined Rivals)', setNumber: '020' },
+  { id: 'dri-015', name: 'Blue\'s Blastoise ex', imageUrl: 'https://images.pokemontcg.io/sv1/86.png', setCode: 'dri', setName: 'Rivais Destinados (Destined Rivals)', setNumber: '015' },
+  { id: 'dri-030', name: 'Ethan\'s Lugia ex', imageUrl: 'https://images.pokemontcg.io/sv45/80.png', setCode: 'dri', setName: 'Rivais Destinados (Destined Rivals)', setNumber: '030' },
+  { id: 'blk-050', name: 'Black Kyurem ex', imageUrl: 'https://images.pokemontcg.io/sv1/81.png', setCode: 'blk', setName: 'Raio Negro (Black Bolt)', setNumber: '050' },
+  { id: 'wht-050', name: 'White Kyurem ex', imageUrl: 'https://images.pokemontcg.io/sv3/125.png', setCode: 'wht', setName: 'Chama Branca (White Flare)', setNumber: '050' },
+
+  // Staples Competitivos do Formato Standard Atual (Scarlet & Violet)
   { id: 'sv3-125', name: 'Charizard ex', imageUrl: 'https://images.pokemontcg.io/sv3/125.png', setCode: 'sv3', setName: 'Obsidian Flames', setNumber: '125' },
-  { id: 'sv1-81', name: 'Miraidon ex', imageUrl: 'https://images.pokemontcg.io/sv1/81.png', setCode: 'sv1', setName: 'Scarlet & Violet Base Set', setNumber: '81' },
-  { id: 'sv1-86', name: 'Gardevoir ex', imageUrl: 'https://images.pokemontcg.io/sv1/86.png', setCode: 'sv1', setName: 'Scarlet & Violet Base Set', setNumber: '86' },
-  { id: 'sv4-163', name: 'Roaring Moon ex', imageUrl: 'https://images.pokemontcg.io/sv4/163.png', setCode: 'sv4', setName: 'Paradox Rift', setNumber: '163' },
-  { id: 'sv3-135', name: 'Pidgeot ex', imageUrl: 'https://images.pokemontcg.io/sv3/135.png', setCode: 'sv3', setName: 'Obsidian Flames', setNumber: '135' },
+  { id: 'sv6-130', name: 'Dragapult ex', imageUrl: 'https://images.pokemontcg.io/sv6/130.png', setCode: 'sv6', setName: 'Twilight Masquerade', setNumber: '130' },
+  { id: 'sv3-164', name: 'Pidgeot ex', imageUrl: 'https://images.pokemontcg.io/sv3/164.png', setCode: 'sv3', setName: 'Obsidian Flames', setNumber: '164' },
+  { id: 'sv6pt5-96', name: 'Fezandipiti ex', imageUrl: 'https://images.pokemontcg.io/sv6pt5/96.png', setCode: 'sv6pt5', setName: 'Shrouded Fable', setNumber: '96' },
+  { id: 'sv7-128', name: 'Terapagos ex', imageUrl: 'https://images.pokemontcg.io/sv7/128.png', setCode: 'sv7', setName: 'Stellar Crown', setNumber: '128' },
+  { id: 'sv8-57', name: 'Pikachu ex', imageUrl: 'https://images.pokemontcg.io/sv8/57.png', setCode: 'sv8', setName: 'Surging Sparks', setNumber: '57' },
+  { id: 'sv4-139', name: 'Gholdengo ex', imageUrl: 'https://images.pokemontcg.io/sv4/139.png', setCode: 'sv4', setName: 'Paradox Rift', setNumber: '139' },
+  { id: 'sv2-185', name: 'Iono', imageUrl: 'https://images.pokemontcg.io/sv2/185.png', setCode: 'sv2', setName: 'Paldea Evolved', setNumber: '185' },
+  { id: 'sv1-166', name: 'Arven', imageUrl: 'https://images.pokemontcg.io/sv1/166.png', setCode: 'sv1', setName: 'Scarlet & Violet Base', setNumber: '166' },
+  { id: 'sv5-144', name: 'Buddy-Buddy Poffin', imageUrl: 'https://images.pokemontcg.io/sv5/144.png', setCode: 'sv5', setName: 'Temporal Forces', setNumber: '144' },
   { id: 'sv5-157', name: 'Prime Catcher', imageUrl: 'https://images.pokemontcg.io/sv5/157.png', setCode: 'sv5', setName: 'Temporal Forces', setNumber: '157' },
-  { id: 'pgo-55', name: 'Snorlax', imageUrl: 'https://images.pokemontcg.io/pgo/55.png', setCode: 'pgo', setName: 'Pokémon GO', setNumber: '55' },
-  { id: 'sv3-124', name: 'Charmeleon', imageUrl: 'https://images.pokemontcg.io/sv3/124.png', setCode: 'sv3', setName: 'Obsidian Flames', setNumber: '124' },
-  { id: 'sv3-26', name: 'Charmander', imageUrl: 'https://images.pokemontcg.io/sv3/26.png', setCode: 'sv3', setName: 'Obsidian Flames', setNumber: '26' },
-  { id: 'sv3-207', name: 'Pidgey', imageUrl: 'https://images.pokemontcg.io/sv3/207.png', setCode: 'sv3', setName: 'Obsidian Flames', setNumber: '207' },
-  { id: 'sv45-80', name: 'Iono', imageUrl: 'https://images.pokemontcg.io/sv45/80.png', setCode: 'sv45', setName: 'Paldean Fates', setNumber: '80' },
-  { id: 'sv1-166', name: 'Arven', imageUrl: 'https://images.pokemontcg.io/sv1/166.png', setCode: 'sv1', setName: 'Scarlet & Violet Base Set', setNumber: '166' },
-  { id: 'sv1-172', name: 'Boss\'s Orders', imageUrl: 'https://images.pokemontcg.io/sv1/172.png', setCode: 'sv1', setName: 'Scarlet & Violet Base Set', setNumber: '172' },
-  { id: 'sv1-196', name: 'Ultra Ball', imageUrl: 'https://images.pokemontcg.io/sv1/196.png', setCode: 'sv1', setName: 'Scarlet & Violet Base Set', setNumber: '196' },
-  { id: 'sv1-191', name: 'Rare Candy', imageUrl: 'https://images.pokemontcg.io/sv1/191.png', setCode: 'sv1', setName: 'Scarlet & Violet Base Set', setNumber: '191' },
-  { id: 'sv6-123', name: 'Raging Bolt ex', imageUrl: 'https://images.pokemontcg.io/sv6/123.png', setCode: 'sv6', setName: 'Twilight Masquerade', setNumber: '123' },
-  { id: 'sv6-25', name: 'Teal Mask Ogerpon ex', imageUrl: 'https://images.pokemontcg.io/sv6/25.png', setCode: 'sv6', setName: 'Twilight Masquerade', setNumber: '25' },
-  { id: 'sv4-170', name: 'Professor Sada\'s Vitality', imageUrl: 'https://images.pokemontcg.io/sv4/170.png', setCode: 'sv4', setName: 'Paradox Rift', setNumber: '170' },
-  { id: 'sv4-163-item', name: 'Earthen Vessel', imageUrl: 'https://images.pokemontcg.io/sv4/163.png', setCode: 'sv4', setName: 'Paradox Rift', setNumber: '163' },
-  { id: 'sit-139', name: 'Lugia VSTAR', imageUrl: 'https://images.pokemontcg.io/sit/139.png', setCode: 'sit', setName: 'Silver Tempest', setNumber: '139' },
-  { id: 'sit-147', name: 'Archeops', imageUrl: 'https://images.pokemontcg.io/sit/147.png', setCode: 'sit', setName: 'Silver Tempest', setNumber: '147' },
-  { id: 'sv5-137', name: 'Cinccino', imageUrl: 'https://images.pokemontcg.io/sv5/137.png', setCode: 'sv5', setName: 'Temporal Forces', setNumber: '137' }
+  { id: 'sv7-131', name: 'Area Zero Underdepths', imageUrl: 'https://images.pokemontcg.io/sv7/131.png', setCode: 'sv7', setName: 'Stellar Crown', setNumber: '131' }
 ];
 
 // Helper to look up an image link or search pokemontcg.io
@@ -634,6 +673,16 @@ const TPCI_TO_LOCAL_SET_MAP: Record<string, string> = {
   'SVP': 'svp',
   'ME1': 'me1',
   'ME2': 'me2',
+  'ASC': 'asc',
+  'PFL': 'pfl',
+  'POR': 'por',
+  'MEG': 'meg',
+  'CRI': 'cri',
+  'PBL': 'pbl',
+  'JTG': 'jtg',
+  'DRI': 'dri',
+  'BLK': 'blk',
+  'WHT': 'wht',
   'SSH': 'swsh1',
   'RCL': 'swsh2',
   'DAA': 'swsh3',
@@ -690,6 +739,16 @@ const LOCAL_TO_TPCI_SET_MAP: Record<string, string> = {
   'me1': 'ME1',
   'me2': 'ME2',
   'me2.5': 'ME2',
+  'asc': 'ASC',
+  'pfl': 'PFL',
+  'por': 'POR',
+  'meg': 'MEG',
+  'cri': 'CRI',
+  'pbl': 'PBL',
+  'jtg': 'JTG',
+  'dri': 'DRI',
+  'blk': 'BLK',
+  'wht': 'WHT',
   'swsh12pt5': 'CRZ',
   'crz': 'CRZ',
   'swsh12': 'SIT',
@@ -726,7 +785,96 @@ const LOCAL_TO_TPCI_SET_MAP: Record<string, string> = {
   'xy': 'XY'
 };
 
-// Search Pokémon cards via pokemontcg.io with intelligent local and Gemini fallbacks
+// Aliases for Portuguese names and colloquial queries for new collections
+const SET_QUERY_ALIASES: Record<string, string> = {
+  'herois excelsor': 'asc',
+  'herois excelsos': 'asc',
+  'heróis excelsos': 'asc',
+  'herois': 'asc',
+  'ascended heroes': 'asc',
+  'asc': 'asc',
+  'fogo fantasmagorico': 'pfl',
+  'fogo fantasmagórico': 'pfl',
+  'fantasmagorico': 'pfl',
+  'fantasmagórico': 'pfl',
+  'phantasmal flames': 'pfl',
+  'pfl': 'pfl',
+  'perfect ordem': 'por',
+  'ordem perfeita': 'por',
+  'perfect order': 'por',
+  'por': 'por',
+  'mega evolucao': 'meg',
+  'mega evolução': 'meg',
+  'mega evolution': 'meg',
+  'meg': 'meg',
+  'caos ascendente': 'cri',
+  'chaos rising': 'cri',
+  'cri': 'cri',
+  'escuridao total': 'pbl',
+  'escuridão total': 'pbl',
+  'pitch black': 'pbl',
+  'pbl': 'pbl',
+  'evolucoes prismaticas': 'pre',
+  'evoluções prismáticas': 'pre',
+  'prismatic evolutions': 'pre',
+  'pre': 'pre',
+  'jornada em conjunto': 'jtg',
+  'journey together': 'jtg',
+  'jtg': 'jtg',
+  'rivais destinados': 'dri',
+  'destined rivals': 'dri',
+  'dri': 'dri',
+  'raio negro': 'blk',
+  'black bolt': 'blk',
+  'blk': 'blk',
+  'chama branca': 'wht',
+  'white flare': 'wht',
+  'wht': 'wht'
+};
+
+// Master catalog of modern Pokémon TCG collections (2025+ Mega Evolution Era & Modern Standard)
+const COMPREHENSIVE_SETS = [
+  // 1. Nova Era Mega Evolution (Lançadas a partir de 2025 para frente)
+  { id: 'asc', name: 'Heróis Excelsos (Mega Evolution: Ascended Heroes - ASC)', series: 'Mega Evolution', releaseDate: '2026-01-30', logo: 'https://images.pokemontcg.io/asc/logo.png', symbol: 'https://images.pokemontcg.io/asc/symbol.png' },
+  { id: 'pfl', name: 'Fogo Fantasmagórico (Mega Evolution: Phantasmal Flames - PFL)', series: 'Mega Evolution', releaseDate: '2025-11-14', logo: 'https://images.pokemontcg.io/pfl/logo.png', symbol: 'https://images.pokemontcg.io/pfl/symbol.png' },
+  { id: 'por', name: 'Ordem Perfeita (Mega Evolution: Perfect Order - POR)', series: 'Mega Evolution', releaseDate: '2026-03-27', logo: 'https://images.pokemontcg.io/por/logo.png', symbol: 'https://images.pokemontcg.io/por/symbol.png' },
+  { id: 'meg', name: 'Mega Evolução Base (Mega Evolution - MEG)', series: 'Mega Evolution', releaseDate: '2025-09-26', logo: 'https://images.pokemontcg.io/meg/logo.png', symbol: 'https://images.pokemontcg.io/meg/symbol.png' },
+  { id: 'cri', name: 'Caos Ascendente (Mega Evolution: Chaos Rising - CRI)', series: 'Mega Evolution', releaseDate: '2026-05-22' },
+  { id: 'pbl', name: 'Escuridão Total (Mega Evolution: Pitch Black - PBL)', series: 'Mega Evolution', releaseDate: '2026-07-17' },
+
+  // 2. Expansões de 2025 de Scarlet & Violet
+  { id: 'pre', name: 'Evoluções Prismáticas (Prismatic Evolutions - PRE)', series: 'Scarlet & Violet', releaseDate: '2025-01-17' },
+  { id: 'jtg', name: 'Jornada em Conjunto (Journey Together - JTG)', series: 'Scarlet & Violet', releaseDate: '2025-03-28' },
+  { id: 'dri', name: 'Rivais Destinados (Destined Rivals - DRI)', series: 'Scarlet & Violet', releaseDate: '2025-05-30' },
+  { id: 'blk', name: 'Raio Negro (Black Bolt - BLK)', series: 'Scarlet & Violet', releaseDate: '2025-07-18' },
+  { id: 'wht', name: 'Chama Branca (White Flare - WHT)', series: 'Scarlet & Violet', releaseDate: '2025-07-18' },
+
+  // 3. Formato Standard Atual (Scarlet & Violet 2023-2024)
+  { id: 'ssp', name: 'Faíscas Impetuosas (Surging Sparks - SSP)', series: 'Scarlet & Violet', releaseDate: '2024-11-08' },
+  { id: 'scr', name: 'Coroa Estelar (Stellar Crown - SCR)', series: 'Scarlet & Violet', releaseDate: '2024-09-13' },
+  { id: 'sfa', name: 'Fábulas Nebulosas (Shrouded Fable - SFA)', series: 'Scarlet & Violet', releaseDate: '2024-08-02' },
+  { id: 'sv6', name: 'Máscaras do Crepúsculo (Twilight Masquerade - TWM)', series: 'Scarlet & Violet', releaseDate: '2024-05-24' },
+  { id: 'sv5', name: 'Forças Temporais (Temporal Forces - TEF)', series: 'Scarlet & Violet', releaseDate: '2024-03-22' },
+  { id: 'sv45', name: 'Destinos de Paldea (Paldean Fates - PAF)', series: 'Scarlet & Violet', releaseDate: '2024-01-26' },
+  { id: 'sv4', name: 'Fenda Paradoxal (Paradox Rift - PAR)', series: 'Scarlet & Violet', releaseDate: '2023-11-03' },
+  { id: 'sv3pt5', name: '151 (MEW)', series: 'Scarlet & Violet', releaseDate: '2023-09-22' },
+  { id: 'sv3', name: 'Obsidiana em Chamas (Obsidian Flames - OBF)', series: 'Scarlet & Violet', releaseDate: '2023-08-11' },
+  { id: 'sv2', name: 'Evoluções em Paldea (Paldea Evolved - PAL)', series: 'Scarlet & Violet', releaseDate: '2023-06-09' },
+  { id: 'sv1', name: 'Escarlate e Violeta Base (SVI)', series: 'Scarlet & Violet', releaseDate: '2023-03-31' }
+];
+
+function normalizeSearchTerm(str: string): string {
+  return (str || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim();
+}
+
+// Set of all modern Mega Evolution collection IDs (2025+)
+const MODERN_MEGA_SET_IDS = new Set(['asc', 'pfl', 'por', 'meg', 'cri', 'pbl']);
+
+// Search Pokémon cards via modern database & pokemontcg.io with intelligent local and Gemini fallbacks
 app.get('/api/pokemon/search', async (req, res) => {
   const rawQuery = ((req.query.q as string) || '').trim();
   const rawSet = ((req.query.set as string) || '').trim();
@@ -735,30 +883,154 @@ app.get('/api/pokemon/search', async (req, res) => {
     return res.json([]);
   }
 
-  try {
-    let resolvedSetId = rawSet ? (TPCI_TO_LOCAL_SET_MAP[rawSet.toUpperCase()] || rawSet.toLowerCase()) : '';
-    let resolvedNumber = '';
-    let nameQuery = rawQuery;
+  const normQuery = normalizeSearchTerm(rawQuery);
+  const normSet = normalizeSearchTerm(rawSet);
 
-    // Detect if rawQuery is a TPCi / PTCGL code or hyphenated local code (e.g. "TWM 130", "sv6-130", "OBF 125")
-    const codeMatch = rawQuery.match(/^([A-Za-z0-9.-]{2,7})[- ]+(\d+|promo)$/i);
-    if (codeMatch) {
-      const setToken = codeMatch[1].toUpperCase();
-      const numToken = codeMatch[2];
+  let resolvedSetId = rawSet ? (TPCI_TO_LOCAL_SET_MAP[rawSet.toUpperCase()] || rawSet.toLowerCase()) : '';
+  let resolvedNumber = '';
+  let nameQuery = rawQuery;
+
+  // Check if query is an alias for a known set (e.g. "herois excelsor" -> "asc", "fogo fantasmagorico" -> "pfl")
+  if (!resolvedSetId && SET_QUERY_ALIASES[normQuery]) {
+    resolvedSetId = SET_QUERY_ALIASES[normQuery];
+    nameQuery = '';
+  }
+
+  // Detect if rawQuery is a TPCi / PTCGL code or hyphenated local code (e.g. "ASC 085", "PFL 013", "TWM 130")
+  const codeMatch = rawQuery.match(/^([A-Za-z0-9.-]{2,7})[- ]+(\d+|promo)$/i);
+  if (codeMatch) {
+    const setToken = codeMatch[1].toUpperCase();
+    const numToken = codeMatch[2];
+    resolvedSetId = TPCI_TO_LOCAL_SET_MAP[setToken] || setToken.toLowerCase();
+    resolvedNumber = numToken;
+    nameQuery = '';
+  } else {
+    // Check if it's format "Name SET 123" e.g. "Mega Lucario ex ASC 085"
+    const ptcglNameMatch = rawQuery.match(/^(.+?)\s+([A-Za-z]{3,4})\s+(\d+)$/i);
+    if (ptcglNameMatch) {
+      nameQuery = ptcglNameMatch[1].trim();
+      const setToken = ptcglNameMatch[2].toUpperCase();
       resolvedSetId = TPCI_TO_LOCAL_SET_MAP[setToken] || setToken.toLowerCase();
-      resolvedNumber = numToken;
-      nameQuery = '';
-    } else {
-      // Check if it's format "Name SET 123" e.g. "Dragapult ex TWM 130"
-      const ptcglNameMatch = rawQuery.match(/^(.+?)\s+([A-Za-z]{3,4})\s+(\d+)$/i);
-      if (ptcglNameMatch) {
-        nameQuery = ptcglNameMatch[1].trim();
-        const setToken = ptcglNameMatch[2].toUpperCase();
-        resolvedSetId = TPCI_TO_LOCAL_SET_MAP[setToken] || setToken.toLowerCase();
-        resolvedNumber = ptcglNameMatch[3];
+      resolvedNumber = ptcglNameMatch[3];
+    }
+  }
+
+  // Determine if this is a Mega Evolution search or a modern 2025+ Mega set search
+  const isMegaSearch = normQuery.includes('mega') || 
+                       MODERN_MEGA_SET_IDS.has(resolvedSetId) || 
+                       MODERN_MEGA_SET_IDS.has(normSet) ||
+                       normQuery.includes('herois') || 
+                       normQuery.includes('fantasmagorico') || 
+                       normQuery.includes('ordem perfeita');
+
+  // If searching for Mega Evolution cards or modern Mega sets, NEVER query pokemontcg.io (which only has legacy 2014-2016 XY cards)
+  // Instead, search local modern 2025+ database first
+  if (isMegaSearch) {
+    console.log(`Mega Evolution search detected (q="${rawQuery}", set="${rawSet}"). Prioritizing modern 2025+ collections.`);
+    
+    let matched = fallbackCards.filter(c => {
+      const cardSetCode = (c.setCode || '').toLowerCase();
+      const cardSetName = normalizeSearchTerm(c.setName || '');
+      const cardName = normalizeSearchTerm(c.name || '');
+
+      // Set match
+      if (resolvedSetId) {
+        const setMatches = cardSetCode === resolvedSetId || 
+          cardSetCode.includes(normSet) || 
+          cardSetName.includes(normSet) ||
+          (LOCAL_TO_TPCI_SET_MAP[cardSetCode] && LOCAL_TO_TPCI_SET_MAP[cardSetCode].toLowerCase() === resolvedSetId);
+        if (!setMatches) return false;
       }
+
+      // Query match
+      if (normQuery && (!resolvedSetId || normQuery !== normalizeSearchTerm(resolvedSetId))) {
+        if (SET_QUERY_ALIASES[normQuery] && cardSetCode === SET_QUERY_ALIASES[normQuery]) {
+          return true;
+        }
+        const nameMatches = cardName.includes(normQuery);
+        const setMatches = cardSetCode.includes(normQuery) || cardSetName.includes(normQuery);
+        const numMatches = c.setNumber && String(c.setNumber).includes(normQuery);
+        const megaMatches = normQuery.includes('mega') && cardName.includes('mega');
+        return nameMatches || setMatches || numMatches || megaMatches;
+      }
+
+      return true;
+    }).map(c => {
+      const setId = (c.setCode || 'meg').toLowerCase();
+      const tpciSet = LOCAL_TO_TPCI_SET_MAP[setId] || setId.toUpperCase();
+      return {
+        ...c,
+        tpciCode: `${tpciSet} ${c.setNumber || '001'}`,
+        tpciSetCode: tpciSet
+      };
+    });
+
+    if (matched.length > 0) {
+      return res.json(matched);
     }
 
+    // If not in local fallback, synthesize modern 2025+ Mega cards using Gemini
+    const ai = getGeminiClient();
+    if (ai) {
+      try {
+        console.log('Using Gemini for modern 2025+ Mega Evolution search:', rawQuery, 'set:', rawSet);
+        const prompt = `Você é o especialista oficial em Pokémon TCG da nova era Mega Evolution (lançada a partir de 2025 para frente).
+O usuário busca: "${rawQuery || ''}" ${rawSet ? `(coleção: ${rawSet})` : ''}.
+IMPORTANTE: Retorne ESTRITAMENTE cartas da NOVA era Mega Evolution de 2025 em diante (como Heróis Excelsos/Ascended Heroes - ASC, Fogo Fantasmagórico/Phantasmal Flames - PFL, Ordem Perfeita/Perfect Order - POR, Mega Evolução Base - MEG).
+NUNCA retorne cartas antigas do bloco XY de 2014-2016 (NADA de 'M Charizard EX' ou 'M Lucario EX').
+As cartas modernas são no formato 'Mega [Nome] ex' (exemplo: 'Mega Charizard X ex', 'Mega Lucario ex', 'Mega Gardevoir ex', 'Mega Zygarde ex').
+Retorne um array JSON contendo até 12 cartas com:
+- "id": string (ex: "asc-085", "pfl-013", "por-001", "meg-015")
+- "name": string oficial (ex: "Mega Charizard X ex", "Mega Lucario ex")
+- "setCode": string ("asc", "pfl", "por", "meg", "cri", "pbl")
+- "setName": string ("Heróis Excelsos", "Fogo Fantasmagórico", "Ordem Perfeita", "Mega Evolução")
+- "setNumber": string (ex: "085", "013")
+- "imageUrl": string url válida de artwork`;
+
+        const geminiRes = await ai.models.generateContent({
+          model: 'gemini-2.5-flash',
+          contents: prompt,
+          config: {
+            responseMimeType: 'application/json',
+            responseSchema: {
+              type: Type.ARRAY,
+              items: {
+                type: Type.OBJECT,
+                properties: {
+                  id: { type: Type.STRING },
+                  name: { type: Type.STRING },
+                  setCode: { type: Type.STRING },
+                  setName: { type: Type.STRING },
+                  setNumber: { type: Type.STRING },
+                  imageUrl: { type: Type.STRING }
+                },
+                required: ['id', 'name', 'setCode', 'setName', 'setNumber', 'imageUrl']
+              }
+            }
+          }
+        });
+
+        const parsedCards = JSON.parse(geminiRes.text.trim());
+        if (Array.isArray(parsedCards) && parsedCards.length > 0) {
+          const enriched = parsedCards.map((c: any) => {
+            const setId = (c.setCode || 'meg').toLowerCase();
+            const tpciSet = LOCAL_TO_TPCI_SET_MAP[setId] || setId.toUpperCase();
+            return {
+              ...c,
+              tpciCode: `${tpciSet} ${c.setNumber}`,
+              tpciSetCode: tpciSet
+            };
+          });
+          return res.json(enriched);
+        }
+      } catch (aiErr) {
+        console.error('Gemini modern mega card search error:', aiErr);
+      }
+    }
+  }
+
+  // Non-Mega searches: query pokemontcg.io, but strictly filter OUT legacy XY-era sets and old "M " cards
+  try {
     let qParts: string[] = [];
     if (nameQuery) {
       qParts.push(`name:"*${nameQuery}*"`);
@@ -771,65 +1043,79 @@ app.get('/api/pokemon/search', async (req, res) => {
     }
 
     const qString = qParts.join(' ');
-    console.log(`Searching cards for: q="${rawQuery}" set="${rawSet}" -> resolved query="${qString}"`);
-    const encodedQuery = encodeURIComponent(qString);
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 4000);
+    console.log(`Searching non-mega cards: "${qString}"`);
     
-    const response = await fetch(`https://api.pokemontcg.io/v2/cards?q=${encodedQuery}&pageSize=36`, {
-      signal: controller.signal
-    });
-    clearTimeout(timeoutId);
-    
-    if (response.ok) {
-      const data = await response.json();
-      if (data.data && data.data.length > 0) {
-        const formatted = data.data.map((card: any) => {
-          const setId = card.set.id.toLowerCase();
-          const tpciSet = LOCAL_TO_TPCI_SET_MAP[setId] || card.set.id.toUpperCase();
-          const tpciProductCode = `${tpciSet} ${card.number}`;
-          return {
-            id: card.id,
-            name: card.name,
-            imageUrl: card.images.small || card.images.large,
-            setCode: card.set.id,
-            tpciCode: tpciProductCode,
-            tpciSetCode: tpciSet,
-            setName: card.set.name,
-            setNumber: card.number
-          };
-        });
-        return res.json(formatted);
+    if (qString) {
+      const encodedQuery = encodeURIComponent(qString);
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 3500);
+      
+      const response = await fetch(`https://api.pokemontcg.io/v2/cards?q=${encodedQuery}&pageSize=36`, {
+        signal: controller.signal
+      });
+      clearTimeout(timeoutId);
+      
+      if (response.ok) {
+        const data = await response.json();
+        if (data.data && data.data.length > 0) {
+          // STRICT FILTER: reject any card from legacy XY sets or old M-EX cards
+          const filteredData = data.data.filter((card: any) => {
+            const setId = (card.set?.id || '').toLowerCase();
+            const series = (card.set?.series || '').toLowerCase();
+            const name = (card.name || '').toLowerCase();
+
+            // Exclude legacy XY era
+            if (setId.startsWith('xy') || series === 'xy') return false;
+            // Exclude old Mega EX naming convention (e.g. "M Charizard EX", "M Lucario-EX")
+            if (name.startsWith('m ') || name.includes('m-ex') || (name.includes('mega') && name.includes('ex') && !name.includes(' ex'))) return false;
+
+            return true;
+          });
+
+          if (filteredData.length > 0) {
+            const formatted = filteredData.map((card: any) => {
+              const setId = card.set.id.toLowerCase();
+              const tpciSet = LOCAL_TO_TPCI_SET_MAP[setId] || card.set.id.toUpperCase();
+              const tpciProductCode = `${tpciSet} ${card.number}`;
+              return {
+                id: card.id,
+                name: card.name,
+                imageUrl: card.images.small || card.images.large,
+                setCode: card.set.id,
+                tpciCode: tpciProductCode,
+                tpciSetCode: tpciSet,
+                setName: card.set.name,
+                setNumber: card.number
+              };
+            });
+            return res.json(formatted);
+          }
+        }
       }
     }
   } catch (error) {
-    console.warn('External pokemontcg.io API unavailable, using local & AI knowledge base:', (error as Error).message);
+    console.warn('External pokemontcg.io API unavailable, falling back to local catalog:', (error as Error).message);
   }
 
-  // Local fallback search (handles set filter and query filter)
-  const lowerQuery = rawQuery.toLowerCase();
-  const lowerSet = rawSet.toLowerCase();
-  const resolvedSet = (TPCI_TO_LOCAL_SET_MAP[rawSet.toUpperCase()] || lowerSet);
-
+  // Local fallback search for standard format cards
   let matched = fallbackCards.filter(c => {
-    // Set match (if set is specified)
-    if (resolvedSet) {
-      const cardSetCode = (c.setCode || '').toLowerCase();
-      const cardSetName = (c.setName || '').toLowerCase();
-      const setMatches = cardSetCode === resolvedSet || 
-        cardSetCode.includes(lowerSet) || 
-        cardSetName.includes(lowerSet) ||
-        (LOCAL_TO_TPCI_SET_MAP[cardSetCode] && LOCAL_TO_TPCI_SET_MAP[cardSetCode].toLowerCase() === lowerSet);
+    const cardSetCode = (c.setCode || '').toLowerCase();
+    const cardSetName = normalizeSearchTerm(c.setName || '');
+    const cardName = normalizeSearchTerm(c.name || '');
+
+    if (resolvedSetId) {
+      const setMatches = cardSetCode === resolvedSetId || 
+        cardSetCode.includes(normSet) || 
+        cardSetName.includes(normSet) ||
+        (LOCAL_TO_TPCI_SET_MAP[cardSetCode] && LOCAL_TO_TPCI_SET_MAP[cardSetCode].toLowerCase() === resolvedSetId);
       if (!setMatches) return false;
     }
 
-    // Query match (if query is specified)
-    if (lowerQuery) {
-      const nameMatches = c.name.toLowerCase().includes(lowerQuery);
-      const setMatches = (c.setCode && c.setCode.toLowerCase().includes(lowerQuery)) || (c.setName && c.setName.toLowerCase().includes(lowerQuery));
-      const numMatches = c.setNumber && String(c.setNumber).includes(lowerQuery);
-      const megaMatches = lowerQuery.includes('mega') && (c.name.toLowerCase().includes('mega') || c.name.toLowerCase().includes('m '));
-      return nameMatches || setMatches || numMatches || megaMatches;
+    if (normQuery && (!resolvedSetId || normQuery !== normalizeSearchTerm(resolvedSetId))) {
+      const nameMatches = cardName.includes(normQuery);
+      const setMatches = cardSetCode.includes(normQuery) || cardSetName.includes(normQuery);
+      const numMatches = c.setNumber && String(c.setNumber).includes(normQuery);
+      return nameMatches || setMatches || numMatches;
     }
 
     return true;
@@ -847,20 +1133,18 @@ app.get('/api/pokemon/search', async (req, res) => {
     return res.json(matched);
   }
 
-  // If still no matches and query is present, use Gemini 2.5 Flash to synthesize accurate Pokémon TCG data
+  // Gemini general fallback
   const ai = getGeminiClient();
-  if (ai && rawQuery) {
+  if (ai && (rawQuery || rawSet)) {
     try {
-      console.log('Using Gemini to synthesize Pokémon card data for:', rawQuery);
-      const prompt = `Como especialista em Pokémon TCG, forneça dados oficiais precisos para a busca: "${rawQuery}" ${rawSet ? `(coleção/set: ${rawSet})` : ''}.
-Retorne um array JSON contendo até 6 cartas oficiais mais relevantes.
-Cada carta deve ter:
-- "id": string (ex: "xy2-13", "me2-016", "sv3-125")
-- "name": string oficial em inglês (ex: "Mega Charizard EX", "Charizard ex", "Budew")
-- "setCode": string (código local do set, ex: "me2", "xy2", "xy12", "sv3", "sv6")
-- "setName": string oficial da coleção (ex: "Mega Evolution", "Flashfire", "Obsidian Flames")
-- "setNumber": string (número no set, ex: "13", "016", "125")
-- "imageUrl": url de imagem direta (ex: "https://images.pokemontcg.io/xy2/13.png", "https://images.pokemontcg.io/me2/016.png", "https://images.pokemontcg.io/sv3/125.png")`;
+      const prompt = `Como especialista em Pokémon TCG moderno (formato Standard de 2023 em diante ou nova era 2025+), forneça dados oficiais precisos para ${rawQuery ? `a busca: "${rawQuery}"` : ''} ${rawSet ? `(coleção/set: ${rawSet})` : ''}.
+Retorne um array JSON contendo até 12 cartas com:
+- "id": string (ex: "sv3-125")
+- "name": string oficial (ex: "Charizard ex")
+- "setCode": string (código local do set, ex: "sv3", "pre", "asc", "pfl")
+- "setName": string oficial da coleção
+- "setNumber": string (ex: "125")
+- "imageUrl": url de imagem direta`;
 
       const geminiRes = await ai.models.generateContent({
         model: 'gemini-2.5-flash',
@@ -899,18 +1183,18 @@ Cada carta deve ter:
         return res.json(enriched);
       }
     } catch (aiErr) {
-      console.error('Gemini card lookup failed:', aiErr);
+      console.error('Gemini fallback error:', aiErr);
     }
   }
 
   res.json([]);
 });
 
-// Fetch all available Pokémon TCG sets
+// Fetch all available Pokémon TCG sets with modern Mega Evolution & Scarlet/Violet expansions strictly prioritized
 app.get('/api/pokemon/sets', async (req, res) => {
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 4000);
+    const timeoutId = setTimeout(() => controller.abort(), 3000);
     const response = await fetch('https://api.pokemontcg.io/v2/sets?orderBy=-releaseDate', {
       signal: controller.signal
     });
@@ -919,78 +1203,55 @@ app.get('/api/pokemon/sets', async (req, res) => {
     if (response.ok) {
       const data = await response.json();
       if (data.data && Array.isArray(data.data) && data.data.length > 0) {
-        const formatted = data.data.map((s: any) => ({
-          id: s.id,
-          name: s.name,
-          series: s.series,
-          releaseDate: s.releaseDate,
-          logo: s.images?.logo,
-          symbol: s.images?.symbol
-        }));
+        // STRICT FILTER: Keep only modern sets (Mega Evolution or Scarlet & Violet series, or release date >= 2023)
+        // REJECT old XY, Black & White, Sun & Moon, Diamond & Pearl, etc.
+        const fetchedSets = data.data
+          .filter((s: any) => {
+            const series = (s.series || '').toLowerCase();
+            const id = (s.id || '').toLowerCase();
+            const release = s.releaseDate || '';
+            // Reject any XY sets or classic vintage sets
+            if (series === 'xy' || id.startsWith('xy') || series === 'black & white' || series === 'sun & moon' || series === 'sword & shield') {
+              return false;
+            }
+            return series === 'mega evolution' || series === 'scarlet & violet' || release >= '2023';
+          })
+          .map((s: any) => ({
+            id: s.id,
+            name: s.name,
+            series: s.series,
+            releaseDate: s.releaseDate,
+            logo: s.images?.logo,
+            symbol: s.images?.symbol
+          }));
         
-        // Ensure Mega Evolution (me2) is at the top of the list if not present
-        const hasMe2 = formatted.some((s: any) => s.id === 'me2' || s.name.toLowerCase().includes('mega evolution'));
-        if (!hasMe2) {
-          formatted.unshift(
-            { id: 'me2', name: 'Mega Evolution (Mega Evoluções)', series: 'Mega Evolution', releaseDate: '2025-06-01' },
-            { id: 'xy12', name: 'XY - Evolutions (Mega Evoluções)', series: 'XY', releaseDate: '2016-11-02' }
-          );
+        // Merge with COMPREHENSIVE_SETS ensuring requested new collections (Heróis Excelsos, Fogo Fantasmagórico, Perfect Order, Mega Evolução Base) are at the top
+        const seen = new Set<string>();
+        const combined: any[] = [];
+
+        for (const exp of COMPREHENSIVE_SETS) {
+          if (!seen.has(exp.id.toLowerCase())) {
+            seen.add(exp.id.toLowerCase());
+            combined.push(exp);
+          }
         }
 
-        return res.json(formatted);
+        for (const s of fetchedSets) {
+          if (!seen.has(s.id.toLowerCase())) {
+            seen.add(s.id.toLowerCase());
+            combined.push(s);
+          }
+        }
+
+        return res.json(combined);
       }
     }
   } catch (err) {
-    console.warn('Error fetching sets from pokemontcg.io, serving comprehensive offline sets catalog:', (err as Error).message);
+    console.warn('External pokemontcg.io API unavailable or slow, serving comprehensive expansions catalog:', (err as Error).message);
   }
 
-  // Comprehensive sets catalog covering all official eras (Mega Evoluções, Scarlet & Violet, Sword & Shield, XY)
-  res.json([
-    // Mega Evolution Sets
-    { id: 'me2', name: 'Mega Evolution (Mega Evoluções - ME2)', series: 'Mega Evolution', releaseDate: '2025-06-01' },
-    { id: 'xy12', name: 'XY - Evolutions (Mega Evoluções)', series: 'XY', releaseDate: '2016-11-02' },
-    { id: 'xy4', name: 'XY - Phantom Forces (Mega Gengar)', series: 'XY', releaseDate: '2014-11-05' },
-    { id: 'xy2', name: 'XY - Flashfire (Mega Charizard)', series: 'XY', releaseDate: '2014-05-07' },
-    { id: 'xy6', name: 'XY - Roaring Skies (Mega Rayquaza)', series: 'XY', releaseDate: '2015-05-06' },
-    { id: 'xy5', name: 'XY - Primal Clash (Primal & Mega)', series: 'XY', releaseDate: '2015-02-04' },
-    { id: 'xy3', name: 'XY - Furious Fists (Mega Lucario)', series: 'XY', releaseDate: '2014-08-13' },
-    { id: 'xy7', name: 'XY - Ancient Origins (Mega Rayquaza)', series: 'XY', releaseDate: '2015-08-12' },
-    { id: 'xy8', name: 'XY - BREAKthrough (Mega Mewtwo)', series: 'XY', releaseDate: '2015-11-04' },
-    { id: 'xy9', name: 'XY - BREAKpoint (Mega Gyarados)', series: 'XY', releaseDate: '2016-02-03' },
-    { id: 'xy10', name: 'XY - Fates Collide (Mega Alakazam)', series: 'XY', releaseDate: '2016-05-02' },
-    { id: 'xy11', name: 'XY - Steam Siege (Mega Gardevoir)', series: 'XY', releaseDate: '2016-08-03' },
-    { id: 'xy1', name: 'XY Base Set (Mega Blastoise/Venusaur)', series: 'XY', releaseDate: '2014-02-05' },
-
-    // Scarlet & Violet Series
-    { id: 'pre', name: 'Prismatic Evolutions (PRE)', series: 'Scarlet & Violet', releaseDate: '2025-01-17' },
-    { id: 'ssp', name: 'Surging Sparks (SSP)', series: 'Scarlet & Violet', releaseDate: '2024-11-08' },
-    { id: 'scr', name: 'Stellar Crown (SCR)', series: 'Scarlet & Violet', releaseDate: '2024-09-13' },
-    { id: 'sfa', name: 'Shrouded Fable (SFA)', series: 'Scarlet & Violet', releaseDate: '2024-08-02' },
-    { id: 'sv6', name: 'Twilight Masquerade (TWM)', series: 'Scarlet & Violet', releaseDate: '2024-05-24' },
-    { id: 'sv5', name: 'Temporal Forces (TEF)', series: 'Scarlet & Violet', releaseDate: '2024-03-22' },
-    { id: 'sv45', name: 'Paldean Fates (PAF)', series: 'Scarlet & Violet', releaseDate: '2024-01-26' },
-    { id: 'sv4', name: 'Paradox Rift (PAR)', series: 'Scarlet & Violet', releaseDate: '2023-11-03' },
-    { id: 'sv3pt5', name: '151 (MEW)', series: 'Scarlet & Violet', releaseDate: '2023-09-22' },
-    { id: 'sv3', name: 'Obsidian Flames (OBF)', series: 'Scarlet & Violet', releaseDate: '2023-08-11' },
-    { id: 'sv2', name: 'Paldea Evolved (PAL)', series: 'Scarlet & Violet', releaseDate: '2023-06-09' },
-    { id: 'sv1', name: 'Scarlet & Violet (SVI)', series: 'Scarlet & Violet', releaseDate: '2023-03-31' },
-
-    // Sword & Shield Series
-    { id: 'swsh12pt5', name: 'Crown Zenith (CRZ)', series: 'Sword & Shield', releaseDate: '2023-01-20' },
-    { id: 'swsh12', name: 'Silver Tempest (SIT)', series: 'Sword & Shield', releaseDate: '2022-11-11' },
-    { id: 'swsh11', name: 'Lost Origin (LOR)', series: 'Sword & Shield', releaseDate: '2022-09-09' },
-    { id: 'pgo', name: 'Pokémon GO (PGO)', series: 'Sword & Shield', releaseDate: '2022-07-01' },
-    { id: 'swsh10', name: 'Astral Radiance (ASR)', series: 'Sword & Shield', releaseDate: '2022-05-27' },
-    { id: 'swsh9', name: 'Brilliant Stars (BRS)', series: 'Sword & Shield', releaseDate: '2022-02-25' },
-    { id: 'swsh8', name: 'Fusion Strike (FST)', series: 'Sword & Shield', releaseDate: '2021-11-12' },
-    { id: 'cel', name: 'Celebrations (CEL)', series: 'Sword & Shield', releaseDate: '2021-10-08' },
-    { id: 'swsh7', name: 'Evolving Skies (EVS)', series: 'Sword & Shield', releaseDate: '2021-08-27' },
-    { id: 'swsh6', name: 'Chilling Reign (CRE)', series: 'Sword & Shield', releaseDate: '2021-06-18' },
-    { id: 'swsh5', name: 'Battle Styles (BST)', series: 'Sword & Shield', releaseDate: '2021-03-19' },
-    { id: 'swsh45', name: 'Shining Fates (SHF)', series: 'Sword & Shield', releaseDate: '2021-02-19' },
-    { id: 'swsh4', name: 'Vivid Voltage (VIV)', series: 'Sword & Shield', releaseDate: '2020-11-13' },
-    { id: 'swsh1', name: 'Sword & Shield (SSH)', series: 'Sword & Shield', releaseDate: '2020-02-07' }
-  ]);
+  // Fallback to modern collections
+  res.json(COMPREHENSIVE_SETS);
 });
 
 // Parse TCG Live / Limitless text lists using Gemini (with advanced Regex fallback)
