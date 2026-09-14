@@ -16,6 +16,7 @@ import {
   Info
 } from 'lucide-react';
 import PokemonSprite from './PokemonSprite';
+import { convertLocalIdToPTCGL, normalizeTPCiSetCode } from '../utils/cardImages';
 
 interface CollectionProps {
   currentMember: Member;
@@ -130,14 +131,17 @@ export default function Collection({ currentMember }: CollectionProps) {
           c.id === userCardId ? { ...c, quantity: newQty } : c
         ));
       } else {
+        // Standardize card to official PTCGL / TPCi format
+        const ptcglData = convertLocalIdToPTCGL(selectedCard);
+        
         // Create new item
         const newCard: CardItem = {
           id: userCardId,
           name: selectedCard.name,
           imageUrl: selectedCard.imageUrl,
-          setCode: selectedCard.setCode || 'sv1',
+          setCode: ptcglData.tpciSetCode || selectedCard.setCode || 'SVI',
           setName: selectedCard.setName || 'Unknown Set',
-          setNumber: selectedCard.setNumber || '1',
+          setNumber: ptcglData.setNumber || selectedCard.setNumber || '1',
           quantity: quantity,
           ownerId: currentMember.id,
           ownerName: currentMember.name,
@@ -319,9 +323,11 @@ export default function Collection({ currentMember }: CollectionProps) {
               <div className="p-4 bg-slate-950/40 border-t border-slate-850/60 space-y-3">
                 <div>
                   <h3 className="text-white font-extrabold text-xs truncate" title={card.name}>{card.name}</h3>
-                  <div className="text-[10px] text-slate-450 flex items-center justify-between mt-1">
-                    <span className="truncate">{card.setName}</span>
-                    <span className="font-mono text-purple-350 shrink-0 font-bold">{card.setNumber}</span>
+                  <div className="card-data-field text-[10px] text-slate-400 flex items-center justify-between mt-1">
+                    <span className="truncate max-w-[110px]">{card.setName}</span>
+                    <span className="font-mono text-purple-300 font-bold bg-purple-950/70 px-1.5 py-0.5 rounded border border-purple-500/20 shrink-0">
+                      {convertLocalIdToPTCGL(card).canonicalCode}
+                    </span>
                   </div>
                 </div>
 
@@ -486,7 +492,11 @@ export default function Collection({ currentMember }: CollectionProps) {
                     <div>
                       <span className="text-[10px] uppercase font-mono font-bold text-purple-400">{selectedCard.setName || 'Coleção'}</span>
                       <h4 className="text-xl font-bold text-white mt-1">{selectedCard.name}</h4>
-                      <p className="text-xs text-slate-400 mt-0.5">Set: {selectedCard.setCode?.toUpperCase()} | Número: #{selectedCard.setNumber}</p>
+                      <div className="card-data-field text-xs text-slate-400 mt-1 flex flex-wrap items-center gap-2">
+                        <span>Coleção: <strong className="text-slate-200">{selectedCard.setName}</strong></span>
+                        <span>•</span>
+                        <span>Código Oficial PTCGL: <strong className="font-mono text-purple-300 font-bold bg-purple-950/80 px-2 py-0.5 rounded border border-purple-500/30">{convertLocalIdToPTCGL(selectedCard).canonicalCode}</strong></span>
+                      </div>
                     </div>
 
                     {/* Quantity selection */}
@@ -579,7 +589,12 @@ export default function Collection({ currentMember }: CollectionProps) {
                           </div>
                           <div>
                             <div className="text-white font-bold text-xs truncate group-hover:text-purple-400 transition-colors">{card.name}</div>
-                            <div className="text-[9px] text-slate-550 mt-0.5 truncate">{card.setName} ({card.setNumber})</div>
+                            <div className="card-data-field text-[9px] text-slate-400 mt-0.5 flex items-center justify-between">
+                              <span className="truncate max-w-[85px]">{card.setName}</span>
+                              <span className="font-mono text-purple-300 font-bold bg-purple-950/60 px-1 py-0.2 rounded border border-purple-500/20 shrink-0">
+                                {convertLocalIdToPTCGL(card).canonicalCode}
+                              </span>
+                            </div>
                           </div>
                         </div>
                       ))}

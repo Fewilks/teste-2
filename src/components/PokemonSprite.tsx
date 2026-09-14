@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { resolveCard, getBasePokemonName, POKEMON_DEX_MAP } from '../utils/cardImages';
+import { getPokemonSpriteHierarchy, SpriteSources } from '../utils/cardImages';
 
 interface PokemonSpriteProps {
   name: string;
@@ -9,32 +9,31 @@ interface PokemonSpriteProps {
 
 export const getPokemonSpriteUrl = (pokemonName: string): string => {
   if (!pokemonName) return 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png';
-  
-  const baseName = getBasePokemonName(pokemonName);
-  const dexId = POKEMON_DEX_MAP[baseName];
-
-  // If we have National Dex ID, PokeAPI official artwork is ultra-high resolution and always 200 OK
-  if (dexId) {
-    return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${dexId}.png`;
-  }
-
-  // Check card database
-  const card = resolveCard(pokemonName);
-  if (card && card.imageUrl) {
-    return card.imageUrl;
-  }
-
-  return `https://play.pokemonshowdown.com/sprites/gen5/${baseName}.png`;
+  const hierarchy: SpriteSources = getPokemonSpriteHierarchy(pokemonName);
+  return hierarchy.artwork || hierarchy.primary;
 };
 
 export default function PokemonSprite({ name, className = '', size = 'md' }: PokemonSpriteProps) {
-  const [src, setSrc] = useState<string>(getPokemonSpriteUrl(name));
-  const [hasError, setHasError] = useState(false);
+  const [level, setLevel] = useState<number>(0);
 
   useEffect(() => {
-    setSrc(getPokemonSpriteUrl(name));
-    setHasError(false);
+    setLevel(0);
   }, [name]);
+
+  const hierarchy: SpriteSources = getPokemonSpriteHierarchy(name);
+
+  const getSource = (): string => {
+    switch (level) {
+      case 0:
+        return hierarchy.artwork || hierarchy.primary;
+      case 1:
+        return hierarchy.battleSprite;
+      case 2:
+        return hierarchy.dexSprite;
+      default:
+        return hierarchy.fallback;
+    }
+  };
 
   const sizeClasses = {
     sm: 'w-8 h-8',
@@ -44,21 +43,14 @@ export default function PokemonSprite({ name, className = '', size = 'md' }: Pok
   };
 
   const handleImgError = () => {
-    if (!hasError) {
-      setHasError(true);
-      // Try PokeAPI pixel sprite or Poke-Ball fallback
-      const baseName = getBasePokemonName(name);
-      setSrc(`https://play.pokemonshowdown.com/sprites/gen5/${baseName}.png`);
-    } else {
-      setSrc('https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png');
-    }
+    setLevel(prev => prev + 1);
   };
 
   return (
     <div className={`flex items-center justify-center overflow-hidden shrink-0 ${sizeClasses[size]} ${className}`}>
       <img
         id={`sprite-${name.toLowerCase().replace(/[^a-z0-9]/g, '-')}`}
-        src={src}
+        src={getSource()}
         alt={name}
         className="max-w-full max-h-full object-contain filter drop-shadow-[0_2px_4px_rgba(0,0,0,0.4)] transition-transform duration-300 hover:scale-110"
         onError={handleImgError}

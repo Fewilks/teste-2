@@ -1453,6 +1453,344 @@ registerCardId('sv6pt5-20', CARD_IMAGE_DATABASE['dusknoir']);
 registerCardId('sfa-20', CARD_IMAGE_DATABASE['dusknoir']);
 registerCardId('sfa 20', CARD_IMAGE_DATABASE['dusknoir']);
 
+// Dreepy (Twilight Masquerade #128)
+registerCardId('sv6-128', CARD_IMAGE_DATABASE['dreepy']);
+registerCardId('twm-128', CARD_IMAGE_DATABASE['dreepy']);
+registerCardId('twm 128', CARD_IMAGE_DATABASE['dreepy']);
+
+// Drakloak (Twilight Masquerade #129)
+registerCardId('sv6-129', CARD_IMAGE_DATABASE['drakloak']);
+registerCardId('twm-129', CARD_IMAGE_DATABASE['drakloak']);
+registerCardId('twm 129', CARD_IMAGE_DATABASE['drakloak']);
+
+// Duskull (Shrouded Fable #18)
+registerCardId('sv6pt5-18', CARD_IMAGE_DATABASE['duskull']);
+registerCardId('sfa-18', CARD_IMAGE_DATABASE['duskull']);
+registerCardId('sfa 18', CARD_IMAGE_DATABASE['duskull']);
+
+// Dusclops (Shrouded Fable #19)
+registerCardId('sv6pt5-19', CARD_IMAGE_DATABASE['dusclops']);
+registerCardId('sfa-19', CARD_IMAGE_DATABASE['dusclops']);
+registerCardId('sfa 19', CARD_IMAGE_DATABASE['dusclops']);
+
+// Charmander (Obsidian Flames #26 / MEW #4)
+registerCardId('sv3-26', CARD_IMAGE_DATABASE['charmander']);
+registerCardId('obf-26', CARD_IMAGE_DATABASE['charmander']);
+registerCardId('obf 26', CARD_IMAGE_DATABASE['charmander']);
+
+// Charmeleon (Obsidian Flames #124)
+registerCardId('sv3-124', CARD_IMAGE_DATABASE['charmeleon']);
+registerCardId('obf-124', CARD_IMAGE_DATABASE['charmeleon']);
+registerCardId('obf 124', CARD_IMAGE_DATABASE['charmeleon']);
+
+// Pidgey (Obsidian Flames #162)
+registerCardId('sv3-162', CARD_IMAGE_DATABASE['pidgey']);
+registerCardId('obf-162', CARD_IMAGE_DATABASE['pidgey']);
+registerCardId('obf 162', CARD_IMAGE_DATABASE['pidgey']);
+
+// Pidgeotto (Obsidian Flames #163)
+registerCardId('sv3-163', CARD_IMAGE_DATABASE['pidgeotto']);
+registerCardId('obf-163', CARD_IMAGE_DATABASE['pidgeotto']);
+registerCardId('obf 163', CARD_IMAGE_DATABASE['pidgeotto']);
+
+// Canonical PTCGL Card Format definition and adapter
+export interface FormattedPTCGLCard {
+  canonicalCode: string;   // e.g. "OBF 164" or "TWM 130"
+  setCode: string;         // e.g. "OBF" or "TWM"
+  tpciSetCode: string;     // official TPCi 3-4 letter code (e.g. "TWM", "OBF", "SVI")
+  setNumber: string;       // e.g. "130" or "164"
+  displayName: string;     // e.g. "Pidgeot ex"
+  ptcglIdentifier: string; // e.g. "Pidgeot ex OBF 164"
+  localSetId?: string;     // e.g. "sv6", "sv3" for pokemontcg.io / API queries
+  rawLocalId?: string;     // original input id e.g. "sv6-130"
+}
+
+// Map from pokemontcg.io / local set codes to official TPCi / Pokémon TCG Live codes
+export const SET_LOCAL_TO_TPCI_MAP: Record<string, { tpciCode: string; name: string; localId: string }> = {
+  // Scarlet & Violet era
+  'sv1': { tpciCode: 'SVI', name: 'Scarlet & Violet', localId: 'sv1' },
+  'sv2': { tpciCode: 'PAL', name: 'Paldea Evolved', localId: 'sv2' },
+  'sv3': { tpciCode: 'OBF', name: 'Obsidian Flames', localId: 'sv3' },
+  'sv3pt5': { tpciCode: 'MEW', name: '151', localId: 'sv3pt5' },
+  'mew': { tpciCode: 'MEW', name: '151', localId: 'sv3pt5' },
+  'me1': { tpciCode: 'MEW', name: '151', localId: 'sv3pt5' },
+  'sv4': { tpciCode: 'PAR', name: 'Paradox Rift', localId: 'sv4' },
+  'sv45': { tpciCode: 'PAF', name: 'Paldean Fates', localId: 'sv45' },
+  'sv4pt5': { tpciCode: 'PAF', name: 'Paldean Fates', localId: 'sv45' },
+  'paf': { tpciCode: 'PAF', name: 'Paldean Fates', localId: 'sv45' },
+  'sv5': { tpciCode: 'TEF', name: 'Temporal Forces', localId: 'sv5' },
+  'tef': { tpciCode: 'TEF', name: 'Temporal Forces', localId: 'sv5' },
+  'sv6': { tpciCode: 'TWM', name: 'Twilight Masquerade', localId: 'sv6' },
+  'twm': { tpciCode: 'TWM', name: 'Twilight Masquerade', localId: 'sv6' },
+  'sv6pt5': { tpciCode: 'SFA', name: 'Shrouded Fable', localId: 'sv6pt5' },
+  'sv65': { tpciCode: 'SFA', name: 'Shrouded Fable', localId: 'sv6pt5' },
+  'sfa': { tpciCode: 'SFA', name: 'Shrouded Fable', localId: 'sv6pt5' },
+  'sv7': { tpciCode: 'SCR', name: 'Stellar Crown', localId: 'sv7' },
+  'scr': { tpciCode: 'SCR', name: 'Stellar Crown', localId: 'sv7' },
+  'sv8': { tpciCode: 'SSP', name: 'Surging Sparks', localId: 'sv8' },
+  'ssp': { tpciCode: 'SSP', name: 'Surging Sparks', localId: 'sv8' },
+  'sv8pt5': { tpciCode: 'PRE', name: 'Prismatic Evolutions', localId: 'sv8pt5' },
+  'sv85': { tpciCode: 'PRE', name: 'Prismatic Evolutions', localId: 'sv8pt5' },
+  'pre': { tpciCode: 'PRE', name: 'Prismatic Evolutions', localId: 'sv8pt5' },
+  'sve': { tpciCode: 'SVE', name: 'Scarlet & Violet Energies', localId: 'sve' },
+  'svp': { tpciCode: 'SVP', name: 'Scarlet & Violet Promos', localId: 'svp' },
+  'me2': { tpciCode: 'ME2', name: 'Mega Evolution', localId: 'me2' },
+  'me2.5': { tpciCode: 'ME2', name: 'Mega Evolution', localId: 'me2' },
+  'me2-5': { tpciCode: 'ME2', name: 'Mega Evolution', localId: 'me2' },
+
+  // Sword & Shield era
+  'swsh1': { tpciCode: 'SSH', name: 'Sword & Shield', localId: 'swsh1' },
+  'ssh': { tpciCode: 'SSH', name: 'Sword & Shield', localId: 'swsh1' },
+  'swsh2': { tpciCode: 'RCL', name: 'Rebel Clash', localId: 'swsh2' },
+  'rcl': { tpciCode: 'RCL', name: 'Rebel Clash', localId: 'swsh2' },
+  'swsh3': { tpciCode: 'DAA', name: 'Darkness Ablaze', localId: 'swsh3' },
+  'daa': { tpciCode: 'DAA', name: 'Darkness Ablaze', localId: 'swsh3' },
+  'swsh35': { tpciCode: 'CPA', name: "Champion's Path", localId: 'swsh35' },
+  'cpa': { tpciCode: 'CPA', name: "Champion's Path", localId: 'swsh35' },
+  'swsh4': { tpciCode: 'VIV', name: 'Vivid Voltage', localId: 'swsh4' },
+  'viv': { tpciCode: 'VIV', name: 'Vivid Voltage', localId: 'swsh4' },
+  'swsh45': { tpciCode: 'SHF', name: 'Shining Fates', localId: 'swsh45' },
+  'shf': { tpciCode: 'SHF', name: 'Shining Fates', localId: 'swsh45' },
+  'swsh5': { tpciCode: 'BST', name: 'Battle Styles', localId: 'swsh5' },
+  'bst': { tpciCode: 'BST', name: 'Battle Styles', localId: 'swsh5' },
+  'swsh6': { tpciCode: 'CRE', name: 'Chilling Reign', localId: 'swsh6' },
+  'cre': { tpciCode: 'CRE', name: 'Chilling Reign', localId: 'swsh6' },
+  'swsh7': { tpciCode: 'EVS', name: 'Evolving Skies', localId: 'swsh7' },
+  'evs': { tpciCode: 'EVS', name: 'Evolving Skies', localId: 'swsh7' },
+  'swsh8': { tpciCode: 'FST', name: 'Fusion Strike', localId: 'swsh8' },
+  'fst': { tpciCode: 'FST', name: 'Fusion Strike', localId: 'swsh8' },
+  'fsi': { tpciCode: 'FST', name: 'Fusion Strike', localId: 'swsh8' },
+  'swsh9': { tpciCode: 'BRS', name: 'Brilliant Stars', localId: 'swsh9' },
+  'brs': { tpciCode: 'BRS', name: 'Brilliant Stars', localId: 'swsh9' },
+  'swsh10': { tpciCode: 'ASR', name: 'Astral Radiance', localId: 'swsh10' },
+  'asr': { tpciCode: 'ASR', name: 'Astral Radiance', localId: 'swsh10' },
+  'pgo': { tpciCode: 'PGO', name: 'Pokémon GO', localId: 'pgo' },
+  'swsh11': { tpciCode: 'LOR', name: 'Lost Origin', localId: 'swsh11' },
+  'lor': { tpciCode: 'LOR', name: 'Lost Origin', localId: 'swsh11' },
+  'cel': { tpciCode: 'CEL', name: 'Celebrations', localId: 'cel' },
+  'swsh12': { tpciCode: 'SIT', name: 'Silver Tempest', localId: 'swsh12' },
+  'sit': { tpciCode: 'SIT', name: 'Silver Tempest', localId: 'swsh12' },
+  'swsh12pt5': { tpciCode: 'CRZ', name: 'Crown Zenith', localId: 'swsh12pt5' },
+  'crz': { tpciCode: 'CRZ', name: 'Crown Zenith', localId: 'swsh12pt5' }
+};
+
+// Reverse map: TPCi official 3-letter code -> pokemontcg.io local set code
+export const SET_TPCI_TO_LOCAL_MAP: Record<string, string> = {
+  'SVI': 'sv1',
+  'PAL': 'sv2',
+  'OBF': 'sv3',
+  'MEW': 'sv3pt5',
+  'PAR': 'sv4',
+  'PAF': 'sv45',
+  'TEF': 'sv5',
+  'TWM': 'sv6',
+  'SFA': 'sv6pt5',
+  'SCR': 'sv7',
+  'SSP': 'sv8',
+  'PRE': 'sv8pt5',
+  'SVE': 'sve',
+  'SVP': 'svp',
+  'ME2': 'me2',
+  'SSH': 'swsh1',
+  'RCL': 'swsh2',
+  'DAA': 'swsh3',
+  'CPA': 'swsh35',
+  'VIV': 'swsh4',
+  'SHF': 'swsh45',
+  'BST': 'swsh5',
+  'CRE': 'swsh6',
+  'EVS': 'swsh7',
+  'FST': 'swsh8',
+  'BRS': 'swsh9',
+  'ASR': 'swsh10',
+  'PGO': 'pgo',
+  'LOR': 'swsh11',
+  'CEL': 'cel',
+  'SIT': 'swsh12',
+  'CRZ': 'swsh12pt5'
+};
+
+/**
+ * Normalizes any set identifier (e.g. 'sv6', 'twm', 'sv3', 'obf') into the official TPCi uppercase 3-letter code.
+ */
+export function normalizeTPCiSetCode(setCode: string): string {
+  if (!setCode) return 'SVI';
+  const clean = setCode.toLowerCase().trim().replace(/[^a-z0-9]/g, '');
+  if (SET_LOCAL_TO_TPCI_MAP[clean]) {
+    return SET_LOCAL_TO_TPCI_MAP[clean].tpciCode;
+  }
+  return clean.toUpperCase();
+}
+
+/**
+ * Converts a TPCi official set code (e.g. 'TWM', 'OBF') to its local/pokemontcg.io counterpart ('sv6', 'sv3').
+ */
+export function mapTPCiToLocalSetId(tpciCode: string): string {
+  if (!tpciCode) return 'sv1';
+  const cleanUpper = tpciCode.toUpperCase().trim();
+  return SET_TPCI_TO_LOCAL_MAP[cleanUpper] || tpciCode.toLowerCase().trim();
+}
+
+/**
+ * Primary utility: converts local card IDs, database items, or PTCGL strings to standardized TPCi formats.
+ * Handles:
+ * - Local IDs: "sv6-130", "obf-125", "user123_sv6-130", "twm 130"
+ * - Objects with setCode and setNumber (from Collection or API responses)
+ * - Raw card names with set tags: "Dragapult ex TWM 130", "Charizard ex (OBF #125)"
+ */
+export function convertLocalIdToPTCGL(
+  localCardOrId: string | { id?: string; setCode?: string; setNumber?: string | number; name?: string; setName?: string },
+  fallbackName?: string
+): FormattedPTCGLCard {
+  // If input is an object
+  if (typeof localCardOrId === 'object' && localCardOrId !== null) {
+    const rawSet = localCardOrId.setCode || 'SVI';
+    const tpciSetCode = normalizeTPCiSetCode(rawSet);
+    const localSetId = mapTPCiToLocalSetId(tpciSetCode);
+    const rawNum = String(localCardOrId.setNumber || '001').replace(/^#/, '').trim();
+    const displayName = localCardOrId.name || fallbackName || 'Carta Pokémon';
+    const canonicalCode = `${tpciSetCode} ${rawNum}`;
+
+    return {
+      canonicalCode,
+      setCode: tpciSetCode,
+      tpciSetCode,
+      setNumber: rawNum,
+      displayName,
+      ptcglIdentifier: `${displayName} ${canonicalCode}`,
+      localSetId,
+      rawLocalId: localCardOrId.id
+    };
+  }
+
+  // If input is a string
+  const rawStr = String(localCardOrId || '').trim();
+  if (!rawStr) {
+    return {
+      canonicalCode: 'SVI 001',
+      setCode: 'SVI',
+      tpciSetCode: 'SVI',
+      setNumber: '001',
+      displayName: fallbackName || 'Pokémon',
+      ptcglIdentifier: `${fallbackName || 'Pokémon'} SVI 001`,
+      localSetId: 'sv1',
+      rawLocalId: ''
+    };
+  }
+
+  // Strip Firestore user prefix if present (e.g. "userId_sv6-130" -> "sv6-130")
+  let cleanId = rawStr;
+  const underscoreSplit = rawStr.split('_');
+  if (underscoreSplit.length > 1 && !rawStr.toLowerCase().startsWith('me2_')) {
+    cleanId = underscoreSplit[underscoreSplit.length - 1];
+  }
+
+  // Check 1: Direct PTCGL export format ("Dragapult ex TWM 130" or "TWM 130")
+  const ptcglExportMatch = cleanId.match(/^(?:(.+?)\s+)?([A-Za-z0-9.-]{2,7})\s+(\d+|promo)$/i);
+  if (ptcglExportMatch) {
+    const detectedName = ptcglExportMatch[1]?.trim();
+    const rawSet = ptcglExportMatch[2];
+    const rawNum = ptcglExportMatch[3];
+    const tpciSetCode = normalizeTPCiSetCode(rawSet);
+    const localSetId = mapTPCiToLocalSetId(tpciSetCode);
+    const displayName = detectedName || fallbackName || (CARD_IMAGE_DATABASE[rawStr.toLowerCase()]?.name) || 'Pokémon';
+    const canonicalCode = `${tpciSetCode} ${rawNum}`;
+
+    return {
+      canonicalCode,
+      setCode: tpciSetCode,
+      tpciSetCode,
+      setNumber: rawNum,
+      displayName,
+      ptcglIdentifier: `${displayName} ${canonicalCode}`,
+      localSetId,
+      rawLocalId: rawStr
+    };
+  }
+
+  // Check 2: Hyphenated format ("sv6-130", "obf-125", "me2-5-221", "sfa-019")
+  const hyphenMatch = cleanId.match(/^([a-z0-9.-]+)[-_](\d+|promo)$/i);
+  if (hyphenMatch) {
+    const rawSet = hyphenMatch[1];
+    const rawNum = hyphenMatch[2];
+    const tpciSetCode = normalizeTPCiSetCode(rawSet);
+    const localSetId = mapTPCiToLocalSetId(tpciSetCode);
+    
+    // Look up card by normalized ID in PTCGL map
+    const mapped = PTCGL_CARD_ID_MAP[`${rawSet.toLowerCase()}-${rawNum}`] ||
+                   PTCGL_CARD_ID_MAP[`${tpciSetCode.toLowerCase()} ${rawNum}`];
+    const displayName = mapped?.name || fallbackName || 'Pokémon';
+    const canonicalCode = `${tpciSetCode} ${rawNum}`;
+
+    return {
+      canonicalCode,
+      setCode: tpciSetCode,
+      tpciSetCode,
+      setNumber: rawNum,
+      displayName,
+      ptcglIdentifier: `${displayName} ${canonicalCode}`,
+      localSetId,
+      rawLocalId: rawStr
+    };
+  }
+
+  // Check 3: Card name lookup in database to get canonical set & number
+  const resolved = resolveCard(rawStr);
+  const tpciSetCode = normalizeTPCiSetCode(resolved.setCode || 'SVI');
+  const localSetId = mapTPCiToLocalSetId(tpciSetCode);
+  const setNumber = resolved.setNumber || '001';
+  const canonicalCode = `${tpciSetCode} ${setNumber}`;
+
+  return {
+    canonicalCode,
+    setCode: tpciSetCode,
+    tpciSetCode,
+    setNumber,
+    displayName: resolved.name,
+    ptcglIdentifier: `${resolved.name} ${canonicalCode}`,
+    localSetId,
+    rawLocalId: rawStr
+  };
+}
+
+/**
+ * Formats any card or name into a canonical PTCGL card object.
+ */
+export function formatPTCGLCardCode(cardOrName: CardMetadata | string): FormattedPTCGLCard {
+  return convertLocalIdToPTCGL(cardOrName);
+}
+
+// Hierarchical sprite sources organized across external APIs (PokeAPI, Showdown, PokemonTCG.io)
+export interface SpriteSources {
+  primary: string;       // Authentic high-res TCG card scan or official PokeAPI artwork
+  artwork: string;       // Official PokeAPI high-res artwork (Dex ID)
+  battleSprite: string;  // Showdown animated/pixel battle sprite
+  dexSprite: string;     // Showdown dex sprite
+  fallback: string;      // Poke-ball fallback
+}
+
+export function getPokemonSpriteHierarchy(cardOrName: CardMetadata | string): SpriteSources {
+  const card = typeof cardOrName === 'string' ? resolveCard(cardOrName) : cardOrName;
+  const baseName = getBasePokemonName(card.name);
+  const dexId = POKEMON_DEX_MAP[baseName];
+
+  const artwork = dexId
+    ? `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${dexId}.png`
+    : card.imageUrl;
+
+  const battleSprite = `https://play.pokemonshowdown.com/sprites/gen5/${baseName}.png`;
+  const dexSprite = `https://play.pokemonshowdown.com/sprites/dex/${baseName}.png`;
+  const fallback = 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png';
+
+  return {
+    primary: card.imageUrl || artwork,
+    artwork,
+    battleSprite,
+    dexSprite,
+    fallback
+  };
+}
+
 // Verification interface and method to validate PTCGL ID injection
 export interface PTCGLCardVerification {
   input: string;

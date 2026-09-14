@@ -308,6 +308,7 @@ export function parsePTCGLLog(rawLog: string, loggedInUserName?: string): Traine
       fromCard: string;
       toCard: string;
       isSpotActive: boolean;
+      benchIndex?: number;
     }[] = [];
     const evolvedCardsInTurn: string[] = [];
 
@@ -472,30 +473,54 @@ export function parsePTCGLLog(rawLog: string, loggedInUserName?: string): Traine
         fromMon = fromMon.replace(/^(?:active|ativo)\s+/i, '').trim();
 
         let isSpotActive = false;
+        let evolvedBenchIndex: number | undefined = undefined;
+
         if (actor === 'player1') {
           p1Cards.push(toMon);
-          if ((isTargetActive && (!fromMon || isCardMatch(p1Active, fromMon))) || (p1Active && fromMon && isCardMatch(p1Active, fromMon))) {
+          const activeMatches = Boolean(p1Active && fromMon && isCardMatch(p1Active, fromMon));
+          const benchMatchIdx = p1Bench.findIndex(b => fromMon ? isCardMatch(b, fromMon) : false);
+
+          if (isTargetActive || (activeMatches && !lower.includes('banco') && !lower.includes('bench'))) {
+            p1Active = toMon;
+            isSpotActive = true;
+          } else if (benchMatchIdx !== -1) {
+            p1Bench[benchMatchIdx] = toMon;
+            evolvedBenchIndex = benchMatchIdx;
+          } else if (activeMatches) {
             p1Active = toMon;
             isSpotActive = true;
           } else {
-            const idx = p1Bench.findIndex(b => fromMon ? isCardMatch(b, fromMon) : true);
-            if (idx !== -1) {
-              p1Bench[idx] = toMon;
+            const fallbackIdx = p1Bench.findIndex(b => fromMon ? isCardMatch(b, fromMon) : true);
+            if (fallbackIdx !== -1) {
+              p1Bench[fallbackIdx] = toMon;
+              evolvedBenchIndex = fallbackIdx;
             } else {
-              p1Bench.push(toMon);
+              p1Active = toMon;
+              isSpotActive = true;
             }
           }
         } else {
           p2Cards.push(toMon);
-          if ((isTargetActive && (!fromMon || isCardMatch(p2Active, fromMon))) || (p2Active && fromMon && isCardMatch(p2Active, fromMon))) {
+          const activeMatches = Boolean(p2Active && fromMon && isCardMatch(p2Active, fromMon));
+          const benchMatchIdx = p2Bench.findIndex(b => fromMon ? isCardMatch(b, fromMon) : false);
+
+          if (isTargetActive || (activeMatches && !lower.includes('banco') && !lower.includes('bench'))) {
+            p2Active = toMon;
+            isSpotActive = true;
+          } else if (benchMatchIdx !== -1) {
+            p2Bench[benchMatchIdx] = toMon;
+            evolvedBenchIndex = benchMatchIdx;
+          } else if (activeMatches) {
             p2Active = toMon;
             isSpotActive = true;
           } else {
-            const idx = p2Bench.findIndex(b => fromMon ? isCardMatch(b, fromMon) : true);
-            if (idx !== -1) {
-              p2Bench[idx] = toMon;
+            const fallbackIdx = p2Bench.findIndex(b => fromMon ? isCardMatch(b, fromMon) : true);
+            if (fallbackIdx !== -1) {
+              p2Bench[fallbackIdx] = toMon;
+              evolvedBenchIndex = fallbackIdx;
             } else {
-              p2Bench.push(toMon);
+              p2Active = toMon;
+              isSpotActive = true;
             }
           }
         }
@@ -504,7 +529,8 @@ export function parsePTCGLLog(rawLog: string, loggedInUserName?: string): Traine
           player: actor,
           fromCard: fromMon,
           toCard: toMon,
-          isSpotActive
+          isSpotActive,
+          benchIndex: isSpotActive ? undefined : evolvedBenchIndex
         });
         if (toMon && !evolvedCardsInTurn.includes(toMon)) {
           evolvedCardsInTurn.push(toMon);

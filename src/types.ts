@@ -135,6 +135,7 @@ export interface BattleTurnSnapshot {
     fromCard: string;
     toCard: string;
     isSpotActive: boolean;
+    benchIndex?: number;
   }[];
 }
 

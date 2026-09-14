@@ -593,40 +593,144 @@ app.get('/api/pokemon/meta', async (req, res) => {
   }
 });
 
+// TPCi official 3-letter set codes mapping to pokemontcg.io IDs
+const TPCI_TO_LOCAL_SET_MAP: Record<string, string> = {
+  'SVI': 'sv1',
+  'PAL': 'sv2',
+  'OBF': 'sv3',
+  'MEW': 'sv3pt5',
+  'PAR': 'sv4',
+  'PAF': 'sv45',
+  'TEF': 'sv5',
+  'TWM': 'sv6',
+  'SFA': 'sv6pt5',
+  'SCR': 'sv7',
+  'SSP': 'sv8',
+  'PRE': 'sv8pt5',
+  'SVE': 'sve',
+  'SVP': 'svp',
+  'ME2': 'me2',
+  'SSH': 'swsh1',
+  'RCL': 'swsh2',
+  'DAA': 'swsh3',
+  'CPA': 'swsh35',
+  'VIV': 'swsh4',
+  'SHF': 'swsh45',
+  'BST': 'swsh5',
+  'CRE': 'swsh6',
+  'EVS': 'swsh7',
+  'FST': 'swsh8',
+  'BRS': 'swsh9',
+  'ASR': 'swsh10',
+  'PGO': 'pgo',
+  'LOR': 'swsh11',
+  'CEL': 'cel',
+  'SIT': 'swsh12',
+  'CRZ': 'swsh12pt5'
+};
+
+const LOCAL_TO_TPCI_SET_MAP: Record<string, string> = {
+  'sv1': 'SVI',
+  'sv2': 'PAL',
+  'sv3': 'OBF',
+  'sv3pt5': 'MEW',
+  'sv4': 'PAR',
+  'sv45': 'PAF',
+  'sv5': 'TEF',
+  'sv6': 'TWM',
+  'sv6pt5': 'SFA',
+  'sv7': 'SCR',
+  'sv8': 'SSP',
+  'sv8pt5': 'PRE',
+  'pre': 'PRE',
+  'sfa': 'SFA',
+  'twm': 'TWM',
+  'tef': 'TEF',
+  'paf': 'PAF',
+  'par': 'PAR',
+  'obf': 'OBF',
+  'pal': 'PAL',
+  'sve': 'SVE',
+  'me2': 'ME2',
+  'swsh12pt5': 'CRZ',
+  'crz': 'CRZ',
+  'swsh12': 'SIT',
+  'sit': 'SIT',
+  'swsh11': 'LOR',
+  'lor': 'LOR',
+  'swsh10': 'ASR',
+  'asr': 'ASR',
+  'swsh9': 'BRS',
+  'brs': 'BRS'
+};
+
 // Search Pokémon cards via pokemontcg.io with local fallbacks
 app.get('/api/pokemon/search', async (req, res) => {
-  const queryParam = (req.query.q as string) || '';
-  const setParam = (req.query.set as string) || '';
+  const rawQuery = ((req.query.q as string) || '').trim();
+  const rawSet = ((req.query.set as string) || '').trim();
 
-  if (!queryParam && !setParam) {
+  if (!rawQuery && !rawSet) {
     return res.json([]);
   }
 
   try {
-    let qString = '';
-    if (queryParam) {
-      qString += `name:"*${queryParam}*"`;
-    }
-    if (setParam) {
-      if (qString) qString += ' ';
-      qString += `set.id:${setParam}`;
+    let resolvedSetId = rawSet ? (TPCI_TO_LOCAL_SET_MAP[rawSet.toUpperCase()] || rawSet.toLowerCase()) : '';
+    let resolvedNumber = '';
+    let nameQuery = rawQuery;
+
+    // Detect if rawQuery is a TPCi / PTCGL code or hyphenated local code (e.g. "TWM 130", "sv6-130", "OBF 125")
+    const codeMatch = rawQuery.match(/^([A-Za-z0-9.-]{2,7})[- ]+(\d+|promo)$/i);
+    if (codeMatch) {
+      const setToken = codeMatch[1].toUpperCase();
+      const numToken = codeMatch[2];
+      resolvedSetId = TPCI_TO_LOCAL_SET_MAP[setToken] || setToken.toLowerCase();
+      resolvedNumber = numToken;
+      nameQuery = '';
+    } else {
+      // Check if it's format "Name SET 123" e.g. "Dragapult ex TWM 130"
+      const ptcglNameMatch = rawQuery.match(/^(.+?)\s+([A-Za-z]{3,4})\s+(\d+)$/i);
+      if (ptcglNameMatch) {
+        nameQuery = ptcglNameMatch[1].trim();
+        const setToken = ptcglNameMatch[2].toUpperCase();
+        resolvedSetId = TPCI_TO_LOCAL_SET_MAP[setToken] || setToken.toLowerCase();
+        resolvedNumber = ptcglNameMatch[3];
+      }
     }
 
-    console.log(`Searching cards for: q="${queryParam}" set="${setParam}" -> query="${qString}"`);
+    let qParts: string[] = [];
+    if (nameQuery) {
+      qParts.push(`name:"*${nameQuery}*"`);
+    }
+    if (resolvedSetId) {
+      qParts.push(`set.id:${resolvedSetId}`);
+    }
+    if (resolvedNumber) {
+      qParts.push(`number:${resolvedNumber}`);
+    }
+
+    const qString = qParts.join(' ');
+    console.log(`Searching cards for: q="${rawQuery}" set="${rawSet}" -> resolved query="${qString}"`);
     const encodedQuery = encodeURIComponent(qString);
     const response = await fetch(`https://api.pokemontcg.io/v2/cards?q=${encodedQuery}&pageSize=36`);
     
     if (response.ok) {
       const data = await response.json();
       if (data.data && data.data.length > 0) {
-        const formatted = data.data.map((card: any) => ({
-          id: card.id,
-          name: card.name,
-          imageUrl: card.images.small || card.images.large,
-          setCode: card.set.id,
-          setName: card.set.name,
-          setNumber: card.number
-        }));
+        const formatted = data.data.map((card: any) => {
+          const setId = card.set.id.toLowerCase();
+          const tpciSet = LOCAL_TO_TPCI_SET_MAP[setId] || card.set.id.toUpperCase();
+          const tpciProductCode = `${tpciSet} ${card.number}`;
+          return {
+            id: card.id,
+            name: card.name,
+            imageUrl: card.images.small || card.images.large,
+            setCode: card.set.id,
+            tpciCode: tpciProductCode,
+            tpciSetCode: tpciSet,
+            setName: card.set.name,
+            setNumber: card.number
+          };
+        });
         return res.json(formatted);
       }
     }
@@ -635,9 +739,21 @@ app.get('/api/pokemon/search', async (req, res) => {
   }
 
   // Local fallback search (matches only on name if q is specified)
-  if (queryParam) {
-    const lowerQuery = queryParam.toLowerCase();
-    const matched = fallbackCards.filter(c => c.name.toLowerCase().includes(lowerQuery));
+  if (rawQuery) {
+    const lowerQuery = rawQuery.toLowerCase();
+    const matched = fallbackCards.filter(c => 
+      c.name.toLowerCase().includes(lowerQuery) || 
+      (c.setCode && c.setCode.toLowerCase().includes(lowerQuery)) ||
+      (c.setNumber && c.setNumber.includes(lowerQuery))
+    ).map(c => {
+      const setId = (c.setCode || 'sv1').toLowerCase();
+      const tpciSet = LOCAL_TO_TPCI_SET_MAP[setId] || setId.toUpperCase();
+      return {
+        ...c,
+        tpciCode: `${tpciSet} ${c.setNumber || '001'}`,
+        tpciSetCode: tpciSet
+      };
+    });
     return res.json(matched);
   }
   res.json([]);

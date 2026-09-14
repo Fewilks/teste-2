@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { TrainerLogMatch, BattleTurnAction } from '../../types';
 import PokemonCard from '../PokemonCard';
+import { convertLocalIdToPTCGL } from '../../utils/cardImages';
 import { 
   Play, 
   Pause, 
@@ -127,36 +128,27 @@ export default function BoardReplay({ match }: BoardReplayProps) {
   const lastAttack = currentTurn.actions.slice().reverse().find(a => a.type === 'attack');
   const [showHowItWorks, setShowHowItWorks] = useState(false);
 
-  // Check evolution states in this turn for both players
-  const isP1ActiveEvolved = Boolean(
-    (currentTurn.evolutions && currentTurn.evolutions.some(e => e.player === 'player1' && e.isSpotActive && currentTurn.p1Active && (e.toCard.toLowerCase().includes(currentTurn.p1Active.toLowerCase()) || currentTurn.p1Active.toLowerCase().includes(e.toCard.toLowerCase())))) ||
-    (currentTurn.evolvedCards && currentTurn.p1Active && currentTurn.evolvedCards.some(c => c.toLowerCase().includes(currentTurn.p1Active!.toLowerCase()) || currentTurn.p1Active!.toLowerCase().includes(c.toLowerCase()))) ||
-    currentTurn.actions.some(a => 
-      (a.description.toLowerCase().includes('evoluiu') || a.description.toLowerCase().includes('evolved')) &&
-      currentTurn.p1Active && (a.cardName?.toLowerCase().includes(currentTurn.p1Active.toLowerCase()) || a.description.toLowerCase().includes(currentTurn.p1Active.toLowerCase())) &&
-      (a.player === 'player1' || a.description.toLowerCase().includes(match.player1Name.toLowerCase()))
-    )
-  );
+  // Precise slot-based evolution tracking for this turn
+  const p1ActiveEvolution = currentTurn.evolutions?.find(e => e.player === 'player1' && e.isSpotActive);
+  const isP1ActiveEvolved = Boolean(p1ActiveEvolution);
 
-  const isP2ActiveEvolved = Boolean(
-    (currentTurn.evolutions && currentTurn.evolutions.some(e => e.player === 'player2' && e.isSpotActive && currentTurn.p2Active && (e.toCard.toLowerCase().includes(currentTurn.p2Active.toLowerCase()) || currentTurn.p2Active.toLowerCase().includes(e.toCard.toLowerCase())))) ||
-    (currentTurn.evolvedCards && currentTurn.p2Active && currentTurn.evolvedCards.some(c => c.toLowerCase().includes(currentTurn.p2Active!.toLowerCase()) || currentTurn.p2Active!.toLowerCase().includes(c.toLowerCase()))) ||
-    currentTurn.actions.some(a => 
-      (a.description.toLowerCase().includes('evoluiu') || a.description.toLowerCase().includes('evolved')) &&
-      currentTurn.p2Active && (a.cardName?.toLowerCase().includes(currentTurn.p2Active.toLowerCase()) || a.description.toLowerCase().includes(currentTurn.p2Active.toLowerCase())) &&
-      (a.player === 'player2' || a.description.toLowerCase().includes(match.player2Name.toLowerCase()))
-    )
-  );
+  const p2ActiveEvolution = currentTurn.evolutions?.find(e => e.player === 'player2' && e.isSpotActive);
+  const isP2ActiveEvolved = Boolean(p2ActiveEvolution);
 
-  const isBenchMonEvolved = (mon: string, player: 'player1' | 'player2') => {
-    return Boolean(
-      (currentTurn.evolutions && currentTurn.evolutions.some(e => e.player === player && (e.toCard.toLowerCase().includes(mon.toLowerCase()) || mon.toLowerCase().includes(e.toCard.toLowerCase())))) ||
-      (currentTurn.evolvedCards && currentTurn.evolvedCards.some(c => c.toLowerCase().includes(mon.toLowerCase()) || mon.toLowerCase().includes(c.toLowerCase()))) ||
-      currentTurn.actions.some(a => 
-        (a.description.toLowerCase().includes('evoluiu') || a.description.toLowerCase().includes('evolved')) &&
-        (a.cardName?.toLowerCase().includes(mon.toLowerCase()) || a.description.toLowerCase().includes(mon.toLowerCase()))
-      )
+  const getBenchEvolution = (mon: string, player: 'player1' | 'player2', slotIndex: number) => {
+    if (!currentTurn.evolutions || currentTurn.evolutions.length === 0) return undefined;
+    
+    // 1. Check exact slot index match if recorded
+    const exactIndexMatch = currentTurn.evolutions.find(
+      e => e.player === player && !e.isSpotActive && e.benchIndex === slotIndex
     );
+    if (exactIndexMatch) return exactIndexMatch;
+
+    // 2. Fallback: match by resulting toCard (only if benchIndex is undefined and toCard matches)
+    const cardMatch = currentTurn.evolutions.find(
+      e => e.player === player && !e.isSpotActive && e.benchIndex === undefined && e.toCard.toLowerCase() === mon.toLowerCase()
+    );
+    return cardMatch;
   };
 
   return (
@@ -397,24 +389,27 @@ export default function BoardReplay({ match }: BoardReplayProps) {
               </div>
               <div>
                 <div className="text-xs font-black uppercase tracking-wider text-amber-300 flex items-center gap-2">
-                  <span>Evolução em Campo neste Turno!</span>
+                  <span>Evolução Confirmada no Turno #{currentTurn.turnNumber}</span>
                   <span className="px-2 py-0.5 bg-gradient-to-r from-amber-400 to-yellow-300 text-slate-950 rounded-full text-[9px] font-black tracking-normal uppercase shadow-sm">
-                    Efeito de Brilho Ativo ✨
+                    Apenas Pokémon Evoluído ✨
                   </span>
                 </div>
                 <div className="text-xs text-slate-300 mt-1 flex flex-wrap items-center gap-2">
                   {currentTurn.evolutions && currentTurn.evolutions.length > 0 ? (
                     currentTurn.evolutions.map((evo, i) => (
-                      <span key={i} className="inline-flex items-center gap-1.5 bg-slate-900/90 px-2.5 py-0.5 rounded-lg border border-amber-500/30 text-xs">
-                        <span className="text-slate-400">{evo.fromCard || 'Básico'}</span>
+                      <span key={i} className="inline-flex items-center gap-1.5 bg-slate-900/90 px-2.5 py-1 rounded-lg border border-amber-500/30 text-xs shadow-sm">
+                        <span className="text-amber-400 font-bold">{evo.player === 'player1' ? match.player1Name : match.player2Name}:</span>
+                        <span className="text-slate-400 font-medium">{evo.fromCard || 'Pokémon'}</span>
                         <span className="text-amber-400 font-black">➔</span>
                         <span className="text-amber-200 font-extrabold">{evo.toCard}</span>
-                        <span className="text-[9px] text-amber-400/80 font-semibold">({evo.isSpotActive ? 'Ativo' : 'Banco'})</span>
+                        <span className="text-[10px] text-amber-300/90 font-mono bg-amber-950/60 px-1.5 py-0.5 rounded border border-amber-500/20">
+                          {evo.isSpotActive ? 'Campo Ativo' : `Banco #${(evo.benchIndex ?? 0) + 1}`}
+                        </span>
                       </span>
                     ))
                   ) : (
                     <span className="text-amber-200/90 text-xs font-medium">
-                      Pokémon evoluído em campo com animação luminosa
+                      Pokémon evoluído em campo com brilho dourado
                     </span>
                   )}
                 </div>
@@ -497,6 +492,7 @@ export default function BoardReplay({ match }: BoardReplayProps) {
                     damage={currentTurn.p2ActiveDamage || 0}
                     energiesCount={currentTurn.p2ActiveEnergies?.length || 0}
                     hasEvolvedInTurn={isP2ActiveEvolved}
+                    evolvedFrom={p2ActiveEvolution?.fromCard}
                   />
                 ) : currentTurn.p2KnockedOutThisTurn ? (
                   <div className="flex flex-col items-center">
@@ -559,17 +555,21 @@ export default function BoardReplay({ match }: BoardReplayProps) {
                     {currentTurn.isGameOver ? 'Nenhum Pokémon restante no banco' : 'Nenhum Pokémon no banco'}
                   </div>
                 ) : (
-                  currentTurn.p2Bench.map((mon, idx) => (
-                    <div key={idx} className="flex flex-col items-center">
-                      <PokemonCard
-                        name={mon}
-                        size="sm"
-                        showNameLabel={true}
-                        showInspectButton={true}
-                        hasEvolvedInTurn={isBenchMonEvolved(mon, 'player2')}
-                      />
-                    </div>
-                  ))
+                  currentTurn.p2Bench.map((mon, idx) => {
+                    const benchEvo = getBenchEvolution(mon, 'player2', idx);
+                    return (
+                      <div key={idx} className="flex flex-col items-center">
+                        <PokemonCard
+                          name={mon}
+                          size="sm"
+                          showNameLabel={true}
+                          showInspectButton={true}
+                          hasEvolvedInTurn={Boolean(benchEvo)}
+                          evolvedFrom={benchEvo?.fromCard}
+                        />
+                      </div>
+                    );
+                  })
                 )}
                 {/* Empty Bench Slots placeholders */}
                 {Array.from({ length: Math.max(0, 5 - currentTurn.p2Bench.length) }).map((_, i) => (
@@ -647,6 +647,7 @@ export default function BoardReplay({ match }: BoardReplayProps) {
                     damage={currentTurn.p1ActiveDamage || 0}
                     energiesCount={currentTurn.p1ActiveEnergies?.length || 0}
                     hasEvolvedInTurn={isP1ActiveEvolved}
+                    evolvedFrom={p1ActiveEvolution?.fromCard}
                   />
                 ) : currentTurn.p1KnockedOutThisTurn ? (
                   <div className="flex flex-col items-center">
@@ -709,17 +710,21 @@ export default function BoardReplay({ match }: BoardReplayProps) {
                     {currentTurn.isGameOver ? 'Nenhum Pokémon restante no banco' : 'Nenhum Pokémon no banco'}
                   </div>
                 ) : (
-                  currentTurn.p1Bench.map((mon, idx) => (
-                    <div key={idx} className="flex flex-col items-center">
-                      <PokemonCard
-                        name={mon}
-                        size="sm"
-                        showNameLabel={true}
-                        showInspectButton={true}
-                        hasEvolvedInTurn={isBenchMonEvolved(mon, 'player1')}
-                      />
-                    </div>
-                  ))
+                  currentTurn.p1Bench.map((mon, idx) => {
+                    const benchEvo = getBenchEvolution(mon, 'player1', idx);
+                    return (
+                      <div key={idx} className="flex flex-col items-center">
+                        <PokemonCard
+                          name={mon}
+                          size="sm"
+                          showNameLabel={true}
+                          showInspectButton={true}
+                          hasEvolvedInTurn={Boolean(benchEvo)}
+                          evolvedFrom={benchEvo?.fromCard}
+                        />
+                      </div>
+                    );
+                  })
                 )}
                 {/* Empty Bench Slots placeholders */}
                 {Array.from({ length: Math.max(0, 5 - currentTurn.p1Bench.length) }).map((_, i) => (
@@ -853,6 +858,14 @@ export default function BoardReplay({ match }: BoardReplayProps) {
                     <div className="text-xs text-slate-200 break-words font-medium">
                       {action.description}
                     </div>
+                    {action.cardName && (
+                      <div className="card-data-field mt-1 flex items-center gap-1.5 text-[10px] text-slate-400">
+                        <span className="font-semibold text-slate-300 truncate max-w-[140px]">{action.cardName}</span>
+                        <span className="font-mono text-purple-300 font-bold bg-purple-950/70 px-1.5 py-0.5 rounded border border-purple-500/30 text-[9px] shrink-0">
+                          {convertLocalIdToPTCGL(action.cardName).canonicalCode}
+                        </span>
+                      </div>
+                    )}
                   </div>
 
                   <span className="text-[10px] text-slate-500 font-mono shrink-0">

@@ -1,6 +1,13 @@
 import React, { useState } from 'react';
-import { resolveCard, POKEMON_CARD_BACK, POKEMON_CARD_BACK_FALLBACK, CardMetadata } from '../utils/cardImages';
-import { Eye, Zap, Flame, ShieldAlert, Sparkles, ExternalLink } from 'lucide-react';
+import { 
+  resolveCard, 
+  POKEMON_CARD_BACK, 
+  POKEMON_CARD_BACK_FALLBACK, 
+  CardMetadata,
+  formatPTCGLCardCode,
+  getPokemonSpriteHierarchy
+} from '../utils/cardImages';
+import { Eye, Zap, Flame, ShieldAlert, Sparkles, ExternalLink, CheckCircle2 } from 'lucide-react';
 
 export interface PokemonCardProps {
   name: string;
@@ -16,6 +23,7 @@ export interface PokemonCardProps {
   className?: string;
   showInspectButton?: boolean;
   hasEvolvedInTurn?: boolean;
+  evolvedFrom?: string;
 }
 
 export default function PokemonCard({
@@ -31,13 +39,16 @@ export default function PokemonCard({
   showNameLabel = false,
   className = '',
   showInspectButton = false,
-  hasEvolvedInTurn = false
+  hasEvolvedInTurn = false,
+  evolvedFrom
 }: PokemonCardProps) {
-  const [imgError, setImgError] = useState(false);
+  const [imgLevel, setImgLevel] = useState<number>(0);
   const [isHovered, setIsHovered] = useState(false);
   const [isInspecting, setIsInspecting] = useState(false);
 
   const cardData: CardMetadata = resolveCard(name);
+  const ptcglCard = formatPTCGLCardCode(cardData);
+  const spriteHierarchy = getPokemonSpriteHierarchy(cardData);
 
   // Size specifications matching standard Pokémon card 2.5 x 3.5 ratio
   const sizeClasses = {
@@ -55,14 +66,28 @@ export default function PokemonCard({
   };
 
   const handleImageError = () => {
-    if (!imgError) {
-      setImgError(true);
+    setImgLevel(prev => prev + 1);
+  };
+
+  const getCardSource = (): string => {
+    if (isBack) {
+      return imgLevel > 0 ? POKEMON_CARD_BACK_FALLBACK : POKEMON_CARD_BACK;
+    }
+    switch (imgLevel) {
+      case 0:
+        return spriteHierarchy.primary;
+      case 1:
+        return spriteHierarchy.artwork;
+      case 2:
+        return spriteHierarchy.battleSprite;
+      case 3:
+        return spriteHierarchy.dexSprite;
+      default:
+        return spriteHierarchy.fallback;
     }
   };
 
-  const cardSrc = isBack 
-    ? (imgError ? POKEMON_CARD_BACK_FALLBACK : POKEMON_CARD_BACK)
-    : (imgError ? `https://play.pokemonshowdown.com/sprites/gen5/${cardData.name.toLowerCase().replace(/[^a-z0-9]/g, '')}.png` : cardData.imageUrl);
+  const cardSrc = getCardSource();
 
   return (
     <div className={`flex flex-col items-center select-none ${className}`}>
@@ -75,16 +100,16 @@ export default function PokemonCard({
           isHovered ? '-translate-y-1 scale-105 z-20' : 'z-10'
         } ${
           hasEvolvedInTurn 
-            ? 'ring-2 ring-amber-300 animate-evolution-glow scale-[1.02]' 
+            ? 'ring-2 ring-amber-400 shadow-xl shadow-amber-500/40 animate-evolution-glow scale-[1.02]' 
             : (isActiveSpot ? ringClasses[activeColor] : 'shadow-md shadow-black/60')
         } group`}
-        title={`${cardData.name}${hasEvolvedInTurn ? ' (Evoluiu neste turno!)' : ''} (Clique para ampliar)`}
+        title={`${cardData.name}${hasEvolvedInTurn ? ` (Evoluiu neste turno a partir de ${evolvedFrom || 'básico'}!)` : ''} (Clique para ampliar)`}
       >
         {/* Floating Evolution Sparkle Badge */}
         {hasEvolvedInTurn && !isBack && (
           <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-400 text-slate-950 font-black text-[9px] px-2 py-0.5 rounded-full shadow-lg border border-yellow-100 flex items-center gap-1 z-30 animate-bounce tracking-wide uppercase whitespace-nowrap">
             <Sparkles className="w-2.5 h-2.5 fill-slate-950 text-slate-950" />
-            <span>Evoluiu!</span>
+            <span>{evolvedFrom ? `De ${evolvedFrom}!` : 'Evoluiu!'}</span>
           </div>
         )}
 
@@ -97,6 +122,7 @@ export default function PokemonCard({
             alt={isBack ? 'Carta de Prêmio' : cardData.name}
             onError={handleImageError}
             loading="lazy"
+            referrerPolicy="no-referrer"
             className="w-full h-full object-cover object-center transition-transform duration-300"
           />
 
@@ -146,14 +172,17 @@ export default function PokemonCard({
 
       {/* Optional Card Label below */}
       {showNameLabel && !isBack && (
-        <div className="mt-1.5 text-center max-w-[115px]">
+        <div className="mt-1.5 text-center max-w-[125px]">
           <div className="text-xs font-bold text-slate-100 capitalize truncate" title={cardData.name}>
             {cardData.name}
           </div>
+          <div className="card-data-field text-[9px] font-mono text-purple-300 font-bold tracking-tight truncate" title={`Código Oficial PTCGL: ${ptcglCard.canonicalCode}`}>
+            {ptcglCard.canonicalCode}
+          </div>
           {hasEvolvedInTurn ? (
-            <div className="text-[9px] font-extrabold text-amber-400 uppercase tracking-wide flex items-center justify-center gap-0.5 animate-pulse">
-              <Sparkles className="w-2.5 h-2.5" />
-              <span>Evoluiu</span>
+            <div className="text-[9px] font-extrabold text-amber-300 uppercase tracking-wide flex items-center justify-center gap-0.5 animate-pulse truncate" title={evolvedFrom ? `Evoluiu a partir de ${evolvedFrom}` : 'Evoluiu neste turno'}>
+              <Sparkles className="w-2.5 h-2.5 text-amber-400 shrink-0" />
+              <span>{evolvedFrom ? `De ${evolvedFrom}` : 'Evoluiu'}</span>
             </div>
           ) : cardData.stage ? (
             <div className="text-[9px] font-semibold text-purple-400 uppercase tracking-wide">
@@ -184,8 +213,16 @@ export default function PokemonCard({
               ✕
             </button>
 
-            <div className="text-sm font-bold text-purple-400 uppercase tracking-wider">
-              {isBack ? 'Carta de Prêmio' : cardData.category}
+            <div className="card-data-field flex items-center justify-center gap-2">
+              <span className="text-sm font-bold text-purple-400 uppercase tracking-wider">
+                {isBack ? 'Carta de Prêmio' : cardData.category}
+              </span>
+              {!isBack && (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-purple-950 border border-purple-500/40 text-[10px] font-mono font-bold text-amber-300">
+                  <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+                  {ptcglCard.canonicalCode}
+                </span>
+              )}
             </div>
 
             {/* High Res Card Display */}
@@ -193,17 +230,26 @@ export default function PokemonCard({
               <img
                 src={cardSrc}
                 alt={cardData.name}
+                referrerPolicy="no-referrer"
                 className="w-full h-full object-contain"
               />
             </div>
 
+            {/* Turn Evolution Highlight */}
+            {hasEvolvedInTurn && (
+              <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-400/40 text-xs text-amber-200 flex items-center justify-center gap-2">
+                <Sparkles className="w-4 h-4 text-amber-400 shrink-0" />
+                <span className="font-medium">
+                  <strong className="text-amber-300">Evolução do Turno:</strong> {evolvedFrom ? `${evolvedFrom} ➔ ` : ''}{cardData.name}
+                </span>
+              </div>
+            )}
+
             <div className="space-y-1">
               <h3 className="text-lg font-black text-white">{isBack ? 'Prêmio em Jogo' : cardData.name}</h3>
-              {cardData.setCode && (
-                <p className="text-xs font-mono text-slate-400">
-                  {cardData.setCode} #{cardData.setNumber || '001'}
-                </p>
-              )}
+              <p className="card-data-field text-xs font-mono text-slate-400">
+                Código Oficial PTCGL: <span className="text-purple-300 font-bold">{ptcglCard.canonicalCode}</span>
+              </p>
             </div>
 
             <button
