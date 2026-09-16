@@ -1,6 +1,9 @@
 import { BattleTurnAction, BattleTurnSnapshot, TrainerLogMatch } from '../types';
 
-// Meta archetype definitions with signature cards & sprites
+// ============================================================================
+// ARCHETYPE DETECTION (inalterado)
+// ============================================================================
+
 export interface ArchetypeDefinition {
   name: string;
   keywords: string[];
@@ -8,89 +11,29 @@ export interface ArchetypeDefinition {
 }
 
 export const KNOWN_ARCHETYPES: ArchetypeDefinition[] = [
-  {
-    name: 'Charizard ex',
-    keywords: ['charizard ex', 'charmander', 'charmeleon', 'pidgeot ex', 'dusknoir', 'dusclops', 'duskull'],
-    sprites: ['charizard', 'pidgeot']
-  },
-  {
-    name: 'Dragapult ex',
-    keywords: ['dragapult ex', 'drakloak', 'dreepy'],
-    sprites: ['dragapult', 'pidgeot']
-  },
-  {
-    name: 'Lugia VSTAR',
-    keywords: ['lugia vstar', 'lugia v', 'archeops', 'cinccino', 'minccino'],
-    sprites: ['lugia', 'archeops']
-  },
-  {
-    name: 'Gardevoir ex',
-    keywords: ['gardevoir ex', 'kirlia', 'ralts', 'scream tail', 'drifloon', 'munkidori'],
-    sprites: ['gardevoir', 'scream-tail']
-  },
-  {
-    name: 'Raging Bolt ex',
-    keywords: ['raging bolt ex', 'ogerpon', 'teal mask ogerpon', 'sandy shocks'],
-    sprites: ['raging-bolt', 'ogerpon']
-  },
-  {
-    name: 'Miraidon ex',
-    keywords: ['miraidon ex', 'iron hands ex', 'raikou v', 'zapdos', 'electric generator'],
-    sprites: ['miraidon', 'iron-hands']
-  },
-  {
-    name: 'Roaring Moon',
-    keywords: ['roaring moon ex', 'roaring moon', 'dark patch', 'remendo escuro'],
-    sprites: ['roaring-moon', 'darkrai']
-  },
-  {
-    name: 'Terapagos ex',
-    keywords: ['terapagos ex', 'noctowl', 'hoothoot', 'bouffalant', 'fan rotom', 'area zero'],
-    sprites: ['terapagos', 'noctowl']
-  },
-  {
-    name: 'Iron Thorns ex',
-    keywords: ['iron thorns ex', 'espinho ferroso ex', 'crushing hammer'],
-    sprites: ['iron-thorns', 'substitute']
-  },
-  {
-    name: 'Gholdengo ex',
-    keywords: ['gholdengo ex', 'gimmighoul', 'scizor', 'scyther'],
-    sprites: ['gholdengo', 'scizor']
-  },
-  {
-    name: 'Ancient Box',
-    keywords: ['flutter mane', 'koraidon', 'ancient booster', 'cápsula de energia do passado'],
-    sprites: ['flutter-mane', 'koraidon']
-  },
-  {
-    name: 'Lost Zone Box',
-    keywords: ['comfey', 'sableye', 'cramorant', 'colress', 'mirage gate'],
-    sprites: ['comfey', 'sableye']
-  },
-  {
-    name: 'Origin Forme Palkia VSTAR',
-    keywords: ['palkia vstar', 'palkia v', 'origin forme palkia', 'forma origem'],
-    sprites: ['palkia-origin', 'greninja']
-  },
-  {
-    name: 'Snorlax Stall',
-    keywords: ['snorlax', 'rotom v', 'penny', 'miss fortune sisters'],
-    sprites: ['snorlax', 'rotom']
-  }
+  { name: 'Charizard ex', keywords: ['charizard ex', 'charmander', 'charmeleon', 'pidgeot ex', 'dusknoir', 'dusclops', 'duskull'], sprites: ['charizard', 'pidgeot'] },
+  { name: 'Dragapult ex', keywords: ['dragapult ex', 'drakloak', 'dreepy'], sprites: ['dragapult', 'pidgeot'] },
+  { name: 'Lugia VSTAR', keywords: ['lugia vstar', 'lugia v', 'archeops', 'cinccino', 'minccino'], sprites: ['lugia', 'archeops'] },
+  { name: 'Gardevoir ex', keywords: ['gardevoir ex', 'kirlia', 'ralts', 'scream tail', 'drifloon', 'munkidori'], sprites: ['gardevoir', 'scream-tail'] },
+  { name: 'Raging Bolt ex', keywords: ['raging bolt ex', 'ogerpon', 'teal mask ogerpon', 'sandy shocks'], sprites: ['raging-bolt', 'ogerpon'] },
+  { name: 'Miraidon ex', keywords: ['miraidon ex', 'iron hands ex', 'raikou v', 'zapdos', 'electric generator'], sprites: ['miraidon', 'iron-hands'] },
+  { name: 'Roaring Moon', keywords: ['roaring moon ex', 'roaring moon', 'dark patch', 'remendo escuro'], sprites: ['roaring-moon', 'darkrai'] },
+  { name: 'Terapagos ex', keywords: ['terapagos ex', 'noctowl', 'hoothoot', 'bouffalant', 'fan rotom', 'area zero'], sprites: ['terapagos', 'noctowl'] },
+  { name: 'Iron Thorns ex', keywords: ['iron thorns ex', 'espinho ferroso ex', 'crushing hammer'], sprites: ['iron-thorns', 'substitute'] },
+  { name: 'Gholdengo ex', keywords: ['gholdengo ex', 'gimmighoul', 'scizor', 'scyther'], sprites: ['gholdengo', 'scizor'] },
+  { name: 'Ancient Box', keywords: ['flutter mane', 'koraidon', 'ancient booster', 'cápsula de energia do passado'], sprites: ['flutter-mane', 'koraidon'] },
+  { name: 'Lost Zone Box', keywords: ['comfey', 'sableye', 'cramorant', 'colress', 'mirage gate'], sprites: ['comfey', 'sableye'] },
+  { name: 'Origin Forme Palkia VSTAR', keywords: ['palkia vstar', 'palkia v', 'origin forme palkia', 'forma origem'], sprites: ['palkia-origin', 'greninja'] },
+  { name: 'Snorlax Stall', keywords: ['snorlax', 'rotom v', 'penny', 'miss fortune sisters'], sprites: ['snorlax', 'rotom'] }
 ];
 
 export function detectArchetypeFromCards(cardNames: string[]): { name: string; sprites: [string, string] } {
   const normalizedText = cardNames.join(' ').toLowerCase();
-
   for (const arch of KNOWN_ARCHETYPES) {
-    const matched = arch.keywords.some(kw => normalizedText.includes(kw));
-    if (matched) {
+    if (arch.keywords.some(kw => normalizedText.includes(kw))) {
       return { name: arch.name, sprites: arch.sprites };
     }
   }
-
-  // Fallbacks based on generic matches
   if (normalizedText.includes('charizard')) return { name: 'Charizard ex', sprites: ['charizard', 'pidgeot'] };
   if (normalizedText.includes('dragapult')) return { name: 'Dragapult ex', sprites: ['dragapult', 'pidgeot'] };
   if (normalizedText.includes('gardevoir')) return { name: 'Gardevoir ex', sprites: ['gardevoir', 'scream-tail'] };
@@ -99,55 +42,60 @@ export function detectArchetypeFromCards(cardNames: string[]): { name: string; s
   if (normalizedText.includes('miraidon')) return { name: 'Miraidon ex', sprites: ['miraidon', 'iron-hands'] };
   if (normalizedText.includes('moon')) return { name: 'Roaring Moon', sprites: ['roaring-moon', 'darkrai'] };
   if (normalizedText.includes('terapagos')) return { name: 'Terapagos ex', sprites: ['terapagos', 'noctowl'] };
-
-  // If we can extract the first Pokémon named
   const firstMon = cardNames.find(c => !c.toLowerCase().includes('ball') && !c.toLowerCase().includes('energy') && !c.toLowerCase().includes('research') && !c.toLowerCase().includes('iono'));
   if (firstMon) {
     const cleanMon = firstMon.split(' ')[0].toLowerCase().replace(/[^a-z0-9]/g, '');
     return { name: `${firstMon} Deck`, sprites: [cleanMon || 'substitute', 'substitute'] };
   }
-
   return { name: 'Deck Personalizado', sprites: ['substitute', 'substitute'] };
 }
 
-// Extract clean card or Pokémon name from log phrase
+// ============================================================================
+// CARD NAME EXTRACTION
+// ============================================================================
+
 function extractCardName(text: string): string {
-  // Check evolution first: "evoluiu X para Y" / "evolved X into Y"
-  const evoMatchPt = text.match(/evoluiu\s+.+?\s+para\s+([^.\n]+?)(?:\s+no\s+(?:Campo Ativo|Banco)|\.|$)/i);
-  if (evoMatchPt) return evoMatchPt[1].trim();
+  // "X de Player agora está no Campo Ativo"
+  const nowActive = text.match(/^([^.\n]+?)\s+de\s+[^.\n]+?\s+agora\s+está\s+no\s+Campo\s+Ativo/i);
+  if (nowActive) return nowActive[1].trim();
 
-  const evoMatchEn = text.match(/evolved\s+.+?\s+into\s+([^.\n]+?)(?:\s+(?:in the Active Spot|on the Bench)|\.|$)/i);
-  if (evoMatchEn) return evoMatchEn[1].trim();
+  // "evoluiu X para Y"
+  const evoPt = text.match(/evoluiu\s+.+?\s+para\s+([^.\n]+?)(?:\s+no\s+(?:Campo Ativo|Banco)|\.|$)/i);
+  if (evoPt) return evoPt[1].trim();
+  const evoEn = text.match(/evolved\s+.+?\s+into\s+([^.\n]+?)(?:\s+(?:in the Active Spot|on the Bench)|\.|$)/i);
+  if (evoEn) return evoEn[1].trim();
 
-  // Check promotion: "promoveu X para o Campo Ativo" / "promoted X to the Active Spot"
-  const promoMatchPt = text.match(/promoveu\s+([^.\n]+?)\s+para/i);
-  if (promoMatchPt) return promoMatchPt[1].trim();
+  // "promoveu X para o Campo Ativo"
+  const promoPt = text.match(/promoveu\s+([^.\n]+?)\s+para/i);
+  if (promoPt) return promoPt[1].trim();
+  const promoEn = text.match(/promoted\s+([^.\n]+?)\s+to/i);
+  if (promoEn) return promoEn[1].trim();
 
-  const promoMatchEn = text.match(/promoted\s+([^.\n]+?)\s+to/i);
-  if (promoMatchEn) return promoMatchEn[1].trim();
-
-  // Check attack / ability user: "X de Player usou..." or "Player's X used..."
+  // "X de Player usou..." / "Player's X used..."
   const attackUserPt = text.match(/^[-•*]?\s*([^.\n]+?)\s+de\s+[a-z0-9\s]+\s+usou/i);
   if (attackUserPt) return attackUserPt[1].trim();
-
   const attackUserEn = text.match(/^[-•*]?\s*[a-z0-9\s]+'s\s+([^.\n]+?)\s+used/i);
   if (attackUserEn) return attackUserEn[1].trim();
 
-  // Check attached energy: "ligou X a Y" / "attached X to Y"
-  const energyMatchPt = text.match(/ligou\s+([^.\n]+?)\s+(?:a|ao|do baralho)/i);
+  // "ligou X a Y"
+  const energyMatchPt = text.match(/ligou\s+([^.\n]+?)\s+(?:a|ao|no)\s+/i);
   if (energyMatchPt) return energyMatchPt[1].trim();
-
-  const energyMatchEn = text.match(/attached\s+([^.\n]+?)\s+to/i);
+  const energyMatchEn = text.match(/attached\s+([^.\n]+?)\s+to\s+/i);
   if (energyMatchEn) return energyMatchEn[1].trim();
 
-  // Check placed: "colocou X no Campo Ativo/Banco" / "put X in the Active Spot/Bench"
-  const placedMatchPt = text.match(/colocou\s+([^.\n]+?)\s+no\s+(?:Campo Ativo|Banco)/i);
+  // "jogou X no Campo Ativo/Banco"
+  const placedMatchPt = text.match(/jogou\s+([^.\n]+?)\s+no\s+(?:Campo Ativo|Banco)/i);
   if (placedMatchPt) return placedMatchPt[1].trim();
-
-  const placedMatchEn = text.match(/put\s+([^.\n]+?)\s+(?:in the Active Spot|onto the Bench)/i);
+  const placedMatchEn = text.match(/(?:played|put)\s+([^.\n]+?)\s+(?:in the Active Spot|onto the Bench|to the Bench)/i);
   if (placedMatchEn) return placedMatchEn[1].trim();
 
-  // Standard cleanup
+  // "X de Player foi Nocauteado"
+  const koPt = text.match(/^[-•*]?\s*([^.\n!]+?)\s+de\s+[^.\n!]+?\s+foi\s+Nocauteado/i);
+  if (koPt) return koPt[1].trim();
+  const koEn = text.match(/^[-•*]?\s*([^.\n!]+?)\s+was\s+Knocked\s+Out/i);
+  if (koEn) return koEn[1].trim();
+
+  // Cleanup genérico
   let cleaned = text
     .replace(/^[-•*]\s*/, '')
     .replace(/^[a-z0-9\s]+?\s+(?:played|jogou|colocou|drew|comprou|attached|ligou|anexou|evolved|evoluiu|promoveu|promoted)\s+/i, '')
@@ -158,7 +106,6 @@ function extractCardName(text: string): string {
   return cleaned || text;
 }
 
-// Helper to test if two card names refer to the same card or family
 function isCardMatch(cardA?: string, cardB?: string): boolean {
   if (!cardA || !cardB) return false;
   const a = cardA.toLowerCase().trim();
@@ -166,10 +113,35 @@ function isCardMatch(cardA?: string, cardB?: string): boolean {
   return a === b || a.includes(b) || b.includes(a);
 }
 
+function isEnergyCard(name: string): boolean {
+  const n = name.toLowerCase();
+  return n.includes('energia') || n.includes('energy');
+}
+
+// ============================================================================
+// INTERNAL STATE MODEL
+// ============================================================================
+
+interface PokemonInPlay {
+  name: string;
+  damage: number;
+  energies: string[];
+}
+
+function makePokemon(name: string): PokemonInPlay {
+  return { name, damage: 0, energies: [] };
+}
+
+// ============================================================================
+// MAIN PARSER
+// ============================================================================
+
 export function parsePTCGLLog(rawLog: string, loggedInUserName?: string): TrainerLogMatch {
   const lines = rawLog.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
 
-  // Extract the real names of the two players directly from the log text
+  // ------------------------------------------------------------------
+  // 1) DETECÇÃO DE JOGADORES
+  // ------------------------------------------------------------------
   let detectedPlayer1 = '';
   let detectedPlayer2 = '';
 
@@ -179,7 +151,6 @@ export function parsePTCGLLog(rawLog: string, loggedInUserName?: string): Traine
     if (t1En) { detectedPlayer1 = t1En[1].trim(); break; }
     if (t1Pt) { detectedPlayer1 = t1Pt[1].trim(); break; }
   }
-
   for (const line of lines) {
     const t2En = line.match(/^Turn\s*#?\s*2\s*-\s*(.+?)(?:'s|\s+)\s*Turn/i);
     const t2Pt = line.match(/^Turno\s*#?\s*2\s*-\s*Turno\s+de\s+(.+)$/i);
@@ -187,17 +158,13 @@ export function parsePTCGLLog(rawLog: string, loggedInUserName?: string): Traine
     if (t2Pt) { detectedPlayer2 = t2Pt[1].trim(); break; }
   }
 
-  // Fallback to opening hand / coin flip lines if Turn 1 / Turn 2 headers weren't found
+  // Fallback por mãos iniciais
   if (!detectedPlayer1 || !detectedPlayer2) {
     for (const line of lines) {
-      const coinMatch = line.match(/^(.+?)\s+(?:flipped|jogou)\s+\d+\s+coin/i);
-      if (coinMatch && !detectedPlayer1) {
-        detectedPlayer1 = coinMatch[1].trim();
-      }
       const handPt = line.match(/^(.+?)\s+comprou\s+7\s+cartas\s+para\s+a\s+mão\s+inicial/i);
       const handEn = line.match(/^(.+?)\s+drew\s+7\s+cards\s+for\s+the\s+opening\s+hand/i);
       const handPlayer = (handPt ? handPt[1] : handEn ? handEn[1] : '').trim();
-      if (handPlayer) {
+      if (handPlayer && !handPlayer.toLowerCase().includes('carta')) {
         if (!detectedPlayer1) detectedPlayer1 = handPlayer;
         else if (!detectedPlayer2 && handPlayer.toLowerCase() !== detectedPlayer1.toLowerCase()) {
           detectedPlayer2 = handPlayer;
@@ -211,28 +178,45 @@ export function parsePTCGLLog(rawLog: string, loggedInUserName?: string): Traine
 
   let p1Name = detectedPlayer1;
   let p2Name = detectedPlayer2;
-  let isP1First = true;
 
-  // Only assign perspective to loggedInUserName if it genuinely matches one of the two players in the log!
+  // Perspectiva: usuário logado sempre é player1
   if (loggedInUserName) {
     const cleanUser = loggedInUserName.toLowerCase().trim();
     if (detectedPlayer2.toLowerCase().trim() === cleanUser) {
-      // The logged-in user is Player 2 (went second)
       p1Name = detectedPlayer2;
       p2Name = detectedPlayer1;
-      isP1First = false;
     } else if (detectedPlayer1.toLowerCase().trim() === cleanUser) {
-      // The logged-in user is Player 1 (went first)
       p1Name = detectedPlayer1;
       p2Name = detectedPlayer2;
-      isP1First = true;
     }
   }
 
-  const p1Cards: string[] = [];
-  const p2Cards: string[] = [];
+  // Mapeia "Você"/"You" -> p1Name (usuário logado)
+  const resolveActorName = (name: string): 'player1' | 'player2' | null => {
+    const n = name.toLowerCase().trim();
+    if (n === 'você' || n === 'voce' || n === 'you') return 'player1';
+    if (p1Name.toLowerCase() === n) return 'player1';
+    if (p2Name.toLowerCase() === n) return 'player2';
+    return null;
+  };
 
-  // Break log into turns
+  // ------------------------------------------------------------------
+  // 2) DETERMINAR QUEM COMEÇOU
+  // ------------------------------------------------------------------
+  let isP1First = true;
+  for (const line of lines) {
+    const l = line.toLowerCase();
+    if ((l.includes('decidiu jogar primeiro') || l.includes('decided to go first')) && l.includes(p1Name.toLowerCase())) {
+      isP1First = true; break;
+    }
+    if ((l.includes('decidiu jogar primeiro') || l.includes('decided to go first')) && l.includes(p2Name.toLowerCase())) {
+      isP1First = false; break;
+    }
+  }
+
+  // ------------------------------------------------------------------
+  // 3) DIVISÃO EM BLOCOS DE TURNO (suporta "Turno # N - Turno de X" e "Turno de X")
+  // ------------------------------------------------------------------
   interface RawTurnBlock {
     turnNumber: number;
     title: string;
@@ -249,24 +233,54 @@ export function parsePTCGLLog(rawLog: string, loggedInUserName?: string): Traine
     player: 'player1',
     playerName: p1Name
   };
+  let sequentialTurnNumber = 0;
+
+  const detectTurnHeader = (line: string): { turnNumber?: number; playerName: string; title: string } | null => {
+    // "Turno # 1 - Turno de X" / "Turn # 1 - X's Turn" / "Turn # 1 - Turn of X"
+    let m = line.match(/^(?:Turn|Turno)\s*#?\s*(\d+)\s*-\s*(.+)$/i);
+    if (m) {
+      const num = parseInt(m[1], 10);
+      const remainder = m[2].trim();
+      const inner = remainder.match(/(?:Turno\s+de|Turn\s+of)\s+(.+)$/i) || remainder.match(/^(.+?)(?:'s\s+Turn)?$/i);
+      const name = (inner ? inner[1] : remainder).replace(/'s\s*Turn$/i, '').trim();
+      return { turnNumber: num, playerName: name, title: line };
+    }
+    // "Turno de X" (PT, sem número)
+    m = line.match(/^(?:Turno\s+de)\s+(.+)$/i);
+    if (m) {
+      return { playerName: m[1].trim(), title: line };
+    }
+    // "X's Turn" (EN, sem número)
+    m = line.match(/^(.+?)'s\s+Turn$/i);
+    if (m) {
+      return { playerName: m[1].trim(), title: line };
+    }
+    // "Turn of X"
+    m = line.match(/^Turn\s+of\s+(.+)$/i);
+    if (m) {
+      return { playerName: m[1].trim(), title: line };
+    }
+    return null;
+  };
 
   for (const line of lines) {
-    const turnMatch = line.match(/^(?:Turn|Turno)\s*#?\s*(\d+)\s*-\s*(.+)$/i);
-    if (turnMatch) {
+    const header = detectTurnHeader(line);
+    if (header) {
       if (currentBlock.rawLines.length > 0 || currentBlock.turnNumber > 0) {
         rawTurns.push(currentBlock);
       }
-      const tNum = parseInt(turnMatch[1], 10);
-      const remainder = turnMatch[2].toLowerCase();
-      const isCurrentP1 = remainder.includes(p1Name.toLowerCase()) || remainder.includes('my turn') || remainder.includes('seu turno');
-
+      const resolved = resolveActorName(header.playerName);
+      const player: 'player1' | 'player2' = resolved || 'player1';
+      const playerName = player === 'player1' ? p1Name : p2Name;
+      const tNum = header.turnNumber ?? ++sequentialTurnNumber;
       currentBlock = {
         turnNumber: tNum,
         title: line,
         rawLines: [],
-        player: isCurrentP1 ? 'player1' : 'player2',
-        playerName: isCurrentP1 ? p1Name : p2Name
+        player,
+        playerName
       };
+      if (header.turnNumber === undefined) sequentialTurnNumber = tNum;
     } else {
       currentBlock.rawLines.push(line);
     }
@@ -275,19 +289,15 @@ export function parsePTCGLLog(rawLog: string, loggedInUserName?: string): Traine
     rawTurns.push(currentBlock);
   }
 
-  // Board state trackers
-  let p1Active: string | undefined = undefined;
-  let p1Bench: string[] = [];
+  // ------------------------------------------------------------------
+  // 4) ESTADO GLOBAL
+  // ------------------------------------------------------------------
+  let p1Active: PokemonInPlay | undefined = undefined;
+  let p1Bench: PokemonInPlay[] = [];
   let p1PrizesRemaining = 6;
-  let p1ActiveDamage = 0;
-  let p1ActiveEnergies: string[] = [];
-
-  let p2Active: string | undefined = undefined;
-  let p2Bench: string[] = [];
+  let p2Active: PokemonInPlay | undefined = undefined;
+  let p2Bench: PokemonInPlay[] = [];
   let p2PrizesRemaining = 6;
-  let p2ActiveDamage = 0;
-  let p2ActiveEnergies: string[] = [];
-
   let stadiumInPlay: string | undefined = undefined;
 
   let p1PrizesTaken = 0;
@@ -297,8 +307,18 @@ export function parsePTCGLLog(rawLog: string, loggedInUserName?: string): Traine
   let gameOverWinner: 'player1' | 'player2' | undefined = undefined;
   let gameEndReason: string | undefined = undefined;
 
+  const p1Cards: string[] = [];
+  const p2Cards: string[] = [];
+
+  const getSide = (actor: 'player1' | 'player2') => actor === 'player1'
+    ? { active: () => p1Active, setActive: (p?: PokemonInPlay) => { p1Active = p; }, bench: () => p1Bench, setBench: (b: PokemonInPlay[]) => { p1Bench = b; } }
+    : { active: () => p2Active, setActive: (p?: PokemonInPlay) => { p2Active = p; }, bench: () => p2Bench, setBench: (b: PokemonInPlay[]) => { p2Bench = b; } };
+
   const processedTurns: BattleTurnSnapshot[] = [];
 
+  // ------------------------------------------------------------------
+  // 5) PROCESSAR CADA BLOCO
+  // ------------------------------------------------------------------
   for (const block of rawTurns) {
     const actions: BattleTurnAction[] = [];
     let p1KnockedOutThisTurn: string | undefined = undefined;
@@ -312,45 +332,130 @@ export function parsePTCGLLog(rawLog: string, loggedInUserName?: string): Traine
     }[] = [];
     const evolvedCardsInTurn: string[] = [];
 
+    // Contexto para linhas bullet
+    let lastMainAction: 'benchDraw' | 'draw' | 'search' | 'other' = 'other';
+
     for (let i = 0; i < block.rawLines.length; i++) {
       const line = block.rawLines[i];
       const lower = line.toLowerCase();
       const actionId = `turn-${block.turnNumber}-act-${i}`;
+      const isBullet = /^[•\-*]\s+/.test(line);
 
-      // Determine action performer accurately
-      const isLineExplicitP1 = lower.includes(p1Name.toLowerCase());
-      const isLineExplicitP2 = lower.includes(p2Name.toLowerCase());
+      // Descobre ator
+      const hasP1 = lower.includes(p1Name.toLowerCase());
+      const hasP2 = lower.includes(p2Name.toLowerCase());
+      const hasYou = /\b(você|voce|you)\b/i.test(lower);
 
       let actor: 'player1' | 'player2' = block.player;
-      if (isLineExplicitP1 && !isLineExplicitP2) {
-        actor = 'player1';
-      } else if (isLineExplicitP2 && !isLineExplicitP1) {
-        actor = 'player2';
-      } else {
-        actor = block.player;
-      }
-      const actorName = actor === 'player1' ? p1Name : p2Name;
+      if (hasYou) actor = 'player1';
+      else if (hasP1 && !hasP2) actor = 'player1';
+      else if (hasP2 && !hasP1) actor = 'player2';
 
-      // Classify Action Type
-      if (lower.includes('drew') || lower.includes('comprou')) {
+      const actorName = actor === 'player1' ? p1Name : p2Name;
+      const side = getSide(actor);
+
+      // ----------------------------------------------------------------
+      // BULLETS (linhas "• ...")
+      // ----------------------------------------------------------------
+      if (isBullet) {
+        const content = line.replace(/^[•\-*]\s+/, '').trim();
+
+        if (lastMainAction === 'benchDraw') {
+          // Lista de cartas colocadas no banco por Poffin/Carrinho/etc.
+          const parts = content.split(/,\s*/);
+          for (const p of parts) {
+            const clean = p.trim();
+            if (!clean) continue;
+            if (actor === 'player1') p1Cards.push(clean); else p2Cards.push(clean);
+            if (side.bench().length < 5) side.bench().push(makePokemon(clean));
+          }
+        }
+        // Outros bullets (baralho, mão, etc.) não alteram estado de campo
+
         actions.push({
           id: actionId,
-          type: 'draw',
+          type: 'other',
           player: actor,
           playerName: actorName,
+          cardName: content,
           description: line
         });
-      } else if (lower.includes('prize card') || lower.includes('carta de prêmio') || lower.includes('cartas de prêmio') || lower.includes('pegou um prêmio') || lower.includes('took a prize') || lower.includes('todas as cartas de prêmio')) {
+        continue;
+      }
+
+      // ----------------------------------------------------------------
+      // TURNO: DESCARTA DE ENERGIA (linha de "X foi descartada de Y")
+      // ----------------------------------------------------------------
+      const discardedFromMatch = line.match(/^[-•*]?\s*(.+?)\s+foi\s+descartad[ao]\s+de\s+(.+?)(?:\s+de\s+(.+))?\.?$/i);
+      if (discardedFromMatch && lower.includes('descartad')) {
+        const energyName = discardedFromMatch[1].trim();
+        const targetName = discardedFromMatch[2].trim();
+        const ownerHint = discardedFromMatch[3]?.trim();
+        const ownerActor: 'player1' | 'player2' =
+          ownerHint && ownerHint.toLowerCase() === p2Name.toLowerCase() ? 'player2'
+          : ownerHint && ownerHint.toLowerCase() === p1Name.toLowerCase() ? 'player1'
+          : targetName.toLowerCase() === p2Name.toLowerCase() ? 'player2'
+          : targetName.toLowerCase() === p1Name.toLowerCase() ? 'player1'
+          : actor;
+
+        const targetSide = getSide(ownerActor);
+        const targetPokemonName = ownerHint
+          ? // caso "de Froakie de Wilksman": o "de" entre target e owner não veio, então targetName é "Froakie"
+            targetName
+          : targetName;
+
+        // remove 1 energia do alvo (ativo ou banco)
+        const tryRemove = (mon: PokemonInPlay | undefined): boolean => {
+          if (!mon || !isCardMatch(mon.name, targetPokemonName)) return false;
+          const idx = mon.energies.findIndex(e => isCardMatch(e, energyName) || isEnergyCard(e));
+          if (idx !== -1) mon.energies.splice(idx, 1);
+          return true;
+        };
+        if (!tryRemove(targetSide.active())) {
+          for (const mon of targetSide.bench()) {
+            if (tryRemove(mon)) break;
+          }
+        }
+
+        actions.push({
+          id: actionId,
+          type: 'energy',
+          player: ownerActor,
+          playerName: ownerActor === 'player1' ? p1Name : p2Name,
+          cardName: energyName,
+          description: line
+        });
+        continue;
+      }
+
+      // ----------------------------------------------------------------
+      // DRAW
+      // ----------------------------------------------------------------
+      if (lower.includes('drew') || lower.includes('comprou')) {
+        // Sinaliza contexto se for "comprou N cartas e as jogou no Banco"
+        if ((lower.includes('jogou') || lower.includes('played')) && (lower.includes('banco') || lower.includes('bench'))) {
+          lastMainAction = 'benchDraw';
+        } else {
+          lastMainAction = 'draw';
+        }
+        actions.push({
+          id: actionId, type: 'draw', player: actor, playerName: actorName, description: line
+        });
+        continue;
+      }
+
+      // ----------------------------------------------------------------
+      // PRÊMIO
+      // ----------------------------------------------------------------
+      if (lower.includes('prize card') || lower.includes('carta de prêmio') || lower.includes('cartas de prêmio') ||
+          lower.includes('pegou um prêmio') || lower.includes('took a prize') || lower.includes('todas as cartas de prêmio')) {
         let count = 1;
         if (lower.includes('todas as cartas') || lower.includes('all prize')) {
           count = actor === 'player1' ? p1PrizesRemaining : p2PrizesRemaining;
         } else {
-          const prizeCountMatch = line.match(/(\d+)\s*(?:Prize|carta)/i);
-          if (prizeCountMatch) {
-            count = parseInt(prizeCountMatch[1], 10) || 1;
-          }
+          const m = line.match(/(\d+)\s*(?:Prize|carta)/i);
+          if (m) count = parseInt(m[1], 10) || 1;
         }
-
         if (actor === 'player1') {
           p1PrizesTaken += count;
           p1PrizesRemaining = Math.max(0, p1PrizesRemaining - count);
@@ -358,405 +463,429 @@ export function parsePTCGLLog(rawLog: string, loggedInUserName?: string): Traine
           p2PrizesTaken += count;
           p2PrizesRemaining = Math.max(0, p2PrizesRemaining - count);
         }
-
         actions.push({
-          id: actionId,
-          type: 'prize',
-          player: actor,
-          playerName: actorName,
-          prizesTaken: count,
-          description: line
+          id: actionId, type: 'prize', player: actor, playerName: actorName,
+          prizesTaken: count, description: line
         });
-      } else if (lower.includes('knocked out') || lower.includes('nocauteado') || lower.includes('nocauteou')) {
-        // Find which Pokemon was knocked out
-        const isP1Victim = lower.includes(`de ${p1Name.toLowerCase()}`) || (lower.includes(p1Name.toLowerCase()) && !lower.includes('venceu') && !lower.includes('won'));
-        const isP2Victim = lower.includes(`de ${p2Name.toLowerCase()}`) || lower.includes(p2Name.toLowerCase());
+        lastMainAction = 'other';
+        continue;
+      }
 
-        let koCard = '';
-        const ptMatch = line.match(/^[-•*]?\s*([^.\n!]+?)\s+de\s+/i);
-        const enMatch = line.match(/^[-•*]?\s*([^.\n!]+?)\s+was\s+knocked\s+out/i);
-        if (ptMatch) koCard = ptMatch[1].trim();
-        else if (enMatch) koCard = enMatch[1].trim();
+      // ----------------------------------------------------------------
+      // NOCAUTE
+      // ----------------------------------------------------------------
+      if (lower.includes('knocked out') || lower.includes('nocauteado') || lower.includes('nocauteou')) {
+        // Vítima
+        let victimActor: 'player1' | 'player2' = actor === 'player1' ? 'player2' : 'player1';
+        const victimP2 = line.match(new RegExp(`de\\s+${escapeReg(p2Name)}\\b`, 'i'));
+        const victimP1 = line.match(new RegExp(`de\\s+${escapeReg(p1Name)}\\b`, 'i'));
+        if (victimP2 && !victimP1) victimActor = 'player2';
+        else if (victimP1 && !victimP2) victimActor = 'player1';
 
-        if (isP2Victim || (!isP1Victim && actor === 'player1')) {
-          // P2 victim: check active spot first if it matches
-          if (p2Active && isCardMatch(p2Active, koCard)) {
-            p2KnockedOutThisTurn = p2Active;
-            p2Active = undefined;
-            p2ActiveDamage = 0;
-            p2ActiveEnergies = [];
-          } else if (koCard && p2Bench.some(b => isCardMatch(b, koCard))) {
-            p2Bench = p2Bench.filter(b => !isCardMatch(b, koCard));
-          } else {
-            // If koCard is not found on bench, only clear active if it matches or koCard is empty
-            if (p2Active && (!koCard || isCardMatch(p2Active, koCard))) {
-              p2KnockedOutThisTurn = p2Active;
-              p2Active = undefined;
-              p2ActiveDamage = 0;
-              p2ActiveEnergies = [];
-            } else if (p2Bench.length > 0) {
-              p2Bench.pop();
-            }
+        const koMatchPt = line.match(/^[-•*]?\s*([^.\n!]+?)\s+de\s+[^.\n!]+?\s+foi\s+Nocauteado/i);
+        const koMatchEn = line.match(/^[-•*]?\s*([^.\n!]+?)\s+was\s+Knocked\s+Out/i);
+        const koCard = (koMatchPt ? koMatchPt[1] : koMatchEn ? koMatchEn[1] : '').trim();
+
+        const victimSide = getSide(victimActor);
+
+        if (victimSide.active() && (!koCard || isCardMatch(victimSide.active()!.name, koCard))) {
+          const name = victimSide.active()!.name;
+          if (victimActor === 'player1') p1KnockedOutThisTurn = name; else p2KnockedOutThisTurn = name;
+          victimSide.setActive(undefined);
+        } else if (koCard) {
+          // Tenta remover do banco — só se o nome bater
+          const before = victimSide.bench().length;
+          const filtered = victimSide.bench().filter(b => !isCardMatch(b.name, koCard));
+          if (filtered.length < before) {
+            victimSide.setBench(filtered);
           }
-        } else {
-          // P1 victim: check active spot first if it matches
-          if (p1Active && isCardMatch(p1Active, koCard)) {
-            p1KnockedOutThisTurn = p1Active;
-            p1Active = undefined;
-            p1ActiveDamage = 0;
-            p1ActiveEnergies = [];
-          } else if (koCard && p1Bench.some(b => isCardMatch(b, koCard) || (koCard.toLowerCase().includes('dusknoir') && b.toLowerCase().includes('dusk')))) {
-            p1Bench = p1Bench.filter(b => !isCardMatch(b, koCard) && !(koCard.toLowerCase().includes('dusknoir') && b.toLowerCase().includes('dusk')));
-          } else {
-            // If koCard is not found on bench, only clear active if it matches or koCard is empty
-            if (p1Active && (!koCard || isCardMatch(p1Active, koCard))) {
-              p1KnockedOutThisTurn = p1Active;
-              p1Active = undefined;
-              p1ActiveDamage = 0;
-              p1ActiveEnergies = [];
-            } else if (p1Bench.length > 0) {
-              p1Bench.pop();
-            }
-          }
+          // Se não achou em lugar nenhum, registra o KO mas NÃO remove nada
         }
 
         actions.push({
-          id: actionId,
-          type: 'knockout',
-          player: actor,
-          playerName: actorName,
-          cardName: koCard,
-          description: line
+          id: actionId, type: 'knockout', player: actor, playerName: actorName,
+          cardName: koCard, description: line
         });
-      } else if (lower.includes('used') && (lower.includes('dealt') || lower.includes('damage') || lower.includes('causou') || lower.includes('dano') || lower.includes('usou'))) {
+        lastMainAction = 'other';
+        continue;
+      }
+
+      // ----------------------------------------------------------------
+      // ATAQUE (usa / used / causou dano)
+      // ----------------------------------------------------------------
+      if (lower.includes('usou') || (lower.includes('used') && (lower.includes('damage') || lower.includes('dealt')))) {
         let dmg = 0;
-        const dmgMatch = line.match(/(\d+)\s*(?:damage|de dano)/i);
-        if (dmgMatch) {
-          dmg = parseInt(dmgMatch[1], 10);
+        // Pega o dano base (não "dano total" da análise)
+        const baseMatch = line.match(/dano\s+base[:\s]+(\d+)/i);
+        if (baseMatch) {
+          dmg = parseInt(baseMatch[1], 10);
+        } else {
+          const m = line.match(/causar\s+(\d+)|dealt\s+(\d+)|(\d+)\s*(?:damage|de dano)/i);
+          if (m) dmg = parseInt(m[1] || m[2] || m[3], 10) || 0;
         }
+
+        const defenderActor: 'player1' | 'player2' = actor === 'player1' ? 'player2' : 'player1';
+        const defenderSide = getSide(defenderActor);
+        if (defenderSide.active()) {
+          defenderSide.active()!.damage += dmg;
+        }
+
         const attackerCard = extractCardName(line);
 
-        // Apply damage to defender active
-        if (actor === 'player1') {
-          p2ActiveDamage += dmg;
-        } else {
-          p1ActiveDamage += dmg;
-        }
-
         actions.push({
-          id: actionId,
-          type: 'attack',
-          player: actor,
-          playerName: actorName,
-          cardName: attackerCard,
-          damage: dmg,
-          description: line
+          id: actionId, type: 'attack', player: actor, playerName: actorName,
+          cardName: attackerCard, damage: dmg, description: line
         });
-      } else if (lower.includes('evolved') || lower.includes('evoluiu') || lower.includes('evolve')) {
-        const evoPt = line.match(/evoluiu\s+(.+?)\s+para\s+([^.\n!]+?)(?:\s+no\s+(?:Campo Ativo|Banco)|\.|\!|$)/i);
+        lastMainAction = 'other';
+        continue;
+      }
+
+      // ----------------------------------------------------------------
+      // EVOLUÇÃO
+      // ----------------------------------------------------------------
+      if (lower.includes('evoluiu') || lower.includes('evolved') || lower.includes('evolveu')) {
+        const evoPt = line.match(/evoluiu\s+(?:o\s+)?(.+?)\s+para\s+([^.\n!]+?)(?:\s+no\s+(Campo Ativo|Banco)|\.|\!|$)/i);
         const evoEn = line.match(/evolv(?:ed|e)\s+(?:Active\s+)?(.+?)\s+(?:in)?to\s+([^.\n!]+?)(?:\s+(?:in the Active Spot|on the Bench|onto the Bench)|\.|\!|$)/i);
-        
-        const isTargetActive = lower.includes('campo ativo') || lower.includes('active spot');
+
         let fromMon = '';
         let toMon = '';
+        let spotHint: 'active' | 'bench' | null = null;
         if (evoPt) {
           fromMon = evoPt[1].trim();
           toMon = evoPt[2].trim();
+          if (evoPt[3]) spotHint = evoPt[3].toLowerCase().includes('banco') ? 'bench' : 'active';
         } else if (evoEn) {
           fromMon = evoEn[1].trim();
           toMon = evoEn[2].trim();
+          if (evoEn[3]) spotHint = evoEn[3].toLowerCase().includes('bench') ? 'bench' : 'active';
         } else {
           toMon = extractCardName(line);
         }
-
         toMon = toMon.replace(/\s+(?:no\s+banco|no\s+campo\s+ativo|on\s+the\s+bench|in\s+the\s+active\s+spot).*/i, '').trim();
         fromMon = fromMon.replace(/^(?:active|ativo)\s+/i, '').trim();
+
+        if (actor === 'player1') p1Cards.push(toMon); else p2Cards.push(toMon);
 
         let isSpotActive = false;
         let evolvedBenchIndex: number | undefined = undefined;
 
-        if (actor === 'player1') {
-          p1Cards.push(toMon);
-          const activeMatches = Boolean(p1Active && fromMon && isCardMatch(p1Active, fromMon));
-          const benchMatchIdx = p1Bench.findIndex(b => fromMon ? isCardMatch(b, fromMon) : false);
+        const applyTo = (side: ReturnType<typeof getSide>) => {
+          const active = side.active();
+          const bench = side.bench();
 
-          if (isTargetActive || (activeMatches && !lower.includes('banco') && !lower.includes('bench'))) {
-            p1Active = toMon;
-            isSpotActive = true;
-          } else if (benchMatchIdx !== -1) {
-            p1Bench[benchMatchIdx] = toMon;
-            evolvedBenchIndex = benchMatchIdx;
-          } else if (activeMatches) {
-            p1Active = toMon;
-            isSpotActive = true;
-          } else {
-            const fallbackIdx = p1Bench.findIndex(b => fromMon ? isCardMatch(b, fromMon) : true);
-            if (fallbackIdx !== -1) {
-              p1Bench[fallbackIdx] = toMon;
-              evolvedBenchIndex = fallbackIdx;
-            } else {
-              p1Active = toMon;
-              isSpotActive = true;
-            }
-          }
-        } else {
-          p2Cards.push(toMon);
-          const activeMatches = Boolean(p2Active && fromMon && isCardMatch(p2Active, fromMon));
-          const benchMatchIdx = p2Bench.findIndex(b => fromMon ? isCardMatch(b, fromMon) : false);
+          const activeMatches = Boolean(active && fromMon && isCardMatch(active.name, fromMon));
+          const benchIdx = bench.findIndex(b => fromMon ? isCardMatch(b.name, fromMon) : false);
 
-          if (isTargetActive || (activeMatches && !lower.includes('banco') && !lower.includes('bench'))) {
-            p2Active = toMon;
-            isSpotActive = true;
-          } else if (benchMatchIdx !== -1) {
-            p2Bench[benchMatchIdx] = toMon;
-            evolvedBenchIndex = benchMatchIdx;
-          } else if (activeMatches) {
-            p2Active = toMon;
-            isSpotActive = true;
-          } else {
-            const fallbackIdx = p2Bench.findIndex(b => fromMon ? isCardMatch(b, fromMon) : true);
-            if (fallbackIdx !== -1) {
-              p2Bench[fallbackIdx] = toMon;
-              evolvedBenchIndex = fallbackIdx;
-            } else {
-              p2Active = toMon;
-              isSpotActive = true;
-            }
+          if (spotHint === 'bench' && benchIdx !== -1) {
+            // veio explicitamente do banco
+            bench[benchIdx].name = toMon;
+            evolvedBenchIndex = benchIdx;
+            return;
           }
-        }
+          if (spotHint === 'active' || (activeMatches && spotHint !== 'bench')) {
+            if (active) active.name = toMon;
+            else side.setActive(makePokemon(toMon));
+            isSpotActive = true;
+            return;
+          }
+          if (benchIdx !== -1) {
+            bench[benchIdx].name = toMon;
+            evolvedBenchIndex = benchIdx;
+            return;
+          }
+          if (activeMatches) {
+            if (active) active.name = toMon;
+            isSpotActive = true;
+            return;
+          }
+          // fallback: procura qualquer coisa no banco
+          if (bench.length > 0) {
+            bench[0].name = toMon;
+            evolvedBenchIndex = 0;
+            return;
+          }
+          // fallback final: vira ativo
+          side.setActive(makePokemon(toMon));
+          isSpotActive = true;
+        };
+
+        applyTo(side);
 
         turnEvolutions.push({
-          player: actor,
-          fromCard: fromMon,
-          toCard: toMon,
-          isSpotActive,
-          benchIndex: isSpotActive ? undefined : evolvedBenchIndex
+          player: actor, fromCard: fromMon, toCard: toMon,
+          isSpotActive, benchIndex: isSpotActive ? undefined : evolvedBenchIndex
         });
-        if (toMon && !evolvedCardsInTurn.includes(toMon)) {
-          evolvedCardsInTurn.push(toMon);
-        }
+        if (toMon && !evolvedCardsInTurn.includes(toMon)) evolvedCardsInTurn.push(toMon);
 
         actions.push({
-          id: actionId,
-          type: 'play',
-          player: actor,
-          playerName: actorName,
-          cardName: toMon,
-          description: line
+          id: actionId, type: 'play', player: actor, playerName: actorName,
+          cardName: toMon, description: line
         });
-      } else if (lower.includes('promoted') || lower.includes('promoveu')) {
+        lastMainAction = 'other';
+        continue;
+      }
+
+      // ----------------------------------------------------------------
+      // PROMOÇÃO EXPLÍCITA ("promoveu X para o Campo Ativo")
+      // ----------------------------------------------------------------
+      if (lower.includes('promoveu') || lower.includes('promoted')) {
         let promotedCard = extractCardName(line);
         const promoPt = line.match(/promoveu\s+(.+?)\s+para\s+o\s+campo\s+ativo/i);
         const promoEn = line.match(/promoted\s+(.+?)\s+to\s+the\s+active\s+spot/i);
         if (promoPt) promotedCard = promoPt[1].trim();
         else if (promoEn) promotedCard = promoEn[1].trim();
 
-        if (actor === 'player1') {
-          p1Active = promotedCard;
-          p1ActiveDamage = 0;
-          p1ActiveEnergies = [];
-          const idx = p1Bench.findIndex(b => isCardMatch(b, promotedCard));
-          if (idx !== -1) p1Bench.splice(idx, 1);
+        // Move do banco para ativo, preservando dano/energias
+        const bench = side.bench();
+        const idx = bench.findIndex(b => isCardMatch(b.name, promotedCard));
+        if (idx !== -1) {
+          const [mon] = bench.splice(idx, 1);
+          side.setActive(mon);
         } else {
-          p2Active = promotedCard;
-          p2ActiveDamage = 0;
-          p2ActiveEnergies = [];
-          const idx = p2Bench.findIndex(b => isCardMatch(b, promotedCard));
-          if (idx !== -1) p2Bench.splice(idx, 1);
-        }
-        actions.push({
-          id: actionId,
-          type: 'play',
-          player: actor,
-          playerName: actorName,
-          cardName: promotedCard,
-          description: line
-        });
-      } else if (lower.includes('attached') || lower.includes('ligou') || lower.includes('anexou') || lower.includes('energy') || lower.includes('energia')) {
-        const energyCard = extractCardName(line);
-        if (actor === 'player1') {
-          p1ActiveEnergies.push(energyCard);
-        } else {
-          p2ActiveEnergies.push(energyCard);
-        }
-        actions.push({
-          id: actionId,
-          type: 'energy',
-          player: actor,
-          playerName: actorName,
-          cardName: energyCard,
-          description: line
-        });
-      } else if (lower.includes('ability') || lower.includes('habilidade') || lower.includes('used ability') || lower.includes('ativou')) {
-        const abilityCard = extractCardName(line);
-        actions.push({
-          id: actionId,
-          type: 'ability',
-          player: actor,
-          playerName: actorName,
-          cardName: abilityCard,
-          description: line
-        });
-      } else if (lower.includes('retreated') || lower.includes('recuou') || lower.includes('switch') || lower.includes('trocou')) {
-        actions.push({
-          id: actionId,
-          type: 'retreat',
-          player: actor,
-          playerName: actorName,
-          description: line
-        });
-      } else if (lower.includes('stadium') || lower.includes('estádio')) {
-        stadiumInPlay = extractCardName(line);
-        actions.push({
-          id: actionId,
-          type: 'stadium',
-          player: actor,
-          playerName: actorName,
-          cardName: stadiumInPlay,
-          description: line
-        });
-      } else if (lower.includes('played') || lower.includes('jogou') || lower.includes('colocou') || lower.includes('put')) {
-        const placedCard = extractCardName(line);
-        if (actor === 'player1') {
-          p1Cards.push(placedCard);
-        } else {
-          p2Cards.push(placedCard);
-        }
-
-        // Check if placed in active spot or bench
-        if (lower.includes('active spot') || lower.includes('campo ativo')) {
-          if (actor === 'player1') {
-            p1Active = placedCard;
-            p1ActiveDamage = 0;
-          } else {
-            p2Active = placedCard;
-            p2ActiveDamage = 0;
-          }
-        } else if (lower.includes('bench') || lower.includes('banco')) {
-          // Handle multi-cards e.g. "Duskull e Charmander"
-          const ptMatch = line.match(/colocou\s+(.+?)\s+no\s+Banco/i);
-          const enMatch = line.match(/(?:played|put)\s+(.+?)\s+(?:to|onto)\s+the\s+Bench/i);
-          if (ptMatch || enMatch) {
-            const raw = (ptMatch ? ptMatch[1] : enMatch![1]).trim();
-            const splitMons = raw.includes(' e ') 
-              ? raw.split(' e ') 
-              : raw.includes(' and ') 
-              ? raw.split(' and ') 
-              : [raw];
-            for (const sm of splitMons) {
-              const clean = sm.trim();
-              if (clean) {
-                const countMatch = clean.match(/^(\d+)\s+(.+)$/);
-                const count = countMatch ? parseInt(countMatch[1], 10) : 1;
-                const mon = countMatch ? countMatch[2].trim() : clean;
-                for (let c = 0; c < count; c++) {
-                  if (actor === 'player1' && p1Bench.length < 5) p1Bench.push(mon);
-                  else if (actor === 'player2' && p2Bench.length < 5) p2Bench.push(mon);
-                }
-              }
-            }
-          } else {
-            if (actor === 'player1' && p1Bench.length < 5) {
-              p1Bench.push(placedCard);
-            } else if (actor === 'player2' && p2Bench.length < 5) {
-              p2Bench.push(placedCard);
-            }
-          }
+          side.setActive(makePokemon(promotedCard));
         }
 
         actions.push({
-          id: actionId,
-          type: 'play',
-          player: actor,
-          playerName: actorName,
-          cardName: placedCard,
-          description: line
+          id: actionId, type: 'play', player: actor, playerName: actorName,
+          cardName: promotedCard, description: line
         });
-      } else {
-        actions.push({
-          id: actionId,
-          type: 'other',
-          player: actor,
-          playerName: actorName,
-          description: line
-        });
+        lastMainAction = 'other';
+        continue;
       }
 
-      // Check win/loss phrases
+      // ----------------------------------------------------------------
+      // "agora está no Campo Ativo" (promoção por efeito/recuo)
+      // ----------------------------------------------------------------
+      const nowActiveMatch = line.match(/^([^.\n]+?)\s+de\s+[^.\n]+?\s+agora\s+está\s+no\s+Campo\s+Ativo/i);
+      if (nowActiveMatch) {
+        const promotedCard = nowActiveMatch[1].trim();
+        const bench = side.bench();
+        const idx = bench.findIndex(b => isCardMatch(b.name, promotedCard));
+        if (idx !== -1) {
+          const [mon] = bench.splice(idx, 1);
+          side.setActive(mon);
+        } else {
+          side.setActive(makePokemon(promotedCard));
+        }
+        actions.push({
+          id: actionId, type: 'play', player: actor, playerName: actorName,
+          cardName: promotedCard, description: line
+        });
+        lastMainAction = 'other';
+        continue;
+      }
+
+      // ----------------------------------------------------------------
+      // ENERGIA ("ligou X a Y no Campo Ativo/Banco")
+      // ----------------------------------------------------------------
+      if (lower.includes('ligou') || lower.includes('attached') || lower.includes('anexou')) {
+        const energyCard = extractCardName(line);
+        // Achar alvo: "a X no Campo Ativo" / "a X no Banco" / "to X in the Active Spot"
+        const targetPt = line.match(/\s+(?:a|ao)\s+(.+?)\s+(?:no\s+Campo\s+Ativo|no\s+Banco|do\s+baralho)/i);
+        const targetEn = line.match(/\s+to\s+(.+?)\s+(?:in the Active Spot|on the Bench)/i);
+        const targetName = targetPt ? targetPt[1].trim() : targetEn ? targetEn[1].trim() : '';
+        const toBench = lower.includes('no banco') || lower.includes('on the bench');
+
+        if (targetName) {
+          const bench = side.bench();
+          const benchIdx = bench.findIndex(b => isCardMatch(b.name, targetName));
+          const active = side.active();
+
+          if (toBench && benchIdx !== -1) {
+            bench[benchIdx].energies.push(energyCard);
+          } else if (active && isCardMatch(active.name, targetName)) {
+            active.energies.push(energyCard);
+          } else if (benchIdx !== -1) {
+            bench[benchIdx].energies.push(energyCard);
+          } else if (active) {
+            active.energies.push(energyCard);
+          }
+        } else if (side.active()) {
+          side.active()!.energies.push(energyCard);
+        }
+
+        actions.push({
+          id: actionId, type: 'energy', player: actor, playerName: actorName,
+          cardName: energyCard, description: line
+        });
+        lastMainAction = 'other';
+        continue;
+      }
+
+      // ----------------------------------------------------------------
+      // HABILIDADE
+      // ----------------------------------------------------------------
+      if (lower.includes('habilidade') || lower.includes('ability') || lower.includes('ativou') || lower.includes('activated')) {
+        const abilityCard = extractCardName(line);
+        actions.push({
+          id: actionId, type: 'ability', player: actor, playerName: actorName,
+          cardName: abilityCard, description: line
+        });
+        lastMainAction = 'other';
+        continue;
+      }
+
+      // ----------------------------------------------------------------
+      // RECUO ("recuou X para o Banco") — dano NÃO é zerado
+      // ----------------------------------------------------------------
+      if (lower.includes('recuou') || lower.includes('retreated')) {
+        const retreatPt = line.match(/recuou\s+(.+?)\s+para\s+o\s+Banco/i);
+        const retreatEn = line.match(/retreated\s+(.+?)\s+(?:to|onto)\s+the\s+Bench/i);
+        const retreatedName = retreatPt ? retreatPt[1].trim() : retreatEn ? retreatEn[1].trim() : '';
+
+        const active = side.active();
+        if (active && (!retreatedName || isCardMatch(active.name, retreatedName))) {
+          // Move o Pokémon inteiro (com dano/energias) para o banco
+          if (side.bench().length < 5) {
+            side.bench().push(active);
+          }
+          side.setActive(undefined);
+        }
+
+        actions.push({
+          id: actionId, type: 'retreat', player: actor, playerName: actorName,
+          cardName: retreatedName, description: line
+        });
+        lastMainAction = 'other';
+        continue;
+      }
+
+      // ----------------------------------------------------------------
+      // ESTÁDIO
+      // ----------------------------------------------------------------
+      if (lower.includes('estádio') || lower.includes('stadium')) {
+        stadiumInPlay = extractCardName(line);
+        actions.push({
+          id: actionId, type: 'stadium', player: actor, playerName: actorName,
+          cardName: stadiumInPlay, description: line
+        });
+        lastMainAction = 'other';
+        continue;
+      }
+
+      // ----------------------------------------------------------------
+      // "jogou X no Campo Ativo/Banco" (play normal)
+      // ----------------------------------------------------------------
+      if (lower.includes('jogou') || lower.includes('played') || lower.includes('colocou') || lower.includes('put')) {
+        const placedCard = extractCardName(line);
+        if (actor === 'player1') p1Cards.push(placedCard); else p2Cards.push(placedCard);
+
+        if (lower.includes('campo ativo') || lower.includes('active spot')) {
+          side.setActive(makePokemon(placedCard));
+        } else if (lower.includes('banco') || lower.includes('bench')) {
+          // suporta "colocou X e Y no Banco"
+          const ptMatch = line.match(/colocou\s+(.+?)\s+no\s+Banco/i);
+          const enMatch = line.match(/(?:played|put)\s+(.+?)\s+(?:to|onto)\s+the\s+Bench/i);
+          const raw = (ptMatch ? ptMatch[1] : enMatch ? enMatch[1] : placedCard).trim();
+          const parts = raw.includes(' e ') ? raw.split(' e ') : raw.includes(' and ') ? raw.split(' and ') : [raw];
+          for (const p of parts) {
+            const clean = p.trim();
+            if (!clean) continue;
+            const countMatch = clean.match(/^(\d+)\s+(.+)$/);
+            const count = countMatch ? parseInt(countMatch[1], 10) : 1;
+            const mon = countMatch ? countMatch[2].trim() : clean;
+            for (let c = 0; c < count; c++) {
+              if (side.bench().length < 5) side.bench().push(makePokemon(mon));
+            }
+          }
+        }
+
+        actions.push({
+          id: actionId, type: 'play', player: actor, playerName: actorName,
+          cardName: placedCard, description: line
+        });
+        lastMainAction = 'other';
+        continue;
+      }
+
+      // ----------------------------------------------------------------
+      // FALLBACK
+      // ----------------------------------------------------------------
+      actions.push({
+        id: actionId, type: 'other', player: actor, playerName: actorName, description: line
+      });
+      lastMainAction = 'other';
+
+      // ----------------------------------------------------------------
+      // DETECÇÃO DE FIM DE JOGO (linhas específicas, sem alterar estado de campo)
+      // ----------------------------------------------------------------
+      // feita depois do push do fallback para não interferir nos branches acima
+    }
+
+    // Verifica frases de fim de jogo em todas as linhas do bloco (fora do loop de actions)
+    for (const line of block.rawLines) {
+      const lower = line.toLowerCase();
+
       if (lower.includes('não tem mais pokémon em jogo') || lower.includes('no more pokémon in play')) {
         isGameOver = true;
         if (lower.includes(p2Name.toLowerCase())) {
-          p2Active = undefined;
-          p2Bench = [];
-          gameOverWinner = 'player1';
-          matchResult = 'win';
+          p2Active = undefined; p2Bench = [];
+          gameOverWinner = 'player1'; matchResult = 'win';
           gameEndReason = `${p2Name} não tem mais Pokémon em jogo.`;
         } else {
-          p1Active = undefined;
-          p1Bench = [];
-          gameOverWinner = 'player2';
-          matchResult = 'loss';
+          p1Active = undefined; p1Bench = [];
+          gameOverWinner = 'player2'; matchResult = 'loss';
           gameEndReason = `${p1Name} não tem mais Pokémon em jogo.`;
         }
       }
 
-      if (lower.includes('won the game') || lower.includes('venceu a partida') || lower.includes('venceu!')) {
+      // Vitória com "." ou "!" e "venceu a partida"
+      if (/\bvenceu[.!]?\s*$/i.test(lower) || lower.includes('won the game') || lower.includes('venceu a partida')) {
         isGameOver = true;
         if (lower.includes(p1Name.toLowerCase())) {
-          matchResult = 'win';
-          gameOverWinner = 'player1';
-          p1PrizesRemaining = 0;
-          p1PrizesTaken = 6;
+          matchResult = 'win'; gameOverWinner = 'player1';
+          p1PrizesRemaining = 0; p1PrizesTaken = 6;
           gameEndReason = `${p1Name} venceu a partida!`;
-        } else {
-          matchResult = 'loss';
-          gameOverWinner = 'player2';
-          p2PrizesRemaining = 0;
-          p2PrizesTaken = 6;
+        } else if (lower.includes(p2Name.toLowerCase())) {
+          matchResult = 'loss'; gameOverWinner = 'player2';
+          p2PrizesRemaining = 0; p2PrizesTaken = 6;
           gameEndReason = `${p2Name} venceu a partida!`;
         }
-      } else if (lower.includes('conceded') || lower.includes('concedeu')) {
+      }
+
+      // Rendição (conceded / concedeu / se rendeu / rendeu / surrender)
+      if (lower.includes('conceded') || lower.includes('concedeu') ||
+          lower.includes('se rendeu') || lower.includes('rendeu') || lower.includes('surrender')) {
         isGameOver = true;
-        if (lower.includes(p2Name.toLowerCase())) {
-          matchResult = 'win';
-          gameOverWinner = 'player1';
-          gameEndReason = `${p2Name} concedeu a partida.`;
+        // Quem se rendeu?
+        const isP1Conceding = lower.includes('você') || /\byou\b/i.test(lower) || lower.includes(p1Name.toLowerCase());
+        if (isP1Conceding) {
+          matchResult = 'loss'; gameOverWinner = 'player2';
+          gameEndReason = `${p1Name} se rendeu.`;
         } else {
-          matchResult = 'loss';
-          gameOverWinner = 'player2';
-          gameEndReason = `${p1Name} concedeu a partida.`;
+          matchResult = 'win'; gameOverWinner = 'player1';
+          gameEndReason = `${p2Name} se rendeu.`;
         }
       }
     }
 
-    // In turn 0 (Setup), ensure active Pokémon are set and not duplicated on bench
+    // Setup: define ativos se não foram setados
     if (block.turnNumber === 0) {
-      if (!p1Active && p1Cards.length > 0) {
-        p1Active = p1Cards[0];
-        p1Bench = p1Bench.filter(b => b.toLowerCase() !== p1Active!.toLowerCase());
+      if (!p1Active && p1Bench.length > 0) {
+        p1Active = p1Bench.shift()!;
       }
-      if (!p2Active && p2Cards.length > 0) {
-        p2Active = p2Cards[0];
-        p2Bench = p2Bench.filter(b => b.toLowerCase() !== p2Active!.toLowerCase());
+      if (!p2Active && p2Bench.length > 0) {
+        p2Active = p2Bench.shift()!;
       }
     }
 
+    // Snapshot
     processedTurns.push({
       turnNumber: block.turnNumber,
       turnTitle: block.title,
       player: block.player,
       playerName: block.playerName,
       actions,
-      p1Active,
-      p1Bench: [...p1Bench].slice(0, 5),
+      p1Active: p1Active?.name,
+      p1Bench: p1Bench.map(b => b.name).slice(0, 5),
       p1PrizesRemaining: Math.max(0, p1PrizesRemaining),
-      p1ActiveDamage,
-      p1ActiveEnergies: [...p1ActiveEnergies],
-      p2Active,
-      p2Bench: [...p2Bench].slice(0, 5),
+      p1ActiveDamage: p1Active?.damage ?? 0,
+      p1ActiveEnergies: p1Active ? [...p1Active.energies] : [],
+      p2Active: p2Active?.name,
+      p2Bench: p2Bench.map(b => b.name).slice(0, 5),
       p2PrizesRemaining: Math.max(0, p2PrizesRemaining),
-      p2ActiveDamage,
-      p2ActiveEnergies: [...p2ActiveEnergies],
+      p2ActiveDamage: p2Active?.damage ?? 0,
+      p2ActiveEnergies: p2Active ? [...p2Active.energies] : [],
       stadiumInPlay,
       isGameOver: isGameOver || p1PrizesRemaining <= 0 || p2PrizesRemaining <= 0,
       winner: gameOverWinner || (matchResult === 'win' ? 'player1' : 'player2'),
@@ -768,16 +897,19 @@ export function parsePTCGLLog(rawLog: string, loggedInUserName?: string): Traine
     });
   }
 
-  // Result conclusion if not explicitly set
-  if (p1PrizesTaken >= 6 || p2PrizesRemaining <= 0) {
-    matchResult = 'win';
-  } else if (p2PrizesTaken >= 6 || p1PrizesRemaining <= 0) {
-    matchResult = 'loss';
+  // ------------------------------------------------------------------
+  // 6) CONCLUSÃO DE RESULTADO
+  // ------------------------------------------------------------------
+  if (!isGameOver) {
+    if (p1PrizesTaken >= 6 || p2PrizesRemaining <= 0) {
+      matchResult = 'win'; gameOverWinner = 'player1';
+    } else if (p2PrizesTaken >= 6 || p1PrizesRemaining <= 0) {
+      matchResult = 'loss'; gameOverWinner = 'player2';
+    }
   }
 
   const p1Archetype = detectArchetypeFromCards(p1Cards);
   const p2Archetype = detectArchetypeFromCards(p2Cards);
-
   const totalTurns = processedTurns.filter(t => t.turnNumber > 0).length || 1;
 
   return {
@@ -790,18 +922,25 @@ export function parsePTCGLLog(rawLog: string, loggedInUserName?: string): Traine
     playerDeckName: p1Archetype.name,
     result: matchResult,
     wentFirst: isP1First,
-    totalTurns: totalTurns,
+    totalTurns,
     p1PrizesTaken: Math.min(6, p1PrizesTaken),
     p2PrizesTaken: Math.min(6, p2PrizesTaken),
     finalScore: `${Math.min(6, p1PrizesTaken)} - ${Math.min(6, p2PrizesTaken)}`,
     format: 'Standard',
     date: new Date().toISOString(),
-    rawLog: rawLog,
+    rawLog,
     turns: processedTurns
   };
 }
 
-// Built-in realistic sample logs (Portuguese & English) for instant one-click testing
+function escapeReg(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+// ============================================================================
+// SAMPLE LOGS (mantidos)
+// ============================================================================
+
 export const SAMPLE_PT_LOG = `Preparação
 Felipe Wilks jogou 1 moeda(s), com resultado de 1 cara(s) e 0 coroa(s).
 Felipe Wilks comprou 7 cartas para a mão inicial.
