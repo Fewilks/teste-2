@@ -1,7 +1,7 @@
 import { BattleTurnAction, BattleTurnSnapshot, TrainerLogMatch } from '../types';
 
 // ============================================================================
-// ARCHETYPE DETECTION (inalterado)
+// ARCHETYPE DETECTION
 // ============================================================================
 
 export interface ArchetypeDefinition {
@@ -55,49 +55,40 @@ export function detectArchetypeFromCards(cardNames: string[]): { name: string; s
 // ============================================================================
 
 function extractCardName(text: string): string {
-  // "X de Player agora está no Campo Ativo"
   const nowActive = text.match(/^([^.\n]+?)\s+de\s+[^.\n]+?\s+agora\s+está\s+no\s+Campo\s+Ativo/i);
   if (nowActive) return nowActive[1].trim();
 
-  // "evoluiu X para Y"
-  const evoPt = text.match(/evoluiu\s+.+?\s+para\s+([^.\n]+?)(?:\s+no\s+(?:Campo Ativo|Banco)|\.|$)/i);
-  if (evoPt) return evoPt[1].trim();
+  const evoPt = text.match(/evoluiu\s+(?:o\s+)?(.+?)\s+para\s+([^.\n]+?)(?:\s+no\s+(?:Campo Ativo|Banco)|\.|$)/i);
+  if (evoPt) return evoPt[2].trim();
   const evoEn = text.match(/evolved\s+.+?\s+into\s+([^.\n]+?)(?:\s+(?:in the Active Spot|on the Bench)|\.|$)/i);
   if (evoEn) return evoEn[1].trim();
 
-  // "promoveu X para o Campo Ativo"
   const promoPt = text.match(/promoveu\s+([^.\n]+?)\s+para/i);
   if (promoPt) return promoPt[1].trim();
   const promoEn = text.match(/promoted\s+([^.\n]+?)\s+to/i);
   if (promoEn) return promoEn[1].trim();
 
-  // "X de Player usou..." / "Player's X used..."
-  const attackUserPt = text.match(/^[-•*]?\s*([^.\n]+?)\s+de\s+[a-z0-9\s]+\s+usou/i);
+  const attackUserPt = text.match(/^([^.\n]+?)\s+de\s+[a-z0-9\s]+\s+usou/i);
   if (attackUserPt) return attackUserPt[1].trim();
-  const attackUserEn = text.match(/^[-•*]?\s*[a-z0-9\s]+'s\s+([^.\n]+?)\s+used/i);
+  const attackUserEn = text.match(/^[a-z0-9\s]+'s\s+([^.\n]+?)\s+used/i);
   if (attackUserEn) return attackUserEn[1].trim();
 
-  // "ligou X a Y"
   const energyMatchPt = text.match(/ligou\s+([^.\n]+?)\s+(?:a|ao|no)\s+/i);
   if (energyMatchPt) return energyMatchPt[1].trim();
   const energyMatchEn = text.match(/attached\s+([^.\n]+?)\s+to\s+/i);
   if (energyMatchEn) return energyMatchEn[1].trim();
 
-  // "jogou X no Campo Ativo/Banco"
   const placedMatchPt = text.match(/jogou\s+([^.\n]+?)\s+no\s+(?:Campo Ativo|Banco)/i);
   if (placedMatchPt) return placedMatchPt[1].trim();
   const placedMatchEn = text.match(/(?:played|put)\s+([^.\n]+?)\s+(?:in the Active Spot|onto the Bench|to the Bench)/i);
   if (placedMatchEn) return placedMatchEn[1].trim();
 
-  // "X de Player foi Nocauteado"
-  const koPt = text.match(/^[-•*]?\s*([^.\n!]+?)\s+de\s+[^.\n!]+?\s+foi\s+Nocauteado/i);
+  const koPt = text.match(/^([^.\n!]+?)\s+de\s+[^.\n!]+?\s+foi\s+Nocauteado/i);
   if (koPt) return koPt[1].trim();
-  const koEn = text.match(/^[-•*]?\s*([^.\n!]+?)\s+was\s+Knocked\s+Out/i);
+  const koEn = text.match(/^([^.\n!]+?)\s+was\s+Knocked\s+Out/i);
   if (koEn) return koEn[1].trim();
 
-  // Cleanup genérico
   let cleaned = text
-    .replace(/^[-•*]\s*/, '')
     .replace(/^[a-z0-9\s]+?\s+(?:played|jogou|colocou|drew|comprou|attached|ligou|anexou|evolved|evoluiu|promoveu|promoted)\s+/i, '')
     .replace(/\s+(?:to the Active Spot|to the Bench|no Campo Ativo|no Banco|in the Active Spot).*/i, '')
     .replace(/\s*(?:e descartou|and discarded|procurou|and searched|\.).*$/i, '')
@@ -132,6 +123,10 @@ function makePokemon(name: string): PokemonInPlay {
   return { name, damage: 0, energies: [] };
 }
 
+function escapeReg(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 // ============================================================================
 // MAIN PARSER
 // ============================================================================
@@ -158,7 +153,6 @@ export function parsePTCGLLog(rawLog: string, loggedInUserName?: string): Traine
     if (t2Pt) { detectedPlayer2 = t2Pt[1].trim(); break; }
   }
 
-  // Fallback por mãos iniciais
   if (!detectedPlayer1 || !detectedPlayer2) {
     for (const line of lines) {
       const handPt = line.match(/^(.+?)\s+comprou\s+7\s+cartas\s+para\s+a\s+mão\s+inicial/i);
@@ -179,7 +173,6 @@ export function parsePTCGLLog(rawLog: string, loggedInUserName?: string): Traine
   let p1Name = detectedPlayer1;
   let p2Name = detectedPlayer2;
 
-  // Perspectiva: usuário logado sempre é player1
   if (loggedInUserName) {
     const cleanUser = loggedInUserName.toLowerCase().trim();
     if (detectedPlayer2.toLowerCase().trim() === cleanUser) {
@@ -191,7 +184,6 @@ export function parsePTCGLLog(rawLog: string, loggedInUserName?: string): Traine
     }
   }
 
-  // Mapeia "Você"/"You" -> p1Name (usuário logado)
   const resolveActorName = (name: string): 'player1' | 'player2' | null => {
     const n = name.toLowerCase().trim();
     if (n === 'você' || n === 'voce' || n === 'you') return 'player1';
@@ -201,21 +193,19 @@ export function parsePTCGLLog(rawLog: string, loggedInUserName?: string): Traine
   };
 
   // ------------------------------------------------------------------
-  // 2) DETERMINAR QUEM COMEÇOU
+  // 2) QUEM COMEÇOU
   // ------------------------------------------------------------------
   let isP1First = true;
   for (const line of lines) {
     const l = line.toLowerCase();
-    if ((l.includes('decidiu jogar primeiro') || l.includes('decided to go first')) && l.includes(p1Name.toLowerCase())) {
-      isP1First = true; break;
-    }
-    if ((l.includes('decidiu jogar primeiro') || l.includes('decided to go first')) && l.includes(p2Name.toLowerCase())) {
-      isP1First = false; break;
+    if ((l.includes('decidiu jogar primeiro') || l.includes('decided to go first'))) {
+      if (l.includes(p1Name.toLowerCase())) { isP1First = true; break; }
+      if (l.includes(p2Name.toLowerCase())) { isP1First = false; break; }
     }
   }
 
   // ------------------------------------------------------------------
-  // 3) DIVISÃO EM BLOCOS DE TURNO (suporta "Turno # N - Turno de X" e "Turno de X")
+  // 3) DIVISÃO EM BLOCOS DE TURNO
   // ------------------------------------------------------------------
   interface RawTurnBlock {
     turnNumber: number;
@@ -235,31 +225,21 @@ export function parsePTCGLLog(rawLog: string, loggedInUserName?: string): Traine
   };
   let sequentialTurnNumber = 0;
 
-  const detectTurnHeader = (line: string): { turnNumber?: number; playerName: string; title: string } | null => {
-    // "Turno # 1 - Turno de X" / "Turn # 1 - X's Turn" / "Turn # 1 - Turn of X"
+  const detectTurnHeader = (line: string): { turnNumber?: number; playerName: string } | null => {
     let m = line.match(/^(?:Turn|Turno)\s*#?\s*(\d+)\s*-\s*(.+)$/i);
     if (m) {
       const num = parseInt(m[1], 10);
       const remainder = m[2].trim();
       const inner = remainder.match(/(?:Turno\s+de|Turn\s+of)\s+(.+)$/i) || remainder.match(/^(.+?)(?:'s\s+Turn)?$/i);
       const name = (inner ? inner[1] : remainder).replace(/'s\s*Turn$/i, '').trim();
-      return { turnNumber: num, playerName: name, title: line };
+      return { turnNumber: num, playerName: name };
     }
-    // "Turno de X" (PT, sem número)
     m = line.match(/^(?:Turno\s+de)\s+(.+)$/i);
-    if (m) {
-      return { playerName: m[1].trim(), title: line };
-    }
-    // "X's Turn" (EN, sem número)
+    if (m) return { playerName: m[1].trim() };
     m = line.match(/^(.+?)'s\s+Turn$/i);
-    if (m) {
-      return { playerName: m[1].trim(), title: line };
-    }
-    // "Turn of X"
+    if (m) return { playerName: m[1].trim() };
     m = line.match(/^Turn\s+of\s+(.+)$/i);
-    if (m) {
-      return { playerName: m[1].trim(), title: line };
-    }
+    if (m) return { playerName: m[1].trim() };
     return null;
   };
 
@@ -273,21 +253,13 @@ export function parsePTCGLLog(rawLog: string, loggedInUserName?: string): Traine
       const player: 'player1' | 'player2' = resolved || 'player1';
       const playerName = player === 'player1' ? p1Name : p2Name;
       const tNum = header.turnNumber ?? ++sequentialTurnNumber;
-      currentBlock = {
-        turnNumber: tNum,
-        title: line,
-        rawLines: [],
-        player,
-        playerName
-      };
+      currentBlock = { turnNumber: tNum, title: line, rawLines: [], player, playerName };
       if (header.turnNumber === undefined) sequentialTurnNumber = tNum;
     } else {
       currentBlock.rawLines.push(line);
     }
   }
-  if (currentBlock.rawLines.length > 0) {
-    rawTurns.push(currentBlock);
-  }
+  if (currentBlock.rawLines.length > 0) rawTurns.push(currentBlock);
 
   // ------------------------------------------------------------------
   // 4) ESTADO GLOBAL
@@ -311,10 +283,24 @@ export function parsePTCGLLog(rawLog: string, loggedInUserName?: string): Traine
   const p2Cards: string[] = [];
 
   const getSide = (actor: 'player1' | 'player2') => actor === 'player1'
-    ? { active: () => p1Active, setActive: (p?: PokemonInPlay) => { p1Active = p; }, bench: () => p1Bench, setBench: (b: PokemonInPlay[]) => { p1Bench = b; } }
-    : { active: () => p2Active, setActive: (p?: PokemonInPlay) => { p2Active = p; }, bench: () => p2Bench, setBench: (b: PokemonInPlay[]) => { p2Bench = b; } };
+    ? {
+        active: () => p1Active,
+        setActive: (p?: PokemonInPlay) => { p1Active = p; },
+        bench: () => p1Bench,
+        setBench: (b: PokemonInPlay[]) => { p1Bench = b; }
+      }
+    : {
+        active: () => p2Active,
+        setActive: (p?: PokemonInPlay) => { p2Active = p; },
+        bench: () => p2Bench,
+        setBench: (b: PokemonInPlay[]) => { p2Bench = b; }
+      };
 
   const processedTurns: BattleTurnSnapshot[] = [];
+
+  // Regex de "verbo de ação" — se uma linha bullet contém um desses, ela NÃO é
+  // tratada como lista de cartas; ela segue o fluxo normal.
+  const ACTION_VERB_RE = /\b(usou|jogou|ligou|anexou|evoluiu|promoveu|recuou|comprou|drew|played|attached|evolved|promoted|retreated|used|ativou|activated|foi|was|pegou|took|descartad|discarded|embaralhou|shuffled|colocou|put|rendeu|concedeu|conceded|surrender)\b/i;
 
   // ------------------------------------------------------------------
   // 5) PROCESSAR CADA BLOCO
@@ -332,16 +318,16 @@ export function parsePTCGLLog(rawLog: string, loggedInUserName?: string): Traine
     }[] = [];
     const evolvedCardsInTurn: string[] = [];
 
-    // Contexto para linhas bullet
     let lastMainAction: 'benchDraw' | 'draw' | 'search' | 'other' = 'other';
 
     for (let i = 0; i < block.rawLines.length; i++) {
-      const line = block.rawLines[i];
+      const rawLine = block.rawLines[i];
+      const isBullet = /^[•\-*]\s+/.test(rawLine);
+      const line = isBullet ? rawLine.replace(/^[•\-*]\s+/, '').trim() : rawLine;
       const lower = line.toLowerCase();
       const actionId = `turn-${block.turnNumber}-act-${i}`;
-      const isBullet = /^[•\-*]\s+/.test(line);
 
-      // Descobre ator
+      // Ator
       const hasP1 = lower.includes(p1Name.toLowerCase());
       const hasP2 = lower.includes(p2Name.toLowerCase());
       const hasYou = /\b(você|voce|you)\b/i.test(lower);
@@ -355,42 +341,32 @@ export function parsePTCGLLog(rawLog: string, loggedInUserName?: string): Traine
       const side = getSide(actor);
 
       // ----------------------------------------------------------------
-      // BULLETS (linhas "• ...")
+      // BULLET DE LISTA (só quando continua um "comprou N e jogou no Banco")
       // ----------------------------------------------------------------
-      if (isBullet) {
-        const content = line.replace(/^[•\-*]\s+/, '').trim();
-
-        if (lastMainAction === 'benchDraw') {
-          // Lista de cartas colocadas no banco por Poffin/Carrinho/etc.
-          const parts = content.split(/,\s*/);
-          for (const p of parts) {
-            const clean = p.trim();
-            if (!clean) continue;
-            if (actor === 'player1') p1Cards.push(clean); else p2Cards.push(clean);
-            if (side.bench().length < 5) side.bench().push(makePokemon(clean));
-          }
+      if (isBullet && lastMainAction === 'benchDraw' && !ACTION_VERB_RE.test(line)) {
+        const parts = line.split(/,\s*/);
+        for (const p of parts) {
+          const clean = p.trim();
+          if (!clean) continue;
+          if (actor === 'player1') p1Cards.push(clean); else p2Cards.push(clean);
+          if (side.bench().length < 5) side.bench().push(makePokemon(clean));
         }
-        // Outros bullets (baralho, mão, etc.) não alteram estado de campo
-
         actions.push({
-          id: actionId,
-          type: 'other',
-          player: actor,
-          playerName: actorName,
-          cardName: content,
-          description: line
+          id: actionId, type: 'other', player: actor, playerName: actorName,
+          cardName: line, description: rawLine
         });
         continue;
       }
 
       // ----------------------------------------------------------------
-      // TURNO: DESCARTA DE ENERGIA (linha de "X foi descartada de Y")
+      // DESCARTA DE ENERGIA ("X foi descartada de Y")
       // ----------------------------------------------------------------
-      const discardedFromMatch = line.match(/^[-•*]?\s*(.+?)\s+foi\s+descartad[ao]\s+de\s+(.+?)(?:\s+de\s+(.+))?\.?$/i);
+      const discardedFromMatch = line.match(/^(.+?)\s+foi\s+descartad[ao]\s+de\s+(.+?)(?:\s+de\s+(.+))?\.?$/i);
       if (discardedFromMatch && lower.includes('descartad')) {
         const energyName = discardedFromMatch[1].trim();
         const targetName = discardedFromMatch[2].trim();
         const ownerHint = discardedFromMatch[3]?.trim();
+
         const ownerActor: 'player1' | 'player2' =
           ownerHint && ownerHint.toLowerCase() === p2Name.toLowerCase() ? 'player2'
           : ownerHint && ownerHint.toLowerCase() === p1Name.toLowerCase() ? 'player1'
@@ -399,15 +375,10 @@ export function parsePTCGLLog(rawLog: string, loggedInUserName?: string): Traine
           : actor;
 
         const targetSide = getSide(ownerActor);
-        const targetPokemonName = ownerHint
-          ? // caso "de Froakie de Wilksman": o "de" entre target e owner não veio, então targetName é "Froakie"
-            targetName
-          : targetName;
 
-        // remove 1 energia do alvo (ativo ou banco)
         const tryRemove = (mon: PokemonInPlay | undefined): boolean => {
-          if (!mon || !isCardMatch(mon.name, targetPokemonName)) return false;
-          const idx = mon.energies.findIndex(e => isCardMatch(e, energyName) || isEnergyCard(e));
+          if (!mon || !isCardMatch(mon.name, targetName)) return false;
+          const idx = mon.energies.findIndex(e => isEnergyCard(e) || isCardMatch(e, energyName));
           if (idx !== -1) mon.energies.splice(idx, 1);
           return true;
         };
@@ -418,13 +389,11 @@ export function parsePTCGLLog(rawLog: string, loggedInUserName?: string): Traine
         }
 
         actions.push({
-          id: actionId,
-          type: 'energy',
-          player: ownerActor,
-          playerName: ownerActor === 'player1' ? p1Name : p2Name,
-          cardName: energyName,
-          description: line
+          id: actionId, type: 'energy',
+          player: ownerActor, playerName: ownerActor === 'player1' ? p1Name : p2Name,
+          cardName: energyName, description: line
         });
+        lastMainAction = 'other';
         continue;
       }
 
@@ -432,15 +401,12 @@ export function parsePTCGLLog(rawLog: string, loggedInUserName?: string): Traine
       // DRAW
       // ----------------------------------------------------------------
       if (lower.includes('drew') || lower.includes('comprou')) {
-        // Sinaliza contexto se for "comprou N cartas e as jogou no Banco"
         if ((lower.includes('jogou') || lower.includes('played')) && (lower.includes('banco') || lower.includes('bench'))) {
           lastMainAction = 'benchDraw';
         } else {
           lastMainAction = 'draw';
         }
-        actions.push({
-          id: actionId, type: 'draw', player: actor, playerName: actorName, description: line
-        });
+        actions.push({ id: actionId, type: 'draw', player: actor, playerName: actorName, description: line });
         continue;
       }
 
@@ -463,10 +429,7 @@ export function parsePTCGLLog(rawLog: string, loggedInUserName?: string): Traine
           p2PrizesTaken += count;
           p2PrizesRemaining = Math.max(0, p2PrizesRemaining - count);
         }
-        actions.push({
-          id: actionId, type: 'prize', player: actor, playerName: actorName,
-          prizesTaken: count, description: line
-        });
+        actions.push({ id: actionId, type: 'prize', player: actor, playerName: actorName, prizesTaken: count, description: line });
         lastMainAction = 'other';
         continue;
       }
@@ -474,18 +437,14 @@ export function parsePTCGLLog(rawLog: string, loggedInUserName?: string): Traine
       // ----------------------------------------------------------------
       // NOCAUTE
       // ----------------------------------------------------------------
-      if (lower.includes('knocked out') || lower.includes('nocauteado') || lower.includes('nocauteou')) {
-        // Vítima
+      if (lower.includes('knocked out') || lower.includes('nocauteado')) {
         let victimActor: 'player1' | 'player2' = actor === 'player1' ? 'player2' : 'player1';
-        const victimP2 = line.match(new RegExp(`de\\s+${escapeReg(p2Name)}\\b`, 'i'));
-        const victimP1 = line.match(new RegExp(`de\\s+${escapeReg(p1Name)}\\b`, 'i'));
+        const victimP2 = new RegExp(`de\\s+${escapeReg(p2Name)}\\b`, 'i').test(line);
+        const victimP1 = new RegExp(`de\\s+${escapeReg(p1Name)}\\b`, 'i').test(line);
         if (victimP2 && !victimP1) victimActor = 'player2';
         else if (victimP1 && !victimP2) victimActor = 'player1';
 
-        const koMatchPt = line.match(/^[-•*]?\s*([^.\n!]+?)\s+de\s+[^.\n!]+?\s+foi\s+Nocauteado/i);
-        const koMatchEn = line.match(/^[-•*]?\s*([^.\n!]+?)\s+was\s+Knocked\s+Out/i);
-        const koCard = (koMatchPt ? koMatchPt[1] : koMatchEn ? koMatchEn[1] : '').trim();
-
+        const koCard = extractCardName(line);
         const victimSide = getSide(victimActor);
 
         if (victimSide.active() && (!koCard || isCardMatch(victimSide.active()!.name, koCard))) {
@@ -493,29 +452,22 @@ export function parsePTCGLLog(rawLog: string, loggedInUserName?: string): Traine
           if (victimActor === 'player1') p1KnockedOutThisTurn = name; else p2KnockedOutThisTurn = name;
           victimSide.setActive(undefined);
         } else if (koCard) {
-          // Tenta remover do banco — só se o nome bater
           const before = victimSide.bench().length;
           const filtered = victimSide.bench().filter(b => !isCardMatch(b.name, koCard));
-          if (filtered.length < before) {
-            victimSide.setBench(filtered);
-          }
-          // Se não achou em lugar nenhum, registra o KO mas NÃO remove nada
+          if (filtered.length < before) victimSide.setBench(filtered);
+          // se não achou, NÃO remove nada
         }
 
-        actions.push({
-          id: actionId, type: 'knockout', player: actor, playerName: actorName,
-          cardName: koCard, description: line
-        });
+        actions.push({ id: actionId, type: 'knockout', player: actor, playerName: actorName, cardName: koCard, description: line });
         lastMainAction = 'other';
         continue;
       }
 
       // ----------------------------------------------------------------
-      // ATAQUE (usa / used / causou dano)
+      // ATAQUE
       // ----------------------------------------------------------------
       if (lower.includes('usou') || (lower.includes('used') && (lower.includes('damage') || lower.includes('dealt')))) {
         let dmg = 0;
-        // Pega o dano base (não "dano total" da análise)
         const baseMatch = line.match(/dano\s+base[:\s]+(\d+)/i);
         if (baseMatch) {
           dmg = parseInt(baseMatch[1], 10);
@@ -530,11 +482,9 @@ export function parsePTCGLLog(rawLog: string, loggedInUserName?: string): Traine
           defenderSide.active()!.damage += dmg;
         }
 
-        const attackerCard = extractCardName(line);
-
         actions.push({
           id: actionId, type: 'attack', player: actor, playerName: actorName,
-          cardName: attackerCard, damage: dmg, description: line
+          cardName: extractCardName(line), damage: dmg, description: line
         });
         lastMainAction = 'other';
         continue;
@@ -569,47 +519,31 @@ export function parsePTCGLLog(rawLog: string, loggedInUserName?: string): Traine
         let isSpotActive = false;
         let evolvedBenchIndex: number | undefined = undefined;
 
-        const applyTo = (side: ReturnType<typeof getSide>) => {
-          const active = side.active();
-          const bench = side.bench();
+        const active = side.active();
+        const bench = side.bench();
+        const activeMatches = Boolean(active && fromMon && isCardMatch(active.name, fromMon));
+        const benchIdx = bench.findIndex(b => fromMon ? isCardMatch(b.name, fromMon) : false);
 
-          const activeMatches = Boolean(active && fromMon && isCardMatch(active.name, fromMon));
-          const benchIdx = bench.findIndex(b => fromMon ? isCardMatch(b.name, fromMon) : false);
-
-          if (spotHint === 'bench' && benchIdx !== -1) {
-            // veio explicitamente do banco
-            bench[benchIdx].name = toMon;
-            evolvedBenchIndex = benchIdx;
-            return;
-          }
-          if (spotHint === 'active' || (activeMatches && spotHint !== 'bench')) {
-            if (active) active.name = toMon;
-            else side.setActive(makePokemon(toMon));
-            isSpotActive = true;
-            return;
-          }
-          if (benchIdx !== -1) {
-            bench[benchIdx].name = toMon;
-            evolvedBenchIndex = benchIdx;
-            return;
-          }
-          if (activeMatches) {
-            if (active) active.name = toMon;
-            isSpotActive = true;
-            return;
-          }
-          // fallback: procura qualquer coisa no banco
-          if (bench.length > 0) {
-            bench[0].name = toMon;
-            evolvedBenchIndex = 0;
-            return;
-          }
-          // fallback final: vira ativo
+        if (spotHint === 'bench' && benchIdx !== -1) {
+          bench[benchIdx].name = toMon;
+          evolvedBenchIndex = benchIdx;
+        } else if (spotHint === 'active' || (activeMatches && spotHint !== 'bench')) {
+          if (active) active.name = toMon;
+          else side.setActive(makePokemon(toMon));
+          isSpotActive = true;
+        } else if (benchIdx !== -1) {
+          bench[benchIdx].name = toMon;
+          evolvedBenchIndex = benchIdx;
+        } else if (activeMatches) {
+          if (active) active.name = toMon;
+          isSpotActive = true;
+        } else if (bench.length > 0) {
+          bench[0].name = toMon;
+          evolvedBenchIndex = 0;
+        } else {
           side.setActive(makePokemon(toMon));
           isSpotActive = true;
-        };
-
-        applyTo(side);
+        }
 
         turnEvolutions.push({
           player: actor, fromCard: fromMon, toCard: toMon,
@@ -626,7 +560,7 @@ export function parsePTCGLLog(rawLog: string, loggedInUserName?: string): Traine
       }
 
       // ----------------------------------------------------------------
-      // PROMOÇÃO EXPLÍCITA ("promoveu X para o Campo Ativo")
+      // PROMOÇÃO EXPLÍCITA
       // ----------------------------------------------------------------
       if (lower.includes('promoveu') || lower.includes('promoted')) {
         let promotedCard = extractCardName(line);
@@ -635,7 +569,6 @@ export function parsePTCGLLog(rawLog: string, loggedInUserName?: string): Traine
         if (promoPt) promotedCard = promoPt[1].trim();
         else if (promoEn) promotedCard = promoEn[1].trim();
 
-        // Move do banco para ativo, preservando dano/energias
         const bench = side.bench();
         const idx = bench.findIndex(b => isCardMatch(b.name, promotedCard));
         if (idx !== -1) {
@@ -644,17 +577,13 @@ export function parsePTCGLLog(rawLog: string, loggedInUserName?: string): Traine
         } else {
           side.setActive(makePokemon(promotedCard));
         }
-
-        actions.push({
-          id: actionId, type: 'play', player: actor, playerName: actorName,
-          cardName: promotedCard, description: line
-        });
+        actions.push({ id: actionId, type: 'play', player: actor, playerName: actorName, cardName: promotedCard, description: line });
         lastMainAction = 'other';
         continue;
       }
 
       // ----------------------------------------------------------------
-      // "agora está no Campo Ativo" (promoção por efeito/recuo)
+      // "agora está no Campo Ativo"
       // ----------------------------------------------------------------
       const nowActiveMatch = line.match(/^([^.\n]+?)\s+de\s+[^.\n]+?\s+agora\s+está\s+no\s+Campo\s+Ativo/i);
       if (nowActiveMatch) {
@@ -667,20 +596,16 @@ export function parsePTCGLLog(rawLog: string, loggedInUserName?: string): Traine
         } else {
           side.setActive(makePokemon(promotedCard));
         }
-        actions.push({
-          id: actionId, type: 'play', player: actor, playerName: actorName,
-          cardName: promotedCard, description: line
-        });
+        actions.push({ id: actionId, type: 'play', player: actor, playerName: actorName, cardName: promotedCard, description: line });
         lastMainAction = 'other';
         continue;
       }
 
       // ----------------------------------------------------------------
-      // ENERGIA ("ligou X a Y no Campo Ativo/Banco")
+      // ENERGIA
       // ----------------------------------------------------------------
       if (lower.includes('ligou') || lower.includes('attached') || lower.includes('anexou')) {
         const energyCard = extractCardName(line);
-        // Achar alvo: "a X no Campo Ativo" / "a X no Banco" / "to X in the Active Spot"
         const targetPt = line.match(/\s+(?:a|ao)\s+(.+?)\s+(?:no\s+Campo\s+Ativo|no\s+Banco|do\s+baralho)/i);
         const targetEn = line.match(/\s+to\s+(.+?)\s+(?:in the Active Spot|on the Bench)/i);
         const targetName = targetPt ? targetPt[1].trim() : targetEn ? targetEn[1].trim() : '';
@@ -691,23 +616,15 @@ export function parsePTCGLLog(rawLog: string, loggedInUserName?: string): Traine
           const benchIdx = bench.findIndex(b => isCardMatch(b.name, targetName));
           const active = side.active();
 
-          if (toBench && benchIdx !== -1) {
-            bench[benchIdx].energies.push(energyCard);
-          } else if (active && isCardMatch(active.name, targetName)) {
-            active.energies.push(energyCard);
-          } else if (benchIdx !== -1) {
-            bench[benchIdx].energies.push(energyCard);
-          } else if (active) {
-            active.energies.push(energyCard);
-          }
+          if (toBench && benchIdx !== -1) bench[benchIdx].energies.push(energyCard);
+          else if (active && isCardMatch(active.name, targetName)) active.energies.push(energyCard);
+          else if (benchIdx !== -1) bench[benchIdx].energies.push(energyCard);
+          else if (active) active.energies.push(energyCard);
         } else if (side.active()) {
           side.active()!.energies.push(energyCard);
         }
 
-        actions.push({
-          id: actionId, type: 'energy', player: actor, playerName: actorName,
-          cardName: energyCard, description: line
-        });
+        actions.push({ id: actionId, type: 'energy', player: actor, playerName: actorName, cardName: energyCard, description: line });
         lastMainAction = 'other';
         continue;
       }
@@ -716,17 +633,16 @@ export function parsePTCGLLog(rawLog: string, loggedInUserName?: string): Traine
       // HABILIDADE
       // ----------------------------------------------------------------
       if (lower.includes('habilidade') || lower.includes('ability') || lower.includes('ativou') || lower.includes('activated')) {
-        const abilityCard = extractCardName(line);
         actions.push({
           id: actionId, type: 'ability', player: actor, playerName: actorName,
-          cardName: abilityCard, description: line
+          cardName: extractCardName(line), description: line
         });
         lastMainAction = 'other';
         continue;
       }
 
       // ----------------------------------------------------------------
-      // RECUO ("recuou X para o Banco") — dano NÃO é zerado
+      // RECUO — preserva dano e energias
       // ----------------------------------------------------------------
       if (lower.includes('recuou') || lower.includes('retreated')) {
         const retreatPt = line.match(/recuou\s+(.+?)\s+para\s+o\s+Banco/i);
@@ -735,17 +651,11 @@ export function parsePTCGLLog(rawLog: string, loggedInUserName?: string): Traine
 
         const active = side.active();
         if (active && (!retreatedName || isCardMatch(active.name, retreatedName))) {
-          // Move o Pokémon inteiro (com dano/energias) para o banco
-          if (side.bench().length < 5) {
-            side.bench().push(active);
-          }
+          if (side.bench().length < 5) side.bench().push(active);
           side.setActive(undefined);
         }
 
-        actions.push({
-          id: actionId, type: 'retreat', player: actor, playerName: actorName,
-          cardName: retreatedName, description: line
-        });
+        actions.push({ id: actionId, type: 'retreat', player: actor, playerName: actorName, cardName: retreatedName, description: line });
         lastMainAction = 'other';
         continue;
       }
@@ -755,16 +665,13 @@ export function parsePTCGLLog(rawLog: string, loggedInUserName?: string): Traine
       // ----------------------------------------------------------------
       if (lower.includes('estádio') || lower.includes('stadium')) {
         stadiumInPlay = extractCardName(line);
-        actions.push({
-          id: actionId, type: 'stadium', player: actor, playerName: actorName,
-          cardName: stadiumInPlay, description: line
-        });
+        actions.push({ id: actionId, type: 'stadium', player: actor, playerName: actorName, cardName: stadiumInPlay, description: line });
         lastMainAction = 'other';
         continue;
       }
 
       // ----------------------------------------------------------------
-      // "jogou X no Campo Ativo/Banco" (play normal)
+      // PLAY NORMAL ("jogou X no Campo Ativo/Banco")
       // ----------------------------------------------------------------
       if (lower.includes('jogou') || lower.includes('played') || lower.includes('colocou') || lower.includes('put')) {
         const placedCard = extractCardName(line);
@@ -773,7 +680,6 @@ export function parsePTCGLLog(rawLog: string, loggedInUserName?: string): Traine
         if (lower.includes('campo ativo') || lower.includes('active spot')) {
           side.setActive(makePokemon(placedCard));
         } else if (lower.includes('banco') || lower.includes('bench')) {
-          // suporta "colocou X e Y no Banco"
           const ptMatch = line.match(/colocou\s+(.+?)\s+no\s+Banco/i);
           const enMatch = line.match(/(?:played|put)\s+(.+?)\s+(?:to|onto)\s+the\s+Bench/i);
           const raw = (ptMatch ? ptMatch[1] : enMatch ? enMatch[1] : placedCard).trim();
@@ -790,10 +696,7 @@ export function parsePTCGLLog(rawLog: string, loggedInUserName?: string): Traine
           }
         }
 
-        actions.push({
-          id: actionId, type: 'play', player: actor, playerName: actorName,
-          cardName: placedCard, description: line
-        });
+        actions.push({ id: actionId, type: 'play', player: actor, playerName: actorName, cardName: placedCard, description: line });
         lastMainAction = 'other';
         continue;
       }
@@ -801,18 +704,13 @@ export function parsePTCGLLog(rawLog: string, loggedInUserName?: string): Traine
       // ----------------------------------------------------------------
       // FALLBACK
       // ----------------------------------------------------------------
-      actions.push({
-        id: actionId, type: 'other', player: actor, playerName: actorName, description: line
-      });
+      actions.push({ id: actionId, type: 'other', player: actor, playerName: actorName, description: line });
       lastMainAction = 'other';
-
-      // ----------------------------------------------------------------
-      // DETECÇÃO DE FIM DE JOGO (linhas específicas, sem alterar estado de campo)
-      // ----------------------------------------------------------------
-      // feita depois do push do fallback para não interferir nos branches acima
     }
 
-    // Verifica frases de fim de jogo em todas as linhas do bloco (fora do loop de actions)
+    // ------------------------------------------------------------------
+    // FIM DE JOGO (varredura por bloco)
+    // ------------------------------------------------------------------
     for (const line of block.rawLines) {
       const lower = line.toLowerCase();
 
@@ -829,7 +727,6 @@ export function parsePTCGLLog(rawLog: string, loggedInUserName?: string): Traine
         }
       }
 
-      // Vitória com "." ou "!" e "venceu a partida"
       if (/\bvenceu[.!]?\s*$/i.test(lower) || lower.includes('won the game') || lower.includes('venceu a partida')) {
         isGameOver = true;
         if (lower.includes(p1Name.toLowerCase())) {
@@ -843,12 +740,10 @@ export function parsePTCGLLog(rawLog: string, loggedInUserName?: string): Traine
         }
       }
 
-      // Rendição (conceded / concedeu / se rendeu / rendeu / surrender)
       if (lower.includes('conceded') || lower.includes('concedeu') ||
           lower.includes('se rendeu') || lower.includes('rendeu') || lower.includes('surrender')) {
         isGameOver = true;
-        // Quem se rendeu?
-        const isP1Conceding = lower.includes('você') || /\byou\b/i.test(lower) || lower.includes(p1Name.toLowerCase());
+        const isP1Conceding = /\b(você|voce|you)\b/i.test(lower) || lower.includes(p1Name.toLowerCase());
         if (isP1Conceding) {
           matchResult = 'loss'; gameOverWinner = 'player2';
           gameEndReason = `${p1Name} se rendeu.`;
@@ -861,15 +756,10 @@ export function parsePTCGLLog(rawLog: string, loggedInUserName?: string): Traine
 
     // Setup: define ativos se não foram setados
     if (block.turnNumber === 0) {
-      if (!p1Active && p1Bench.length > 0) {
-        p1Active = p1Bench.shift()!;
-      }
-      if (!p2Active && p2Bench.length > 0) {
-        p2Active = p2Bench.shift()!;
-      }
+      if (!p1Active && p1Bench.length > 0) p1Active = p1Bench.shift()!;
+      if (!p2Active && p2Bench.length > 0) p2Active = p2Bench.shift()!;
     }
 
-    // Snapshot
     processedTurns.push({
       turnNumber: block.turnNumber,
       turnTitle: block.title,
@@ -898,7 +788,7 @@ export function parsePTCGLLog(rawLog: string, loggedInUserName?: string): Traine
   }
 
   // ------------------------------------------------------------------
-  // 6) CONCLUSÃO DE RESULTADO
+  // 6) CONCLUSÃO
   // ------------------------------------------------------------------
   if (!isGameOver) {
     if (p1PrizesTaken >= 6 || p2PrizesRemaining <= 0) {
@@ -933,12 +823,8 @@ export function parsePTCGLLog(rawLog: string, loggedInUserName?: string): Traine
   };
 }
 
-function escapeReg(s: string): string {
-  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}
-
 // ============================================================================
-// SAMPLE LOGS (mantidos)
+// SAMPLE LOGS
 // ============================================================================
 
 export const SAMPLE_PT_LOG = `Preparação
