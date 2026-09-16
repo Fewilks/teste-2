@@ -16,7 +16,7 @@ import {
   Info
 } from 'lucide-react';
 import PokemonSprite from './PokemonSprite';
-import { convertLocalIdToPTCGL, normalizeTPCiSetCode } from '../utils/cardImages';
+import { convertLocalIdToPTCGL, normalizeTPCiSetCode, getAuthenticCardImageUrl, getCardScanHierarchy, POKEMON_CARD_BACK } from '../utils/cardImages';
 import { COMPREHENSIVE_SETS, MODERN_CARDS_CATALOG, searchCardsLocally } from '../data/pokemonCatalog';
 
 interface CollectionProps {
@@ -160,7 +160,7 @@ export default function Collection({ currentMember }: CollectionProps) {
         const newCard: CardItem = {
           id: userCardId,
           name: selectedCard.name,
-          imageUrl: selectedCard.imageUrl,
+          imageUrl: getAuthenticCardImageUrl(selectedCard),
           setCode: ptcglData.tpciSetCode || selectedCard.setCode || 'SVI',
           setName: selectedCard.setName || 'Unknown Set',
           setNumber: ptcglData.setNumber || selectedCard.setNumber || '1',
@@ -321,13 +321,18 @@ export default function Collection({ currentMember }: CollectionProps) {
               {/* Card visual wrapper */}
               <div className="p-3 relative aspect-[3/4] flex items-center justify-center bg-slate-950/20">
                 <img 
-                  src={card.imageUrl} 
+                  src={getAuthenticCardImageUrl(card)} 
                   alt={card.name} 
                   className="max-h-full max-w-full object-contain drop-shadow-[0_4px_12px_rgba(0,0,0,0.7)] group-hover:scale-105 transition-transform duration-300" 
                   referrerPolicy="no-referrer"
                   onError={(e) => {
                     e.currentTarget.onerror = null;
-                    e.currentTarget.src = 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png';
+                    const hierarchy = getCardScanHierarchy(card);
+                    if (e.currentTarget.src !== hierarchy.secondary && hierarchy.secondary !== POKEMON_CARD_BACK) {
+                      e.currentTarget.src = hierarchy.secondary;
+                    } else {
+                      e.currentTarget.src = POKEMON_CARD_BACK;
+                    }
                   }}
                 />
                 
@@ -508,13 +513,13 @@ export default function Collection({ currentMember }: CollectionProps) {
                 <div className="flex flex-col sm:flex-row gap-6 animate-fade-in" id="add-details-form">
                   <div className="w-full sm:w-1/3 flex justify-center">
                     <img 
-                      src={selectedCard.imageUrl} 
+                      src={getAuthenticCardImageUrl(selectedCard)} 
                       alt={selectedCard.name} 
                       className="max-h-64 object-contain rounded-lg drop-shadow-lg" 
                       referrerPolicy="no-referrer"
                       onError={(e) => {
                         e.currentTarget.onerror = null;
-                        e.currentTarget.src = 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png';
+                        e.currentTarget.src = POKEMON_CARD_BACK;
                       }}
                     />
                   </div>
@@ -612,13 +617,13 @@ export default function Collection({ currentMember }: CollectionProps) {
                         >
                           <div className="aspect-[3/4] flex items-center justify-center relative mb-2">
                             <img 
-                              src={card.imageUrl} 
+                              src={getAuthenticCardImageUrl(card)} 
                               alt={card.name} 
                               className="max-h-full max-w-full object-contain drop-shadow-md group-hover:scale-105 transition-transform" 
                               referrerPolicy="no-referrer"
                               onError={(e) => {
                                 e.currentTarget.onerror = null;
-                                e.currentTarget.src = 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png';
+                                e.currentTarget.src = POKEMON_CARD_BACK;
                               }}
                             />
                           </div>

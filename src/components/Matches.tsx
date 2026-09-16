@@ -11,13 +11,18 @@ import {
   CheckCircle2, 
   ArrowRight,
   TrendingUp,
-  FileText
+  FileText,
+  Play,
+  RotateCcw
 } from 'lucide-react';
 import PokemonSprite from './PokemonSprite';
+import TrainerLog from './TrainerLog/TrainerLog';
 
 interface MatchesProps {
   currentMember: Member;
   setActiveTab?: (tab: string) => void;
+  initialSubTab?: 'history' | 'replay';
+  onSyncMatch?: () => void;
 }
 
 export function getArchetypeSprites(archetype: string): string[] {
@@ -39,7 +44,8 @@ export function getArchetypeSprites(archetype: string): string[] {
   return pokemonNames.slice(0, 2);
 }
 
-export default function Matches({ currentMember, setActiveTab }: MatchesProps) {
+export default function Matches({ currentMember, setActiveTab, initialSubTab = 'history', onSyncMatch }: MatchesProps) {
+  const [activeSection, setActiveSection] = useState<'history' | 'replay'>(initialSubTab);
   const [matches, setMatches] = useState<MatchRecord[]>([]);
   const [members, setMembers] = useState<Member[]>([]);
   const [allDecks, setAllDecks] = useState<DeckRecord[]>([]);
@@ -88,32 +94,32 @@ export default function Matches({ currentMember, setActiveTab }: MatchesProps) {
     'Outro'
   ];
 
-  useEffect(() => {
-    async function loadMatches() {
-      try {
-        setLoading(true);
-        
-        // Load matches sorted by playedAt desc
-        const matchSnap = await getDocs(query(matchesCol, orderBy('playedAt', 'desc')));
-        const matchList = matchSnap.docs.map(d => ({ id: d.id, ...d.data() } as MatchRecord));
-        setMatches(matchList);
+  async function loadMatches() {
+    try {
+      setLoading(true);
+      
+      // Load matches sorted by playedAt desc
+      const matchSnap = await getDocs(query(matchesCol, orderBy('playedAt', 'desc')));
+      const matchList = matchSnap.docs.map(d => ({ id: d.id, ...d.data() } as MatchRecord));
+      setMatches(matchList);
 
-        // Load members list for selector
-        const memSnap = await getDocs(membersCol);
-        const memList = memSnap.docs.map(d => ({ id: d.id, ...d.data() } as Member));
-        setMembers(memList);
+      // Load members list for selector
+      const memSnap = await getDocs(membersCol);
+      const memList = memSnap.docs.map(d => ({ id: d.id, ...d.data() } as Member));
+      setMembers(memList);
 
-        // Load all registered decks
-        const deckSnap = await getDocs(decksCol);
-        const deckList = deckSnap.docs.map(d => ({ id: d.id, ...d.data() } as DeckRecord));
-        setAllDecks(deckList);
-      } catch (err) {
-        console.error('Error loading matches:', err);
-      } finally {
-        setLoading(false);
-      }
+      // Load all registered decks
+      const deckSnap = await getDocs(decksCol);
+      const deckList = deckSnap.docs.map(d => ({ id: d.id, ...d.data() } as DeckRecord));
+      setAllDecks(deckList);
+    } catch (err) {
+      console.error('Error loading matches:', err);
+    } finally {
+      setLoading(false);
     }
+  }
 
+  useEffect(() => {
     loadMatches();
   }, [currentMember]);
 
@@ -321,30 +327,21 @@ export default function Matches({ currentMember, setActiveTab }: MatchesProps) {
   });
 
   return (
-    <div className="space-y-8" id="matches-view">
+    <div className="space-y-6" id="matches-view">
       
       {/* Header */}
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border-b border-slate-850 pb-6">
         <div>
           <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-            <span>⚔️</span> Arena de Combate Spirits
+            <span>⚔️</span> Arena de Partidas Spirits
           </h1>
           <p className="text-sm text-slate-400 mt-1">
-            Mantenha o registro de todos os treinos internos, confrontos de torneios regionais e eventos competitivos.
+            Registro de treinos internos, confrontos de torneios competitivos e leitor interativo de logs do Pokémon TCG Live.
           </p>
         </div>
         
-        <div className="flex flex-wrap gap-3">
-          {setActiveTab && (
-            <button
-              onClick={() => setActiveTab('trainerlog')}
-              className="px-4 py-2 bg-slate-850 hover:bg-slate-800 text-purple-300 border border-purple-500/30 rounded-lg font-bold text-sm flex items-center gap-2 cursor-pointer transition-all duration-300 shadow-md"
-            >
-              <FileText className="w-4 h-4 text-emerald-400" /> ⚡ TrainerLog (Replay PTCGL)
-            </button>
-          )}
-
-          {selectedMatches.length > 0 && (
+        <div className="flex flex-wrap items-center gap-3">
+          {activeSection === 'history' && selectedMatches.length > 0 && (
             <button
               id="btn-delete-selected"
               onClick={() => setShowDeleteModal(true)}
@@ -363,6 +360,55 @@ export default function Matches({ currentMember, setActiveTab }: MatchesProps) {
           </button>
         </div>
       </div>
+
+      {/* Sub-tab Navigation (Histórico de Partidas vs Leitor & Replay PTCGL) */}
+      <div className="flex items-center gap-2 bg-slate-900/80 p-1.5 rounded-xl border border-slate-800 w-fit">
+        <button
+          id="subtab-matches-history"
+          onClick={() => setActiveSection('history')}
+          className={`px-4 py-2 rounded-lg text-xs font-bold flex items-center gap-2 transition-all cursor-pointer ${
+            activeSection === 'history'
+              ? 'bg-purple-600 text-white shadow-lg shadow-purple-900/40'
+              : 'text-slate-400 hover:text-slate-200 hover:bg-slate-850'
+          }`}
+        >
+          <Swords className="w-4 h-4" />
+          <span>Histórico de Partidas</span>
+          <span className="text-[10px] bg-slate-950/60 px-1.5 py-0.5 rounded font-mono">
+            {matches.length}
+          </span>
+        </button>
+
+        <button
+          id="subtab-matches-replay"
+          onClick={() => setActiveSection('replay')}
+          className={`px-4 py-2 rounded-lg text-xs font-bold flex items-center gap-2 transition-all cursor-pointer ${
+            activeSection === 'replay'
+              ? 'bg-purple-600 text-white shadow-lg shadow-purple-900/40'
+              : 'text-slate-400 hover:text-slate-200 hover:bg-slate-850'
+          }`}
+        >
+          <FileText className="w-4 h-4 text-emerald-400" />
+          <span>Leitor & Replay PTCGL</span>
+          <span className="text-[10px] bg-emerald-500/20 text-emerald-300 px-1.5 py-0.5 rounded uppercase font-mono font-bold">
+            Interativo
+          </span>
+        </button>
+      </div>
+
+      {/* CONDITIONAL CONTENT: REPLAY PTCGL OR MATCH HISTORY */}
+      {activeSection === 'replay' ? (
+        <div id="ptcgl-replay-container" className="animate-fade-in">
+          <TrainerLog 
+            currentMember={currentMember} 
+            onSyncMatch={() => {
+              loadMatches();
+              if (onSyncMatch) onSyncMatch();
+            }} 
+          />
+        </div>
+      ) : (
+        <div id="match-history-container" className="space-y-6 animate-fade-in">
 
       {/* Filter panel */}
       <div className="bg-slate-900/60 border border-slate-800 p-4 rounded-xl flex flex-wrap gap-4 items-center justify-between">

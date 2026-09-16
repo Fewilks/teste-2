@@ -35,7 +35,7 @@ const metaDecks = [
     archetype: 'Pikachu ex / Latias ex / Magneton',
     share: 18.2,
     winRate: 55.4,
-    imageUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/25.png',
+    imageUrl: 'https://images.pokemontcg.io/sv8/57.png',
     updatedAt: '2024-11-08',
     description: 'O deck do momento após Surging Sparks. Pikachu ex bate 300 de dano e previne nocaute com vida cheia (habilidade Resolute Heart), energizado instantaneamente pela habilidade Overcharge do Magneton.',
     cards: [
@@ -77,7 +77,7 @@ Energy: 12
     archetype: 'Regidrago VSTAR / Teal Mask Ogerpon',
     share: 14.5,
     winRate: 53.8,
-    imageUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/895.png',
+    imageUrl: 'https://images.pokemontcg.io/swsh12/136.png',
     updatedAt: '2023-06-09',
     description: 'Extremamente versátil. Usa o ataque Apex Dragon para copiar ataques de qualquer dragão no descarte (como Giratina VSTAR ou Noivern ex), energizado rapidamente por Teal Mask Ogerpon ex.',
     cards: [
@@ -123,7 +123,7 @@ Energy: 12
     archetype: 'Raging Bolt ex / Teal Mask Ogerpon',
     share: 13.2,
     winRate: 52.9,
-    imageUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/1021.png',
+    imageUrl: 'https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/tpci/TEF/TEF_123_R_EN_LG.png',
     updatedAt: '2024-03-22',
     description: 'Dano explosivo ilimitado. Descarta energias em jogo para causar 70 de dano por energia, utilizando Ogerpon para acelerar energias de Grama e puxar cartas adicionais.',
     cards: [
@@ -169,7 +169,7 @@ Energy: 13
     archetype: 'Terapagos ex / Pidgeot ex / Dusknoir',
     share: 15.1,
     winRate: 53.6,
-    imageUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/1024.png',
+    imageUrl: 'https://images.pokemontcg.io/sv7/128.png',
     updatedAt: '2024-09-13',
     description: 'Utiliza Area Zero Underdepths para expandir o banco para 8 Pokémons, aumentando o dano do Unified Beatdown de Terapagos ex para 240. Dusknoir oferece nocautes surpresa com Cursed Blast.',
     cards: [
@@ -212,7 +212,7 @@ Energy: 12
     archetype: 'Ceruledge ex / Dusknoir / Pecharunt',
     share: 12.8,
     winRate: 52.8,
-    imageUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/937.png',
+    imageUrl: 'https://images.pokemontcg.io/sv8/36.png',
     updatedAt: '2024-11-08',
     description: 'Descarte em massa de energias usando Earthen Vessel e Professor Sada. O ataque de Ceruledge ex causa 30 de dano para cada energia na pilha de descarte, atingindo números avassaladores rapidamente.',
     cards: [
@@ -252,7 +252,7 @@ Energy: 12
     archetype: 'Dragapult ex / Pidgeot ex',
     share: 10.4,
     winRate: 51.9,
-    imageUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/887.png',
+    imageUrl: 'https://images.pokemontcg.io/sv6/130.png',
     updatedAt: '2024-05-24',
     description: 'Dano cirúrgico. Com o ataque Phantom Dive, causa 200 de dano no ativo e distribui 6 contadores de dano no banco adversário. Pidgeot ex oferece busca irrestrita.',
     cards: [
@@ -299,87 +299,87 @@ Energy: 10
 const fallbackCards = [
   // --- NOVA ERA MEGA EVOLUÇÃO (Lançadas a partir de 2025 para frente) ---
   // Heróis Excelsos (Mega Evolution: Ascended Heroes - ASC - 2026)
-  { id: 'asc-085', name: 'Mega Lucario ex', imageUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/10059.png', setCode: 'asc', setName: 'Heróis Excelsos (Ascended Heroes)', setNumber: '085' },
-  { id: 'asc-120', name: 'Mega Lucario ex (Ilustração Especial Rara)', imageUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/10059.png', setCode: 'asc', setName: 'Heróis Excelsos (Ascended Heroes)', setNumber: '120' },
-  { id: 'asc-092', name: 'Mega Gardevoir ex', imageUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/10051.png', setCode: 'asc', setName: 'Heróis Excelsos (Ascended Heroes)', setNumber: '092' },
-  { id: 'asc-068', name: 'Mega Greninja ex', imageUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/658.png', setCode: 'asc', setName: 'Heróis Excelsos (Ascended Heroes)', setNumber: '068' },
-  { id: 'asc-010', name: 'Mega Meganium ex', imageUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/154.png', setCode: 'asc', setName: 'Heróis Excelsos (Ascended Heroes)', setNumber: '010' },
-  { id: 'asc-024', name: 'Mega Feraligatr ex', imageUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/160.png', setCode: 'asc', setName: 'Heróis Excelsos (Ascended Heroes)', setNumber: '024' },
-  { id: 'asc-035', name: 'Mega Emboar ex', imageUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/500.png', setCode: 'asc', setName: 'Heróis Excelsos (Ascended Heroes)', setNumber: '035' },
-  { id: 'asc-101', name: 'Zygarde ex', imageUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/10118.png', setCode: 'asc', setName: 'Heróis Excelsos (Ascended Heroes)', setNumber: '101' },
-  { id: 'asc-112', name: 'Treinador AZ & Floette Eterna', imageUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/670.png', setCode: 'asc', setName: 'Heróis Excelsos (Ascended Heroes)', setNumber: '112' },
+  { id: 'asc-085', name: 'Mega Lucario ex', imageUrl: 'https://images.pokemontcg.io/xy3/55.png', setCode: 'asc', setName: 'Heróis Excelsos (Ascended Heroes)', setNumber: '085' },
+  { id: 'asc-120', name: 'Mega Lucario ex (Ilustração Especial Rara)', imageUrl: 'https://images.pokemontcg.io/xy3/113.png', setCode: 'asc', setName: 'Heróis Excelsos (Ascended Heroes)', setNumber: '120' },
+  { id: 'asc-092', name: 'Mega Gardevoir ex', imageUrl: 'https://images.pokemontcg.io/xy11/112.png', setCode: 'asc', setName: 'Heróis Excelsos (Ascended Heroes)', setNumber: '092' },
+  { id: 'asc-068', name: 'Mega Greninja ex', imageUrl: 'https://images.pokemontcg.io/sv6/106.png', setCode: 'asc', setName: 'Heróis Excelsos (Ascended Heroes)', setNumber: '068' },
+  { id: 'asc-010', name: 'Mega Meganium ex', imageUrl: 'https://images.pokemontcg.io/col1/11.png', setCode: 'asc', setName: 'Heróis Excelsos (Ascended Heroes)', setNumber: '010' },
+  { id: 'asc-024', name: 'Mega Feraligatr ex', imageUrl: 'https://images.pokemontcg.io/col1/9.png', setCode: 'asc', setName: 'Heróis Excelsos (Ascended Heroes)', setNumber: '024' },
+  { id: 'asc-035', name: 'Mega Emboar ex', imageUrl: 'https://images.pokemontcg.io/bw1/19.png', setCode: 'asc', setName: 'Heróis Excelsos (Ascended Heroes)', setNumber: '035' },
+  { id: 'asc-101', name: 'Zygarde ex', imageUrl: 'https://images.pokemontcg.io/xy10/54.png', setCode: 'asc', setName: 'Heróis Excelsos (Ascended Heroes)', setNumber: '101' },
+  { id: 'asc-112', name: 'Treinador AZ & Floette Eterna', imageUrl: 'https://images.pokemontcg.io/xy4/91.png', setCode: 'asc', setName: 'Heróis Excelsos (Ascended Heroes)', setNumber: '112' },
 
   // Fogo Fantasmagórico (Mega Evolution: Phantasmal Flames - PFL - 2025)
-  { id: 'pfl-013', name: 'Mega Charizard X ex', imageUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/10034.png', setCode: 'pfl', setName: 'Fogo Fantasmagórico (Phantasmal Flames)', setNumber: '013' },
-  { id: 'pfl-130', name: 'Mega Charizard X ex (Ilustração Rara)', imageUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/10034.png', setCode: 'pfl', setName: 'Fogo Fantasmagórico (Phantasmal Flames)', setNumber: '130' },
-  { id: 'pfl-025', name: 'Mega Blaziken ex', imageUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/10050.png', setCode: 'pfl', setName: 'Fogo Fantasmagórico (Phantasmal Flames)', setNumber: '025' },
-  { id: 'pfl-038', name: 'Mega Camerupt ex', imageUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/10070.png', setCode: 'pfl', setName: 'Fogo Fantasmagórico (Phantasmal Flames)', setNumber: '038' },
-  { id: 'pfl-045', name: 'Mega Houndoom ex', imageUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/10048.png', setCode: 'pfl', setName: 'Fogo Fantasmagórico (Phantasmal Flames)', setNumber: '045' },
-  { id: 'pfl-052', name: 'Ceruledge ex', imageUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/937.png', setCode: 'pfl', setName: 'Fogo Fantasmagórico (Phantasmal Flames)', setNumber: '052' },
-  { id: 'pfl-060', name: 'Chandelure ex', imageUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/609.png', setCode: 'pfl', setName: 'Fogo Fantasmagórico (Phantasmal Flames)', setNumber: '060' },
+  { id: 'pfl-013', name: 'Mega Charizard X ex', imageUrl: 'https://images.pokemontcg.io/xy2/13.png', setCode: 'pfl', setName: 'Fogo Fantasmagórico (Phantasmal Flames)', setNumber: '013' },
+  { id: 'pfl-130', name: 'Mega Charizard X ex (Ilustração Rara)', imageUrl: 'https://images.pokemontcg.io/xy2/107.png', setCode: 'pfl', setName: 'Fogo Fantasmagórico (Phantasmal Flames)', setNumber: '130' },
+  { id: 'pfl-025', name: 'Mega Blaziken ex', imageUrl: 'https://images.pokemontcg.io/xyp/XY86.png', setCode: 'pfl', setName: 'Fogo Fantasmagórico (Phantasmal Flames)', setNumber: '025' },
+  { id: 'pfl-038', name: 'Mega Camerupt ex', imageUrl: 'https://images.pokemontcg.io/xyp/XY198.png', setCode: 'pfl', setName: 'Fogo Fantasmagórico (Phantasmal Flames)', setNumber: '038' },
+  { id: 'pfl-045', name: 'Mega Houndoom ex', imageUrl: 'https://images.pokemontcg.io/xy8/22.png', setCode: 'pfl', setName: 'Fogo Fantasmagórico (Phantasmal Flames)', setNumber: '045' },
+  { id: 'pfl-052', name: 'Ceruledge ex', imageUrl: 'https://images.pokemontcg.io/sv8/36.png', setCode: 'pfl', setName: 'Fogo Fantasmagórico (Phantasmal Flames)', setNumber: '052' },
+  { id: 'pfl-060', name: 'Chandelure ex', imageUrl: 'https://images.pokemontcg.io/swsh8/39.png', setCode: 'pfl', setName: 'Fogo Fantasmagórico (Phantasmal Flames)', setNumber: '060' },
 
   // Ordem Perfeita (Mega Evolution: Perfect Order - POR - 2026)
-  { id: 'por-001', name: 'Mega Zygarde Forma Completa ex', imageUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/10118.png', setCode: 'por', setName: 'Ordem Perfeita (Perfect Order)', setNumber: '001' },
-  { id: 'por-028', name: 'Mega Clefable ex', imageUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/36.png', setCode: 'por', setName: 'Ordem Perfeita (Perfect Order)', setNumber: '028' },
-  { id: 'por-042', name: 'Mega Starmie ex', imageUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/121.png', setCode: 'por', setName: 'Ordem Perfeita (Perfect Order)', setNumber: '042' },
-  { id: 'por-058', name: 'Mega Absol ex', imageUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/10057.png', setCode: 'por', setName: 'Ordem Perfeita (Perfect Order)', setNumber: '058' },
-  { id: 'por-072', name: 'Mega Steelix ex', imageUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/10072.png', setCode: 'por', setName: 'Ordem Perfeita (Perfect Order)', setNumber: '072' },
-  { id: 'por-089', name: 'Mega Metagross ex', imageUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/10076.png', setCode: 'por', setName: 'Ordem Perfeita (Perfect Order)', setNumber: '089' },
-  { id: 'por-095', name: 'Xerneas ex', imageUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/716.png', setCode: 'por', setName: 'Ordem Perfeita (Perfect Order)', setNumber: '095' },
-  { id: 'por-104', name: 'Yveltal ex', imageUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/717.png', setCode: 'por', setName: 'Ordem Perfeita (Perfect Order)', setNumber: '104' },
+  { id: 'por-001', name: 'Mega Zygarde Forma Completa ex', imageUrl: 'https://images.pokemontcg.io/xy10/54.png', setCode: 'por', setName: 'Ordem Perfeita (Perfect Order)', setNumber: '001' },
+  { id: 'por-028', name: 'Mega Clefable ex', imageUrl: 'https://images.pokemontcg.io/sv4/82.png', setCode: 'por', setName: 'Ordem Perfeita (Perfect Order)', setNumber: '028' },
+  { id: 'por-042', name: 'Mega Starmie ex', imageUrl: 'https://images.pokemontcg.io/sv3pt5/121.png', setCode: 'por', setName: 'Ordem Perfeita (Perfect Order)', setNumber: '042' },
+  { id: 'por-058', name: 'Mega Absol ex', imageUrl: 'https://images.pokemontcg.io/xyp/XY63.png', setCode: 'por', setName: 'Ordem Perfeita (Perfect Order)', setNumber: '058' },
+  { id: 'por-072', name: 'Mega Steelix ex', imageUrl: 'https://images.pokemontcg.io/xy11/68.png', setCode: 'por', setName: 'Ordem Perfeita (Perfect Order)', setNumber: '072' },
+  { id: 'por-089', name: 'Mega Metagross ex', imageUrl: 'https://images.pokemontcg.io/xyp/XY35.png', setCode: 'por', setName: 'Ordem Perfeita (Perfect Order)', setNumber: '089' },
+  { id: 'por-095', name: 'Xerneas ex', imageUrl: 'https://images.pokemontcg.io/xy1/96.png', setCode: 'por', setName: 'Ordem Perfeita (Perfect Order)', setNumber: '095' },
+  { id: 'por-104', name: 'Yveltal ex', imageUrl: 'https://images.pokemontcg.io/xy1/78.png', setCode: 'por', setName: 'Ordem Perfeita (Perfect Order)', setNumber: '104' },
 
   // Mega Evolução Base (Mega Evolution - MEG - 2025)
-  { id: 'meg-015', name: 'Mega Charizard Y ex', imageUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/10035.png', setCode: 'meg', setName: 'Mega Evolução (Mega Evolution)', setNumber: '015' },
-  { id: 'meg-002', name: 'Mega Venusaur ex', imageUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/10033.png', setCode: 'meg', setName: 'Mega Evolução (Mega Evolution)', setNumber: '002' },
-  { id: 'meg-031', name: 'Mega Blastoise ex', imageUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/10036.png', setCode: 'meg', setName: 'Mega Evolução (Mega Evolution)', setNumber: '031' },
-  { id: 'meg-049', name: 'Mega Gengar ex', imageUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/10038.png', setCode: 'meg', setName: 'Mega Evolução (Mega Evolution)', setNumber: '049' },
-  { id: 'meg-088', name: 'Mega Rayquaza ex', imageUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/10079.png', setCode: 'meg', setName: 'Mega Evolução (Mega Evolution)', setNumber: '088' },
-  { id: 'meg-099', name: 'Mega Mewtwo X ex', imageUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/10043.png', setCode: 'meg', setName: 'Mega Evolução (Mega Evolution)', setNumber: '099' },
-  { id: 'meg-100', name: 'Mega Mewtwo Y ex', imageUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/10044.png', setCode: 'meg', setName: 'Mega Evolução (Mega Evolution)', setNumber: '100' },
-  { id: 'meg-077', name: 'Mega Tyranitar ex', imageUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/10049.png', setCode: 'meg', setName: 'Mega Evolução (Mega Evolution)', setNumber: '077' },
-  { id: 'meg-065', name: 'Mega Scizor ex', imageUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/10046.png', setCode: 'meg', setName: 'Mega Evolução (Mega Evolution)', setNumber: '065' },
-  { id: 'meg-082', name: 'Mega Aerodactyl ex', imageUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/10042.png', setCode: 'meg', setName: 'Mega Evolução (Mega Evolution)', setNumber: '082' },
-  { id: 'meg-090', name: 'Mega Salamence ex', imageUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/10075.png', setCode: 'meg', setName: 'Mega Evolução (Mega Evolution)', setNumber: '090' },
-  { id: 'meg-084', name: 'Mega Lopunny ex', imageUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/10088.png', setCode: 'meg', setName: 'Mega Evolução (Mega Evolution)', setNumber: '084' },
-  { id: 'meg-080', name: 'Mega Gallade ex', imageUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/10068.png', setCode: 'meg', setName: 'Mega Evolução (Mega Evolution)', setNumber: '080' },
-  { id: 'meg-083', name: 'Mega Diancie ex', imageUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/10077.png', setCode: 'meg', setName: 'Mega Evolução (Mega Evolution)', setNumber: '083' },
-  { id: 'meg-091', name: 'Mega Latias ex', imageUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/10062.png', setCode: 'meg', setName: 'Mega Evolução (Mega Evolution)', setNumber: '091' },
-  { id: 'meg-092', name: 'Mega Latios ex', imageUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/10063.png', setCode: 'meg', setName: 'Mega Evolução (Mega Evolution)', setNumber: '092' },
-  { id: 'meg-016', name: 'Budew', imageUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/406.png', setCode: 'meg', setName: 'Mega Evolução (Mega Evolution)', setNumber: '016' },
-  { id: 'meg-221', name: 'Budew (Ilustração Rara)', imageUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/406.png', setCode: 'meg', setName: 'Mega Evolução (Mega Evolution)', setNumber: '221' },
+  { id: 'meg-015', name: 'Mega Charizard Y ex', imageUrl: 'https://images.pokemontcg.io/xy2/108.png', setCode: 'meg', setName: 'Mega Evolução (Mega Evolution)', setNumber: '015' },
+  { id: 'meg-002', name: 'Mega Venusaur ex', imageUrl: 'https://images.pokemontcg.io/xy1/2.png', setCode: 'meg', setName: 'Mega Evolução (Mega Evolution)', setNumber: '002' },
+  { id: 'meg-031', name: 'Mega Blastoise ex', imageUrl: 'https://images.pokemontcg.io/xy1/30.png', setCode: 'meg', setName: 'Mega Evolução (Mega Evolution)', setNumber: '031' },
+  { id: 'meg-049', name: 'Mega Gengar ex', imageUrl: 'https://images.pokemontcg.io/xy4/35.png', setCode: 'meg', setName: 'Mega Evolução (Mega Evolution)', setNumber: '049' },
+  { id: 'meg-088', name: 'Mega Rayquaza ex', imageUrl: 'https://images.pokemontcg.io/xy6/61.png', setCode: 'meg', setName: 'Mega Evolução (Mega Evolution)', setNumber: '088' },
+  { id: 'meg-099', name: 'Mega Mewtwo X ex', imageUrl: 'https://images.pokemontcg.io/xy8/63.png', setCode: 'meg', setName: 'Mega Evolução (Mega Evolution)', setNumber: '099' },
+  { id: 'meg-100', name: 'Mega Mewtwo Y ex', imageUrl: 'https://images.pokemontcg.io/xy8/64.png', setCode: 'meg', setName: 'Mega Evolução (Mega Evolution)', setNumber: '100' },
+  { id: 'meg-077', name: 'Mega Tyranitar ex', imageUrl: 'https://images.pokemontcg.io/xy7/43.png', setCode: 'meg', setName: 'Mega Evolução (Mega Evolution)', setNumber: '077' },
+  { id: 'meg-065', name: 'Mega Scizor ex', imageUrl: 'https://images.pokemontcg.io/xy9/77.png', setCode: 'meg', setName: 'Mega Evolução (Mega Evolution)', setNumber: '065' },
+  { id: 'meg-082', name: 'Mega Aerodactyl ex', imageUrl: 'https://images.pokemontcg.io/xyp/XY98.png', setCode: 'meg', setName: 'Mega Evolução (Mega Evolution)', setNumber: '082' },
+  { id: 'meg-090', name: 'Mega Salamence ex', imageUrl: 'https://images.pokemontcg.io/xyp/XY171.png', setCode: 'meg', setName: 'Mega Evolução (Mega Evolution)', setNumber: '090' },
+  { id: 'meg-084', name: 'Mega Lopunny ex', imageUrl: 'https://images.pokemontcg.io/sm12/165.png', setCode: 'meg', setName: 'Mega Evolução (Mega Evolution)', setNumber: '084' },
+  { id: 'meg-080', name: 'Mega Gallade ex', imageUrl: 'https://images.pokemontcg.io/xy6/35.png', setCode: 'meg', setName: 'Mega Evolução (Mega Evolution)', setNumber: '080' },
+  { id: 'meg-083', name: 'Mega Diancie ex', imageUrl: 'https://images.pokemontcg.io/xyp/XY44.png', setCode: 'meg', setName: 'Mega Evolução (Mega Evolution)', setNumber: '083' },
+  { id: 'meg-091', name: 'Mega Latias ex', imageUrl: 'https://images.pokemontcg.io/xy6/59.png', setCode: 'meg', setName: 'Mega Evolução (Mega Evolution)', setNumber: '091' },
+  { id: 'meg-092', name: 'Mega Latios ex', imageUrl: 'https://images.pokemontcg.io/xy6/59.png', setCode: 'meg', setName: 'Mega Evolução (Mega Evolution)', setNumber: '092' },
+  { id: 'meg-016', name: 'Budew', imageUrl: 'https://images.pokemontcg.io/dp7/33.png', setCode: 'meg', setName: 'Mega Evolução (Mega Evolution)', setNumber: '016' },
+  { id: 'meg-221', name: 'Budew (Ilustração Rara)', imageUrl: 'https://images.pokemontcg.io/dp7/33.png', setCode: 'meg', setName: 'Mega Evolução (Mega Evolution)', setNumber: '221' },
 
   // Evoluções Prismáticas (Prismatic Evolutions - PRE - 2025)
-  { id: 'pre-075', name: 'Eevee ex (Stellar)', imageUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/133.png', setCode: 'pre', setName: 'Evoluções Prismáticas (Prismatic Evolutions)', setNumber: '075' },
-  { id: 'pre-060', name: 'Umbreon ex', imageUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/197.png', setCode: 'pre', setName: 'Evoluções Prismáticas (Prismatic Evolutions)', setNumber: '060' },
-  { id: 'pre-042', name: 'Sylveon ex', imageUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/700.png', setCode: 'pre', setName: 'Evoluções Prismáticas (Prismatic Evolutions)', setNumber: '042' },
-  { id: 'pre-035', name: 'Espeon ex', imageUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/196.png', setCode: 'pre', setName: 'Evoluções Prismáticas (Prismatic Evolutions)', setNumber: '035' },
-  { id: 'pre-020', name: 'Vaporeon ex', imageUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/134.png', setCode: 'pre', setName: 'Evoluções Prismáticas (Prismatic Evolutions)', setNumber: '020' },
-  { id: 'pre-025', name: 'Jolteon ex', imageUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/135.png', setCode: 'pre', setName: 'Evoluções Prismáticas (Prismatic Evolutions)', setNumber: '025' },
-  { id: 'pre-015', name: 'Flareon ex', imageUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/136.png', setCode: 'pre', setName: 'Evoluções Prismáticas (Prismatic Evolutions)', setNumber: '015' },
+  { id: 'pre-075', name: 'Eevee ex (Stellar)', imageUrl: 'https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/tpci/PRE/PRE_075_R_EN_LG.png', setCode: 'pre', setName: 'Evoluções Prismáticas (Prismatic Evolutions)', setNumber: '075' },
+  { id: 'pre-060', name: 'Umbreon ex', imageUrl: 'https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/tpci/PRE/PRE_060_R_EN_LG.png', setCode: 'pre', setName: 'Evoluções Prismáticas (Prismatic Evolutions)', setNumber: '060' },
+  { id: 'pre-042', name: 'Sylveon ex', imageUrl: 'https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/tpci/PRE/PRE_042_R_EN_LG.png', setCode: 'pre', setName: 'Evoluções Prismáticas (Prismatic Evolutions)', setNumber: '042' },
+  { id: 'pre-035', name: 'Espeon ex', imageUrl: 'https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/tpci/PRE/PRE_035_R_EN_LG.png', setCode: 'pre', setName: 'Evoluções Prismáticas (Prismatic Evolutions)', setNumber: '035' },
+  { id: 'pre-020', name: 'Vaporeon ex', imageUrl: 'https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/tpci/PRE/PRE_020_R_EN_LG.png', setCode: 'pre', setName: 'Evoluções Prismáticas (Prismatic Evolutions)', setNumber: '020' },
+  { id: 'pre-025', name: 'Jolteon ex', imageUrl: 'https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/tpci/PRE/PRE_025_R_EN_LG.png', setCode: 'pre', setName: 'Evoluções Prismáticas (Prismatic Evolutions)', setNumber: '025' },
+  { id: 'pre-015', name: 'Flareon ex', imageUrl: 'https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/tpci/PRE/PRE_015_R_EN_LG.png', setCode: 'pre', setName: 'Evoluções Prismáticas (Prismatic Evolutions)', setNumber: '015' },
 
   // Jornada em Conjunto & Rivais Destinados (JTG & DRI - 2025)
-  { id: 'jtg-010', name: 'Red\'s Pikachu ex', imageUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/25.png', setCode: 'jtg', setName: 'Jornada em Conjunto (Journey Together)', setNumber: '010' },
-  { id: 'jtg-022', name: 'N\'s Reshiram ex', imageUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/643.png', setCode: 'jtg', setName: 'Jornada em Conjunto (Journey Together)', setNumber: '022' },
-  { id: 'jtg-045', name: 'Cynthia\'s Garchomp ex', imageUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/445.png', setCode: 'jtg', setName: 'Jornada em Conjunto (Journey Together)', setNumber: '045' },
-  { id: 'dri-020', name: 'Red\'s Charizard ex', imageUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/6.png', setCode: 'dri', setName: 'Rivais Destinados (Destined Rivals)', setNumber: '020' },
-  { id: 'dri-015', name: 'Blue\'s Blastoise ex', imageUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/9.png', setCode: 'dri', setName: 'Rivais Destinados (Destined Rivals)', setNumber: '015' },
-  { id: 'dri-030', name: 'Ethan\'s Lugia ex', imageUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/249.png', setCode: 'dri', setName: 'Rivais Destinados (Destined Rivals)', setNumber: '030' },
-  { id: 'blk-050', name: 'Black Kyurem ex', imageUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/646.png', setCode: 'blk', setName: 'Raio Negro (Black Bolt)', setNumber: '050' },
-  { id: 'wht-050', name: 'White Kyurem ex', imageUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/646.png', setCode: 'wht', setName: 'Chama Branca (White Flare)', setNumber: '050' },
+  { id: 'jtg-010', name: 'Red\'s Pikachu ex', imageUrl: 'https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/tpci/JTG/JTG_010_R_EN_LG.png', setCode: 'jtg', setName: 'Jornada em Conjunto (Journey Together)', setNumber: '010' },
+  { id: 'jtg-022', name: 'N\'s Reshiram ex', imageUrl: 'https://images.pokemontcg.io/bw11/114.png', setCode: 'jtg', setName: 'Jornada em Conjunto (Journey Together)', setNumber: '022' },
+  { id: 'jtg-045', name: 'Cynthia\'s Garchomp ex', imageUrl: 'https://images.pokemontcg.io/sm115/45.png', setCode: 'jtg', setName: 'Jornada em Conjunto (Journey Together)', setNumber: '045' },
+  { id: 'dri-020', name: 'Red\'s Charizard ex', imageUrl: 'https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/tpci/DRI/DRI_020_R_EN_LG.png', setCode: 'dri', setName: 'Rivais Destinados (Destined Rivals)', setNumber: '020' },
+  { id: 'dri-015', name: 'Blue\'s Blastoise ex', imageUrl: 'https://images.pokemontcg.io/xy1/30.png', setCode: 'dri', setName: 'Rivais Destinados (Destined Rivals)', setNumber: '015' },
+  { id: 'dri-030', name: 'Ethan\'s Lugia ex', imageUrl: 'https://images.pokemontcg.io/xy10/78.png', setCode: 'dri', setName: 'Rivais Destinados (Destined Rivals)', setNumber: '030' },
+  { id: 'blk-050', name: 'Black Kyurem ex', imageUrl: 'https://images.pokemontcg.io/bw7/101.png', setCode: 'blk', setName: 'Raio Negro (Black Bolt)', setNumber: '050' },
+  { id: 'wht-050', name: 'White Kyurem ex', imageUrl: 'https://images.pokemontcg.io/bw7/103.png', setCode: 'wht', setName: 'Chama Branca (White Flare)', setNumber: '050' },
 
   // Staples Competitivos do Formato Standard Atual (Scarlet & Violet)
-  { id: 'sv3-125', name: 'Charizard ex', imageUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/6.png', setCode: 'sv3', setName: 'Obsidian Flames', setNumber: '125' },
-  { id: 'sv6-130', name: 'Dragapult ex', imageUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/887.png', setCode: 'sv6', setName: 'Twilight Masquerade', setNumber: '130' },
-  { id: 'sv3-164', name: 'Pidgeot ex', imageUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/18.png', setCode: 'sv3', setName: 'Obsidian Flames', setNumber: '164' },
-  { id: 'sv6pt5-96', name: 'Fezandipiti ex', imageUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/1014.png', setCode: 'sv6pt5', setName: 'Shrouded Fable', setNumber: '96' },
-  { id: 'sv7-128', name: 'Terapagos ex', imageUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/1024.png', setCode: 'sv7', setName: 'Stellar Crown', setNumber: '128' },
-  { id: 'sv8-57', name: 'Pikachu ex', imageUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/25.png', setCode: 'sv8', setName: 'Surging Sparks', setNumber: '57' },
-  { id: 'sv4-139', name: 'Gholdengo ex', imageUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/1000.png', setCode: 'sv4', setName: 'Paradox Rift', setNumber: '139' },
-  { id: 'sv2-185', name: 'Iono', imageUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png', setCode: 'sv2', setName: 'Paldea Evolved', setNumber: '185' },
-  { id: 'sv1-166', name: 'Arven', imageUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png', setCode: 'sv1', setName: 'Scarlet & Violet Base', setNumber: '166' },
-  { id: 'sv5-144', name: 'Buddy-Buddy Poffin', imageUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poffin-case.png', setCode: 'sv5', setName: 'Temporal Forces', setNumber: '144' },
-  { id: 'sv5-157', name: 'Prime Catcher', imageUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png', setCode: 'sv5', setName: 'Temporal Forces', setNumber: '157' },
-  { id: 'sv7-131', name: 'Area Zero Underdepths', imageUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png', setCode: 'sv7', setName: 'Stellar Crown', setNumber: '131' }
+  { id: 'sv3-125', name: 'Charizard ex', imageUrl: 'https://images.pokemontcg.io/sv3/125.png', setCode: 'sv3', setName: 'Obsidian Flames', setNumber: '125' },
+  { id: 'sv6-130', name: 'Dragapult ex', imageUrl: 'https://images.pokemontcg.io/sv6/130.png', setCode: 'sv6', setName: 'Twilight Masquerade', setNumber: '130' },
+  { id: 'sv3-164', name: 'Pidgeot ex', imageUrl: 'https://images.pokemontcg.io/sv3/164.png', setCode: 'sv3', setName: 'Obsidian Flames', setNumber: '164' },
+  { id: 'sv6pt5-96', name: 'Fezandipiti ex', imageUrl: 'https://images.pokemontcg.io/sv6pt5/38.png', setCode: 'sv6pt5', setName: 'Shrouded Fable', setNumber: '96' },
+  { id: 'sv7-128', name: 'Terapagos ex', imageUrl: 'https://images.pokemontcg.io/sv7/128.png', setCode: 'sv7', setName: 'Stellar Crown', setNumber: '128' },
+  { id: 'sv8-57', name: 'Pikachu ex', imageUrl: 'https://images.pokemontcg.io/sv8/57.png', setCode: 'sv8', setName: 'Surging Sparks', setNumber: '57' },
+  { id: 'sv4-139', name: 'Gholdengo ex', imageUrl: 'https://images.pokemontcg.io/sv4/139.png', setCode: 'sv4', setName: 'Paradox Rift', setNumber: '139' },
+  { id: 'sv2-185', name: 'Iono', imageUrl: 'https://images.pokemontcg.io/sv2/185.png', setCode: 'sv2', setName: 'Paldea Evolved', setNumber: '185' },
+  { id: 'sv1-166', name: 'Arven', imageUrl: 'https://images.pokemontcg.io/sv1/166.png', setCode: 'sv1', setName: 'Scarlet & Violet Base', setNumber: '166' },
+  { id: 'sv5-144', name: 'Buddy-Buddy Poffin', imageUrl: 'https://images.pokemontcg.io/sv5/144.png', setCode: 'sv5', setName: 'Temporal Forces', setNumber: '144' },
+  { id: 'sv5-157', name: 'Prime Catcher', imageUrl: 'https://images.pokemontcg.io/sv5/157.png', setCode: 'sv5', setName: 'Temporal Forces', setNumber: '157' },
+  { id: 'sv7-131', name: 'Area Zero Underdepths', imageUrl: 'https://images.pokemontcg.io/sv7/131.png', setCode: 'sv7', setName: 'Stellar Crown', setNumber: '131' }
 ];
 
 // Helper to look up an image link or search pokemontcg.io
@@ -581,26 +581,32 @@ app.get('/api/pokemon/meta', async (req, res) => {
             }));
 
             // Choose image
-            let imageUrl = 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/25.png';
+            let imageUrl = 'https://images.pokemontcg.io/sv8/57.png';
             if (item.decklist.pokemon && item.decklist.pokemon.length > 0) {
               const firstPokemon = item.decklist.pokemon[0];
-              const nameLower = firstPokemon.name.toLowerCase();
-              if (nameLower.includes('pikachu')) imageUrl = 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/25.png';
-              else if (nameLower.includes('charizard')) imageUrl = 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/6.png';
-              else if (nameLower.includes('gholdengo')) imageUrl = 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/1000.png';
-              else if (nameLower.includes('moon')) imageUrl = 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/1005.png';
-              else if (nameLower.includes('gardevoir')) imageUrl = 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/282.png';
-              else if (nameLower.includes('bolt')) imageUrl = 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/1021.png';
-              else if (nameLower.includes('drago')) imageUrl = 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/895.png';
-              else if (nameLower.includes('terapagos')) imageUrl = 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/1024.png';
-              else if (nameLower.includes('ceruledge')) imageUrl = 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/937.png';
-              else if (nameLower.includes('dragapult')) imageUrl = 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/887.png';
-              else if (nameLower.includes('miraidon')) imageUrl = 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/1008.png';
-              else if (nameLower.includes('lugia')) imageUrl = 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/249.png';
-              else if (nameLower.includes('pidgeot')) imageUrl = 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/18.png';
-              else if (nameLower.includes('ogerpon')) imageUrl = 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/1017.png';
-              else if (nameLower.includes('greninja')) imageUrl = 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/658.png';
-              else if (nameLower.includes('lucario')) imageUrl = 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/448.png';
+              if (firstPokemon.set && firstPokemon.number) {
+                const s = String(firstPokemon.set).trim().toUpperCase();
+                const num = String(firstPokemon.number).replace(/^[0]+/, '') || '1';
+                imageUrl = `https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/tpci/${s}/${s}_${num.padStart(3, '0')}_R_EN_LG.png`;
+              } else {
+                const nameLower = firstPokemon.name.toLowerCase();
+                if (nameLower.includes('pikachu')) imageUrl = 'https://images.pokemontcg.io/sv8/57.png';
+                else if (nameLower.includes('charizard')) imageUrl = 'https://images.pokemontcg.io/sv3/125.png';
+                else if (nameLower.includes('gholdengo')) imageUrl = 'https://images.pokemontcg.io/sv4/139.png';
+                else if (nameLower.includes('moon')) imageUrl = 'https://images.pokemontcg.io/sv4/124.png';
+                else if (nameLower.includes('gardevoir')) imageUrl = 'https://images.pokemontcg.io/sv1/86.png';
+                else if (nameLower.includes('bolt')) imageUrl = 'https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/tpci/TEF/TEF_123_R_EN_LG.png';
+                else if (nameLower.includes('drago')) imageUrl = 'https://images.pokemontcg.io/swsh12/136.png';
+                else if (nameLower.includes('terapagos')) imageUrl = 'https://images.pokemontcg.io/sv7/128.png';
+                else if (nameLower.includes('ceruledge')) imageUrl = 'https://images.pokemontcg.io/sv8/36.png';
+                else if (nameLower.includes('dragapult')) imageUrl = 'https://images.pokemontcg.io/sv6/130.png';
+                else if (nameLower.includes('miraidon')) imageUrl = 'https://images.pokemontcg.io/sv1/81.png';
+                else if (nameLower.includes('lugia')) imageUrl = 'https://images.pokemontcg.io/swsh12/138.png';
+                else if (nameLower.includes('pidgeot')) imageUrl = 'https://images.pokemontcg.io/sv3/164.png';
+                else if (nameLower.includes('ogerpon')) imageUrl = 'https://images.pokemontcg.io/sv6/25.png';
+                else if (nameLower.includes('greninja')) imageUrl = 'https://images.pokemontcg.io/sv6/106.png';
+                else if (nameLower.includes('lucario')) imageUrl = 'https://images.pokemontcg.io/xy3/55.png';
+              }
             }
 
             // Description
