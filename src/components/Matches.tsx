@@ -410,520 +410,522 @@ export default function Matches({ currentMember, setActiveTab, initialSubTab = '
       ) : (
         <div id="match-history-container" className="space-y-6 animate-fade-in">
 
-      {/* Filter panel */}
-      <div className="bg-slate-900/60 border border-slate-800 p-4 rounded-xl flex flex-wrap gap-4 items-center justify-between">
-        <div className="flex items-center gap-2 text-slate-300 text-sm">
-          <Filter className="w-4 h-4 text-purple-400" />
-          <span>Filtros Rápidos:</span>
-        </div>
-        
-        <div className="flex flex-wrap gap-3">
-          {/* Result Filter */}
-          <div className="flex items-center gap-1.5">
-            <span className="text-xs text-slate-400">Resultado:</span>
-            <select
-              id="filter-result-select"
-              value={filterResult}
-              onChange={(e) => setFilterResult(e.target.value)}
-              className="bg-slate-950 border border-slate-800 text-white text-xs px-2.5 py-1 rounded-md outline-none"
-            >
-              <option value="all">Todos</option>
-              <option value="win">Vitórias</option>
-              <option value="loss">Derrotas</option>
-              <option value="draw">Empates</option>
-            </select>
-          </div>
-
-          {/* Format Filter */}
-          <div className="flex items-center gap-1.5">
-            <span className="text-xs text-slate-400">Formato:</span>
-            <select
-              id="filter-format-select"
-              value={filterFormat}
-              onChange={(e) => setFilterFormat(e.target.value)}
-              className="bg-slate-950 border border-slate-800 text-white text-xs px-2.5 py-1 rounded-md outline-none"
-            >
-              <option value="all">Todos</option>
-              <option value="MD1">Melhor de 1 (MD1)</option>
-              <option value="MD3">Melhor de 3 (MD3)</option>
-              <option value="MD5">Melhor de 5 (MD5)</option>
-            </select>
-          </div>
-
-          {/* My Results Toggle */}
-          <label className="flex items-center gap-2 cursor-pointer select-none border border-slate-800 bg-slate-950/40 px-3 py-1 rounded-md hover:border-purple-500/30 transition-all text-xs text-slate-300">
-            <input
-              type="checkbox"
-              id="filter-only-mine"
-              checked={showOnlyMine}
-              onChange={(e) => setShowOnlyMine(e.target.checked)}
-              className="accent-purple-500 rounded cursor-pointer w-3.5 h-3.5"
-            />
-            <span>Apenas minhas partidas</span>
-          </label>
-
-          {filteredMatches.length > 0 && (
-            <button
-              type="button"
-              onClick={handleSelectAll}
-              className="px-3 py-1 bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-slate-600 rounded-md text-xs text-slate-300 transition-all hover:text-white font-bold cursor-pointer"
-            >
-              {filteredMatches.every(m => selectedMatches.includes(m.id)) ? 'Desmarcar Todas' : 'Selecionar Todas'}
-            </button>
-          )}
-        </div>
-      </div>
-
-      {/* Main List */}
-      {loading ? (
-        <div className="flex flex-col items-center justify-center py-20">
-          <PokemonSprite name="scizor" size="lg" className="animate-spin" />
-          <p className="mt-4 text-purple-300 font-mono text-xs animate-pulse">Consultando registro de combates...</p>
-        </div>
-      ) : filteredMatches.length === 0 ? (
-        <div className="text-center py-16 bg-slate-900/40 rounded-2xl border border-slate-800 text-slate-400">
-          <Swords className="w-12 h-12 text-slate-600 mx-auto mb-3" />
-          <p className="font-bold">Nenhum combate corresponde aos filtros aplicados.</p>
-          <p className="text-xs text-slate-500 mt-1">Experimente mudar as opções de filtros acima.</p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4" id="matches-grid">
-          {filteredMatches.map(match => (
-            <div 
-              key={match.id} 
-              className="bg-slate-900/60 border border-slate-800 hover:border-purple-500/25 rounded-2xl p-5 transition-all flex flex-col justify-between"
-              id={`match-card-${match.id}`}
-            >
-              <div className="space-y-4">
-                {/* Players comparison header */}
-                <div className="flex items-center justify-between gap-2 border-b border-slate-850 pb-3">
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      checked={selectedMatches.includes(match.id)}
-                      onChange={() => handleToggleSelectMatch(match.id)}
-                      className="accent-purple-500 rounded cursor-pointer w-4 h-4 mr-1 shrink-0"
-                    />
-                    <div className="flex items-center gap-3">
-                      <PokemonSprite name={match.player1Sprite} size="sm" />
-                      <div>
-                        <h3 className="text-white font-bold text-sm">{match.player1Name}</h3>
-                        <span className="text-[10px] text-purple-400 font-bold bg-purple-950/40 px-1.5 py-0.5 rounded font-mono">Spirits Team</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="text-xs font-mono font-bold text-slate-500">VS</div>
-
-                  <div className="flex items-center gap-3 text-right">
-                    <div>
-                      <h3 className="text-white font-bold text-sm">{match.player2Name}</h3>
-                      <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded font-mono ${
-                        match.player2IsMember ? 'text-purple-400 bg-purple-950/40' : 'text-slate-400 bg-slate-800'
-                      }`}>
-                        {match.player2IsMember ? 'Spirits Team' : 'Oponente'}
-                      </span>
-                    </div>
-                    <PokemonSprite name={match.player2IsMember ? (members.find(m => m.id === match.player2Id)?.avatarSprite || 'substitute') : 'substitute'} size="sm" />
-                  </div>
-                </div>
-
-                {/* Match deck setups */}
-                <div className="grid grid-cols-2 gap-4 bg-slate-950/40 p-3 rounded-xl border border-slate-850">
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    {/* Archetype Icons */}
-                    <div className="flex -space-x-2 shrink-0">
-                      {getArchetypeSprites(match.deckArchetype).map((spriteName, idx) => (
-                        <div key={idx} className="w-7 h-7 rounded-lg bg-slate-900 border border-slate-850 flex items-center justify-center overflow-hidden shadow-md">
-                          <PokemonSprite name={spriteName} size="sm" className="w-5.5 h-5.5 scale-110" />
-                        </div>
-                      ))}
-                    </div>
-                    <div className="min-w-0">
-                      <div className="text-[9px] text-slate-550 uppercase font-bold">Deck do Spirits</div>
-                      <div className="text-xs font-bold text-slate-200 truncate" title={match.deckName}>{match.deckName}</div>
-                      <div className="text-[10px] text-slate-400 truncate">{match.deckArchetype}</div>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-end gap-2.5 text-right border-l border-slate-900 pl-4 min-w-0">
-                    <div className="min-w-0">
-                      <div className="text-[9px] text-slate-550 uppercase font-bold">Deck Oponente</div>
-                      <div className="text-xs font-bold text-slate-200 truncate" title={match.opponentDeck}>{match.opponentDeck}</div>
-                      <div className="text-[10px] text-slate-400 truncate">{match.opponentDeck}</div>
-                    </div>
-                    {/* Opponent Archetype Icons */}
-                    <div className="flex -space-x-2 shrink-0">
-                      {getArchetypeSprites(match.opponentDeck).map((spriteName, idx) => (
-                        <div key={idx} className="w-7 h-7 rounded-lg bg-slate-900 border border-slate-850 flex items-center justify-center overflow-hidden shadow-md">
-                          <PokemonSprite name={spriteName} size="sm" className="w-5.5 h-5.5 scale-110" />
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Match Notes comment */}
-                {match.notes && (
-                  <div className="bg-slate-900/30 p-2.5 rounded-lg text-xs text-slate-400 italic flex gap-1.5">
-                    <FileText className="w-4 h-4 text-purple-500 shrink-0 mt-0.5" />
-                    <span>"{match.notes}"</span>
-                  </div>
-                )}
-              </div>
-
-              {/* Status details footer */}
-              <div className="flex items-center justify-between border-t border-slate-850 pt-3 mt-4 text-xs">
-                <div className="flex items-center gap-2">
-                  <span className={`px-2.5 py-0.5 rounded-full font-bold uppercase text-[9px] ${
-                    match.result === 'win' ? 'bg-emerald-950 text-emerald-400 border border-emerald-500/20' :
-                    match.result === 'loss' ? 'bg-rose-950 text-rose-400 border border-rose-500/20' :
-                    'bg-slate-800 text-slate-400'
-                  }`}>
-                    {match.result === 'win' ? 'Vitória' : match.result === 'loss' ? 'Derrota' : 'Empate'}
-                  </span>
-                  <span className="text-white font-bold bg-slate-950 px-2 py-0.5 rounded border border-slate-850 font-mono text-xs">{match.score}</span>
-                </div>
-
-                <div className="text-slate-500 flex items-center gap-1 font-mono text-[10px]">
-                  <Calendar className="w-3.5 h-3.5" />
-                  {new Date(match.playedAt).toLocaleDateString('pt-BR')} | {match.format}
-                </div>
-              </div>
-
+          {/* Filter panel */}
+          <div className="bg-slate-900/60 border border-slate-800 p-4 rounded-xl flex flex-wrap gap-4 items-center justify-between">
+            <div className="flex items-center gap-2 text-slate-300 text-sm">
+              <Filter className="w-4 h-4 text-purple-400" />
+              <span>Filtros Rápidos:</span>
             </div>
-          ))}
-        </div>
-      )}
-
-      {/* Form Overlay Modal */}
-      {showFormModal && (
-        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-in" id="register-match-modal">
-          <div className="bg-slate-900 border border-slate-800 w-full max-w-xl rounded-2xl shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
             
-            {/* Header */}
-            <div className="p-5 border-b border-slate-800 flex items-center justify-between bg-gradient-to-r from-purple-900/40 to-slate-900">
-              <div className="flex items-center gap-2">
-                <Swords className="w-5 h-5 text-purple-400" />
-                <h3 className="text-base font-bold text-white">Registrar Partida Competitiva</h3>
-              </div>
-              <button 
-                id="close-form-x"
-                onClick={() => setShowFormModal(false)}
-                className="text-slate-400 hover:text-white transition-all cursor-pointer"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            {/* Form */}
-            <form onSubmit={handleRegisterMatch} className="p-6 overflow-y-auto space-y-4 flex-1">
-              
-              {/* Player 1 selection (Spirits member) */}
-              <div className="space-y-1.5">
-                <label className="block text-xs font-bold text-slate-300 uppercase">Representando Spirits (Jogador 1):</label>
+            <div className="flex flex-wrap gap-3">
+              {/* Result Filter */}
+              <div className="flex items-center gap-1.5">
+                <span className="text-xs text-slate-400">Resultado:</span>
                 <select
-                  id="p1-selector"
-                  value={player1Id}
-                  onChange={(e) => setPlayer1Id(e.target.value)}
-                  className="w-full p-2.5 bg-slate-950 border border-slate-850 focus:border-purple-500 rounded-lg text-white text-sm outline-none"
+                  id="filter-result-select"
+                  value={filterResult}
+                  onChange={(e) => setFilterResult(e.target.value)}
+                  className="bg-slate-950 border border-slate-800 text-white text-xs px-2.5 py-1 rounded-md outline-none"
                 >
-                  {members.map(mem => (
-                    <option key={mem.id} value={mem.id}>{mem.name} ({mem.nickname || 'Sem apelido'})</option>
-                  ))}
+                  <option value="all">Todos</option>
+                  <option value="win">Vitórias</option>
+                  <option value="loss">Derrotas</option>
+                  <option value="draw">Empates</option>
                 </select>
               </div>
 
-              {/* Player 2 selection */}
-              <div className="space-y-2 bg-slate-950/40 p-3 rounded-xl border border-slate-850">
-                <div className="flex items-center justify-between">
-                  <label className="block text-xs font-bold text-slate-300 uppercase">Oponente (Jogador 2):</label>
-                  
-                  <label className="flex items-center gap-1.5 cursor-pointer text-xs text-purple-400 font-bold">
-                    <input
-                      id="checkbox-is-p2-member"
-                      type="checkbox"
-                      checked={player2IsMember}
-                      onChange={(e) => {
-                        setPlayer2IsMember(e.target.checked);
-                        if (e.target.checked && members.length > 0) {
-                          setPlayer2Id(members[0].id);
-                        } else {
-                          setPlayer2Id('');
-                        }
-                      }}
-                      className="accent-purple-600 rounded"
-                    />
-                    <span>É membro do Spirits?</span>
-                  </label>
-                </div>
-
-                {player2IsMember ? (
-                  <select
-                    id="p2-member-selector"
-                    value={player2Id}
-                    onChange={(e) => setPlayer2Id(e.target.value)}
-                    className="w-full p-2.5 bg-slate-950 border border-slate-850 focus:border-purple-500 rounded-lg text-white text-sm outline-none"
-                  >
-                    {members.filter(m => m.id !== player1Id).map(mem => (
-                      <option key={mem.id} value={mem.id}>{mem.name}</option>
-                    ))}
-                  </select>
-                ) : (
-                  <input
-                    id="p2-text-input"
-                    type="text"
-                    placeholder="Nome do oponente externo (ex: João Santos ou Renato Legião)"
-                    value={player2Name}
-                    onChange={(e) => setPlayer2Name(e.target.value)}
-                    className="w-full p-2.5 bg-slate-950 border border-slate-850 focus:border-purple-500 rounded-lg text-white text-sm outline-none"
-                    required={!player2IsMember}
-                  />
-                )}
+              {/* Format Filter */}
+              <div className="flex items-center gap-1.5">
+                <span className="text-xs text-slate-400">Formato:</span>
+                <select
+                  id="filter-format-select"
+                  value={filterFormat}
+                  onChange={(e) => setFilterFormat(e.target.value)}
+                  className="bg-slate-950 border border-slate-800 text-white text-xs px-2.5 py-1 rounded-md outline-none"
+                >
+                  <option value="all">Todos</option>
+                  <option value="MD1">Melhor de 1 (MD1)</option>
+                  <option value="MD3">Melhor de 3 (MD3)</option>
+                  <option value="MD5">Melhor de 5 (MD5)</option>
+                </select>
               </div>
 
-              {/* Decks comparison */}
-              <div className="bg-slate-950/40 p-4 rounded-xl border border-slate-850 space-y-4">
-                
-                <div className="space-y-1.5">
-                  <label className="block text-xs font-bold text-slate-300 uppercase">Selecione seu Deck Cadastrado:</label>
-                  <select
-                    id="p1-deck-selector"
-                    value={selectedDeckId}
-                    onChange={(e) => {
-                      const selId = e.target.value;
-                      setSelectedDeckId(selId);
-                      if (selId === 'custom') {
-                        setDeckName('');
-                        setDeckPokemon1('charizard');
-                        setDeckPokemon2('');
-                      } else {
-                        const foundDeck = allDecks.find(d => d.id === selId);
-                        if (foundDeck) {
-                          setDeckName(foundDeck.deckName);
-                          setDeckArchetype(foundDeck.archetype);
-                          const parts = getArchetypeSprites(foundDeck.archetype);
-                          setDeckPokemon1(parts[0] || 'substitute');
-                          setDeckPokemon2(parts[1] || '');
-                        } else {
-                          setDeckName('');
-                          setDeckPokemon1('charizard');
-                          setDeckPokemon2('');
-                        }
-                      }
-                    }}
-                    className="w-full p-2.5 bg-slate-950 border border-slate-850 focus:border-purple-500 rounded-lg text-white text-sm outline-none font-semibold"
-                    required
-                  >
-                    <option value="">-- Selecione seu Deck --</option>
-                    {allDecks.filter(d => d.userId === player1Id).map(d => (
-                      <option key={d.id} value={d.id}>{d.deckName} ({d.archetype})</option>
-                    ))}
-                    <option value="custom">✍️ Digitar Manualmente...</option>
-                  </select>
-                </div>
+              {/* My Results Toggle */}
+              <label className="flex items-center gap-2 cursor-pointer select-none border border-slate-800 bg-slate-950/40 px-3 py-1 rounded-md hover:border-purple-500/30 transition-all text-xs text-slate-300">
+                <input
+                  type="checkbox"
+                  id="filter-only-mine"
+                  checked={showOnlyMine}
+                  onChange={(e) => setShowOnlyMine(e.target.checked)}
+                  className="accent-purple-500 rounded cursor-pointer w-3.5 h-3.5"
+                />
+                <span>Apenas minhas partidas</span>
+              </label>
 
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1.5">
-                    <label className="block text-xs font-bold text-slate-300 uppercase">Pokémon Destaque 1 (Ícone):</label>
-                    {selectedDeckId !== 'custom' && selectedDeckId !== '' ? (
-                      <div className="p-2.5 bg-slate-900 border border-slate-800 rounded-lg text-white text-sm font-semibold capitalize flex items-center gap-2">
-                        <PokemonSprite name={deckPokemon1 || 'substitute'} size="sm" className="w-5 h-5" />
-                        <span className="truncate">{deckPokemon1}</span>
-                      </div>
-                    ) : (
-                      <div className="relative">
+              {filteredMatches.length > 0 && (
+                <button
+                  type="button"
+                  onClick={handleSelectAll}
+                  className="px-3 py-1 bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-slate-600 rounded-md text-xs text-slate-300 transition-all hover:text-white font-bold cursor-pointer"
+                >
+                  {filteredMatches.every(m => selectedMatches.includes(m.id)) ? 'Desmarcar Todas' : 'Selecionar Todas'}
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Main List */}
+          {loading ? (
+            <div className="flex flex-col items-center justify-center py-20">
+              <PokemonSprite name="scizor" size="lg" className="animate-spin" />
+              <p className="mt-4 text-purple-300 font-mono text-xs animate-pulse">Consultando registro de combates...</p>
+            </div>
+          ) : filteredMatches.length === 0 ? (
+            <div className="text-center py-16 bg-slate-900/40 rounded-2xl border border-slate-800 text-slate-400">
+              <Swords className="w-12 h-12 text-slate-600 mx-auto mb-3" />
+              <p className="font-bold">Nenhum combate corresponde aos filtros aplicados.</p>
+              <p className="text-xs text-slate-500 mt-1">Experimente mudar as opções de filtros acima.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4" id="matches-grid">
+              {filteredMatches.map(match => (
+                <div 
+                  key={match.id} 
+                  className="bg-slate-900/60 border border-slate-800 hover:border-purple-500/25 rounded-2xl p-5 transition-all flex flex-col justify-between"
+                  id={`match-card-${match.id}`}
+                >
+                  <div className="space-y-4">
+                    {/* Players comparison header */}
+                    <div className="flex items-center justify-between gap-2 border-b border-slate-850 pb-3">
+                      <div className="flex items-center gap-2">
                         <input
-                          type="text"
-                          placeholder="Ex: charizard, lugia"
-                          value={deckPokemon1}
-                          onChange={(e) => setDeckPokemon1(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
-                          className="w-full p-2.5 pl-9 bg-slate-950 border border-slate-850 focus:border-purple-500 rounded-lg text-white text-sm outline-none font-semibold"
-                          required
+                          type="checkbox"
+                          checked={selectedMatches.includes(match.id)}
+                          onChange={() => handleToggleSelectMatch(match.id)}
+                          className="accent-purple-500 rounded cursor-pointer w-4 h-4 mr-1 shrink-0"
                         />
-                        <div className="absolute left-2.5 top-1/2 -translate-y-1/2 flex items-center justify-center">
-                          <PokemonSprite name={deckPokemon1 || 'substitute'} size="sm" className="w-5 h-5 scale-125" />
+                        <div className="flex items-center gap-3">
+                          <PokemonSprite name={match.player1Sprite} size="sm" />
+                          <div>
+                            <h3 className="text-white font-bold text-sm">{match.player1Name}</h3>
+                            <span className="text-[10px] text-purple-400 font-bold bg-purple-950/40 px-1.5 py-0.5 rounded font-mono">Spirits Team</span>
+                          </div>
                         </div>
+                      </div>
+
+                      <div className="text-xs font-mono font-bold text-slate-500">VS</div>
+
+                      <div className="flex items-center gap-3 text-right">
+                        <div>
+                          <h3 className="text-white font-bold text-sm">{match.player2Name}</h3>
+                          <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded font-mono ${
+                            match.player2IsMember ? 'text-purple-400 bg-purple-950/40' : 'text-slate-400 bg-slate-800'
+                          }`}>
+                            {match.player2IsMember ? 'Spirits Team' : 'Oponente'}
+                          </span>
+                        </div>
+                        <PokemonSprite name={match.player2IsMember ? (members.find(m => m.id === match.player2Id)?.avatarSprite || 'substitute') : 'substitute'} size="sm" />
+                      </div>
+                    </div>
+
+                    {/* Match deck setups */}
+                    <div className="grid grid-cols-2 gap-4 bg-slate-950/40 p-3 rounded-xl border border-slate-850">
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        {/* Archetype Icons */}
+                        <div className="flex -space-x-2 shrink-0">
+                          {getArchetypeSprites(match.deckArchetype).map((spriteName, idx) => (
+                            <div key={idx} className="w-7 h-7 rounded-lg bg-slate-900 border border-slate-850 flex items-center justify-center overflow-hidden shadow-md">
+                              <PokemonSprite name={spriteName} size="sm" className="w-5.5 h-5.5 scale-110" />
+                            </div>
+                          ))}
+                        </div>
+                        <div className="min-w-0">
+                          <div className="text-[9px] text-slate-550 uppercase font-bold">Deck do Spirits</div>
+                          <div className="text-xs font-bold text-slate-200 truncate" title={match.deckName}>{match.deckName}</div>
+                          <div className="text-[10px] text-slate-400 truncate">{match.deckArchetype}</div>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-end gap-2.5 text-right border-l border-slate-900 pl-4 min-w-0">
+                        <div className="min-w-0">
+                          <div className="text-[9px] text-slate-550 uppercase font-bold">Deck Oponente</div>
+                          <div className="text-xs font-bold text-slate-200 truncate" title={match.opponentDeck}>{match.opponentDeck}</div>
+                          <div className="text-[10px] text-slate-400 truncate">{match.opponentDeck}</div>
+                        </div>
+                        {/* Opponent Archetype Icons */}
+                        <div className="flex -space-x-2 shrink-0">
+                          {getArchetypeSprites(match.opponentDeck).map((spriteName, idx) => (
+                            <div key={idx} className="w-7 h-7 rounded-lg bg-slate-900 border border-slate-850 flex items-center justify-center overflow-hidden shadow-md">
+                              <PokemonSprite name={spriteName} size="sm" className="w-5.5 h-5.5 scale-110" />
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Match Notes comment */}
+                    {match.notes && (
+                      <div className="bg-slate-900/30 p-2.5 rounded-lg text-xs text-slate-400 italic flex gap-1.5">
+                        <FileText className="w-4 h-4 text-purple-500 shrink-0 mt-0.5" />
+                        <span>"{match.notes}"</span>
                       </div>
                     )}
                   </div>
 
+                  {/* Status details footer */}
+                  <div className="flex items-center justify-between border-t border-slate-850 pt-3 mt-4 text-xs">
+                    <div className="flex items-center gap-2">
+                      <span className={`px-2.5 py-0.5 rounded-full font-bold uppercase text-[9px] ${
+                        match.result === 'win' ? 'bg-emerald-950 text-emerald-400 border border-emerald-500/20' :
+                        match.result === 'loss' ? 'bg-rose-950 text-rose-400 border border-rose-500/20' :
+                        'bg-slate-800 text-slate-400'
+                      }`}>
+                        {match.result === 'win' ? 'Vitória' : match.result === 'loss' ? 'Derrota' : 'Empate'}
+                      </span>
+                      <span className="text-white font-bold bg-slate-950 px-2 py-0.5 rounded border border-slate-850 font-mono text-xs">{match.score}</span>
+                    </div>
+
+                    <div className="text-slate-500 flex items-center gap-1 font-mono text-[10px]">
+                      <Calendar className="w-3.5 h-3.5" />
+                      {new Date(match.playedAt).toLocaleDateString('pt-BR')} | {match.format}
+                    </div>
+                  </div>
+
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Form Overlay Modal */}
+          {showFormModal && (
+            <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-in" id="register-match-modal">
+              <div className="bg-slate-900 border border-slate-800 w-full max-w-xl rounded-2xl shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
+                
+                {/* Header */}
+                <div className="p-5 border-b border-slate-800 flex items-center justify-between bg-gradient-to-r from-purple-900/40 to-slate-900">
+                  <div className="flex items-center gap-2">
+                    <Swords className="w-5 h-5 text-purple-400" />
+                    <h3 className="text-base font-bold text-white">Registrar Partida Competitiva</h3>
+                  </div>
+                  <button 
+                    id="close-form-x"
+                    onClick={() => setShowFormModal(false)}
+                    className="text-slate-400 hover:text-white transition-all cursor-pointer"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+
+                {/* Form */}
+                <form onSubmit={handleRegisterMatch} className="p-6 overflow-y-auto space-y-4 flex-1">
+                  
+                  {/* Player 1 selection (Spirits member) */}
                   <div className="space-y-1.5">
-                    <label className="block text-xs font-bold text-slate-300 uppercase">Pokémon Destaque 2 (Opcional):</label>
-                    {selectedDeckId !== 'custom' && selectedDeckId !== '' ? (
-                      <div className="p-2.5 bg-slate-900 border border-slate-800 rounded-lg text-white text-sm font-semibold capitalize flex items-center gap-2">
-                        {deckPokemon2 ? (
-                          <>
-                            <PokemonSprite name={deckPokemon2} size="sm" className="w-5 h-5" />
-                            <span className="truncate">{deckPokemon2}</span>
-                          </>
+                    <label className="block text-xs font-bold text-slate-300 uppercase">Representando Spirits (Jogador 1):</label>
+                    <select
+                      id="p1-selector"
+                      value={player1Id}
+                      onChange={(e) => setPlayer1Id(e.target.value)}
+                      className="w-full p-2.5 bg-slate-950 border border-slate-850 focus:border-purple-500 rounded-lg text-white text-sm outline-none"
+                    >
+                      {members.map(mem => (
+                        <option key={mem.id} value={mem.id}>{mem.name} ({mem.nickname || 'Sem apelido'})</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Player 2 selection */}
+                  <div className="space-y-2 bg-slate-950/40 p-3 rounded-xl border border-slate-850">
+                    <div className="flex items-center justify-between">
+                      <label className="block text-xs font-bold text-slate-300 uppercase">Oponente (Jogador 2):</label>
+                      
+                      <label className="flex items-center gap-1.5 cursor-pointer text-xs text-purple-400 font-bold">
+                        <input
+                          id="checkbox-is-p2-member"
+                          type="checkbox"
+                          checked={player2IsMember}
+                          onChange={(e) => {
+                            setPlayer2IsMember(e.target.checked);
+                            if (e.target.checked && members.length > 0) {
+                              setPlayer2Id(members[0].id);
+                            } else {
+                              setPlayer2Id('');
+                            }
+                          }}
+                          className="accent-purple-600 rounded"
+                        />
+                        <span>É membro do Spirits?</span>
+                      </label>
+                    </div>
+
+                    {player2IsMember ? (
+                      <select
+                        id="p2-member-selector"
+                        value={player2Id}
+                        onChange={(e) => setPlayer2Id(e.target.value)}
+                        className="w-full p-2.5 bg-slate-950 border border-slate-850 focus:border-purple-500 rounded-lg text-white text-sm outline-none"
+                      >
+                        {members.filter(m => m.id !== player1Id).map(mem => (
+                          <option key={mem.id} value={mem.id}>{mem.name}</option>
+                        ))}
+                      </select>
+                    ) : (
+                      <input
+                        id="p2-text-input"
+                        type="text"
+                        placeholder="Nome do oponente externo (ex: João Santos ou Renato Legião)"
+                        value={player2Name}
+                        onChange={(e) => setPlayer2Name(e.target.value)}
+                        className="w-full p-2.5 bg-slate-950 border border-slate-850 focus:border-purple-500 rounded-lg text-white text-sm outline-none"
+                        required={!player2IsMember}
+                      />
+                    )}
+                  </div>
+
+                  {/* Decks comparison */}
+                  <div className="bg-slate-950/40 p-4 rounded-xl border border-slate-850 space-y-4">
+                    
+                    <div className="space-y-1.5">
+                      <label className="block text-xs font-bold text-slate-300 uppercase">Selecione seu Deck Cadastrado:</label>
+                      <select
+                        id="p1-deck-selector"
+                        value={selectedDeckId}
+                        onChange={(e) => {
+                          const selId = e.target.value;
+                          setSelectedDeckId(selId);
+                          if (selId === 'custom') {
+                            setDeckName('');
+                            setDeckPokemon1('charizard');
+                            setDeckPokemon2('');
+                          } else {
+                            const foundDeck = allDecks.find(d => d.id === selId);
+                            if (foundDeck) {
+                              setDeckName(foundDeck.deckName);
+                              setDeckArchetype(foundDeck.archetype);
+                              const parts = getArchetypeSprites(foundDeck.archetype);
+                              setDeckPokemon1(parts[0] || 'substitute');
+                              setDeckPokemon2(parts[1] || '');
+                            } else {
+                              setDeckName('');
+                              setDeckPokemon1('charizard');
+                              setDeckPokemon2('');
+                            }
+                          }
+                        }}
+                        className="w-full p-2.5 bg-slate-950 border border-slate-850 focus:border-purple-500 rounded-lg text-white text-sm outline-none font-semibold"
+                        required
+                      >
+                        <option value="">-- Selecione seu Deck --</option>
+                        {allDecks.filter(d => d.userId === player1Id).map(d => (
+                          <option key={d.id} value={d.id}>{d.deckName} ({d.archetype})</option>
+                        ))}
+                        <option value="custom">✍️ Digitar Manualmente...</option>
+                      </select>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-1.5">
+                        <label className="block text-xs font-bold text-slate-300 uppercase">Pokémon Destaque 1 (Ícone):</label>
+                        {selectedDeckId !== 'custom' && selectedDeckId !== '' ? (
+                          <div className="p-2.5 bg-slate-900 border border-slate-800 rounded-lg text-white text-sm font-semibold capitalize flex items-center gap-2">
+                            <PokemonSprite name={deckPokemon1 || 'substitute'} size="sm" className="w-5 h-5" />
+                            <span className="truncate">{deckPokemon1}</span>
+                          </div>
                         ) : (
-                          <span className="text-slate-500 font-normal">Nenhum</span>
+                          <div className="relative">
+                            <input
+                              type="text"
+                              placeholder="Ex: charizard, lugia"
+                              value={deckPokemon1}
+                              onChange={(e) => setDeckPokemon1(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
+                              className="w-full p-2.5 pl-9 bg-slate-950 border border-slate-850 focus:border-purple-500 rounded-lg text-white text-sm outline-none font-semibold"
+                              required
+                            />
+                            <div className="absolute left-2.5 top-1/2 -translate-y-1/2 flex items-center justify-center">
+                              <PokemonSprite name={deckPokemon1 || 'substitute'} size="sm" className="w-5 h-5 scale-125" />
+                            </div>
+                          </div>
                         )}
                       </div>
-                    ) : (
-                      <div className="relative">
+
+                      <div className="space-y-1.5">
+                        <label className="block text-xs font-bold text-slate-300 uppercase">Pokémon Destaque 2 (Opcional):</label>
+                        {selectedDeckId !== 'custom' && selectedDeckId !== '' ? (
+                          <div className="p-2.5 bg-slate-900 border border-slate-800 rounded-lg text-white text-sm font-semibold capitalize flex items-center gap-2">
+                            {deckPokemon2 ? (
+                              <>
+                                <PokemonSprite name={deckPokemon2} size="sm" className="w-5 h-5" />
+                                <span className="truncate">{deckPokemon2}</span>
+                              </>
+                            ) : (
+                              <span className="text-slate-500 font-normal">Nenhum</span>
+                            )}
+                          </div>
+                        ) : (
+                          <div className="relative">
+                            <input
+                              type="text"
+                              placeholder="Ex: dragapult, pidgeot"
+                              value={deckPokemon2}
+                              onChange={(e) => setDeckPokemon2(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
+                              className="w-full p-2.5 pl-9 bg-slate-950 border border-slate-850 focus:border-purple-500 rounded-lg text-white text-sm outline-none font-semibold"
+                            />
+                            <div className="absolute left-2.5 top-1/2 -translate-y-1/2 flex items-center justify-center">
+                              {deckPokemon2 ? (
+                                <PokemonSprite name={deckPokemon2} size="sm" className="w-5 h-5 scale-125" />
+                              ) : (
+                                <div className="w-4 h-4 rounded-full border border-dashed border-slate-700" />
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* If custom is selected, let them type the name */}
+                    {(selectedDeckId === 'custom' || selectedDeckId === '') && (
+                      <div className="space-y-1.5">
+                        <label className="block text-xs font-bold text-slate-300 uppercase">Nome Personalizado do seu Deck:</label>
                         <input
+                          id="p1-deck-input"
                           type="text"
-                          placeholder="Ex: dragapult, pidgeot"
-                          value={deckPokemon2}
-                          onChange={(e) => setDeckPokemon2(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
-                          className="w-full p-2.5 pl-9 bg-slate-950 border border-slate-850 focus:border-purple-500 rounded-lg text-white text-sm outline-none font-semibold"
+                          placeholder="ex: Charizard Dragapult"
+                          value={deckName}
+                          onChange={(e) => setDeckName(e.target.value)}
+                          className="w-full p-2.5 bg-slate-950 border border-slate-850 focus:border-purple-500 rounded-lg text-white text-sm outline-none"
+                          required
                         />
-                        <div className="absolute left-2.5 top-1/2 -translate-y-1/2 flex items-center justify-center">
-                          {deckPokemon2 ? (
-                            <PokemonSprite name={deckPokemon2} size="sm" className="w-5 h-5 scale-125" />
-                          ) : (
-                            <div className="w-4 h-4 rounded-full border border-dashed border-slate-700" />
-                          )}
-                        </div>
                       </div>
                     )}
                   </div>
-                </div>
 
-                {/* If custom is selected, let them type the name */}
-                {(selectedDeckId === 'custom' || selectedDeckId === '') && (
                   <div className="space-y-1.5">
-                    <label className="block text-xs font-bold text-slate-300 uppercase">Nome Personalizado do seu Deck:</label>
+                    <label className="block text-xs font-bold text-slate-300 uppercase">Deck do Oponente (O que ele jogou?):</label>
                     <input
-                      id="p1-deck-input"
+                      id="p2-deck-input"
                       type="text"
-                      placeholder="ex: Charizard Dragapult"
-                      value={deckName}
-                      onChange={(e) => setDeckName(e.target.value)}
+                      placeholder="ex: Raging Bolt ex ou Regidrago"
+                      value={opponentDeck}
+                      onChange={(e) => setOpponentDeck(e.target.value)}
                       className="w-full p-2.5 bg-slate-950 border border-slate-850 focus:border-purple-500 rounded-lg text-white text-sm outline-none"
                       required
                     />
                   </div>
-                )}
-              </div>
 
-              <div className="space-y-1.5">
-                <label className="block text-xs font-bold text-slate-300 uppercase">Deck do Oponente (O que ele jogou?):</label>
-                <input
-                  id="p2-deck-input"
-                  type="text"
-                  placeholder="ex: Raging Bolt ex ou Regidrago"
-                  value={opponentDeck}
-                  onChange={(e) => setOpponentDeck(e.target.value)}
-                  className="w-full p-2.5 bg-slate-950 border border-slate-850 focus:border-purple-500 rounded-lg text-white text-sm outline-none"
-                  required
-                />
-              </div>
+                  {/* Format, Result, Score */}
+                  <div className="grid grid-cols-3 gap-3">
+                    <div className="space-y-1.5">
+                      <label className="block text-xs font-bold text-slate-300 uppercase">Formato:</label>
+                      <select
+                        id="match-format-select"
+                        value={format}
+                        onChange={(e) => setFormat(e.target.value as any)}
+                        className="w-full p-2 bg-slate-950 border border-slate-850 focus:border-purple-500 rounded-lg text-white text-sm outline-none"
+                      >
+                        <option value="MD1">MD1</option>
+                        <option value="MD3">MD3</option>
+                        <option value="MD5">MD5</option>
+                      </select>
+                    </div>
 
-              {/* Format, Result, Score */}
-              <div className="grid grid-cols-3 gap-3">
-                <div className="space-y-1.5">
-                  <label className="block text-xs font-bold text-slate-300 uppercase">Formato:</label>
-                  <select
-                    id="match-format-select"
-                    value={format}
-                    onChange={(e) => setFormat(e.target.value as any)}
-                    className="w-full p-2 bg-slate-950 border border-slate-850 focus:border-purple-500 rounded-lg text-white text-sm outline-none"
+                    <div className="space-y-1.5">
+                      <label className="block text-xs font-bold text-slate-300 uppercase">Seu Resultado:</label>
+                      <select
+                        id="match-result-select"
+                        value={result}
+                        onChange={(e) => setResult(e.target.value as any)}
+                        className="w-full p-2 bg-slate-950 border border-slate-850 focus:border-purple-500 rounded-lg text-white text-sm outline-none"
+                      >
+                        <option value="win">Vitória</option>
+                        <option value="loss">Derrota</option>
+                        <option value="draw">Empate</option>
+                      </select>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label className="block text-xs font-bold text-slate-300 uppercase">Placar final:</label>
+                      <input
+                        id="match-score-input"
+                        type="text"
+                        placeholder="ex: 2-1"
+                        value={score}
+                        onChange={(e) => setScore(e.target.value)}
+                        className="w-full p-2 bg-slate-950 border border-slate-850 focus:border-purple-500 rounded-lg text-white text-sm outline-none text-center font-mono"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  {/* Match Notes */}
+                  <div className="space-y-1.5">
+                    <label className="block text-xs font-bold text-slate-300 uppercase">Observações da Partida (Opcional):</label>
+                    <textarea
+                      id="match-notes-input"
+                      rows={3}
+                      placeholder="Comente sobre momentos importantes, tech cards cruciais, erros cometidos..."
+                      value={notes}
+                      onChange={(e) => setNotes(e.target.value)}
+                      className="w-full p-2.5 bg-slate-950 border border-slate-850 focus:border-purple-500 rounded-lg text-white text-xs outline-none"
+                    />
+                  </div>
+
+                  <button
+                    id="btn-submit-match"
+                    type="submit"
+                    disabled={registering}
+                    className="w-full py-3 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 disabled:bg-slate-800 text-white font-bold rounded-xl text-sm cursor-pointer transition-all shadow-lg"
                   >
-                    <option value="MD1">MD1</option>
-                    <option value="MD3">MD3</option>
-                    <option value="MD5">MD5</option>
-                  </select>
-                </div>
+                    {registering ? 'Registrando na Arena...' : 'Confirmar e Atualizar Ranking'}
+                  </button>
 
-                <div className="space-y-1.5">
-                  <label className="block text-xs font-bold text-slate-300 uppercase">Seu Resultado:</label>
-                  <select
-                    id="match-result-select"
-                    value={result}
-                    onChange={(e) => setResult(e.target.value as any)}
-                    className="w-full p-2 bg-slate-950 border border-slate-850 focus:border-purple-500 rounded-lg text-white text-sm outline-none"
-                  >
-                    <option value="win">Vitória</option>
-                    <option value="loss">Derrota</option>
-                    <option value="draw">Empate</option>
-                  </select>
-                </div>
+                </form>
 
-                <div className="space-y-1.5">
-                  <label className="block text-xs font-bold text-slate-300 uppercase">Placar final:</label>
-                  <input
-                    id="match-score-input"
-                    type="text"
-                    placeholder="ex: 2-1"
-                    value={score}
-                    onChange={(e) => setScore(e.target.value)}
-                    className="w-full p-2 bg-slate-950 border border-slate-850 focus:border-purple-500 rounded-lg text-white text-sm outline-none text-center font-mono"
-                    required
-                  />
-                </div>
-              </div>
-
-              {/* Match Notes */}
-              <div className="space-y-1.5">
-                <label className="block text-xs font-bold text-slate-300 uppercase">Observações da Partida (Opcional):</label>
-                <textarea
-                  id="match-notes-input"
-                  rows={3}
-                  placeholder="Comente sobre momentos importantes, tech cards cruciais, erros cometidos..."
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  className="w-full p-2.5 bg-slate-950 border border-slate-850 focus:border-purple-500 rounded-lg text-white text-xs outline-none"
-                />
-              </div>
-
-              <button
-                id="btn-submit-match"
-                type="submit"
-                disabled={registering}
-                className="w-full py-3 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 disabled:bg-slate-800 text-white font-bold rounded-xl text-sm cursor-pointer transition-all shadow-lg"
-              >
-                {registering ? 'Registrando na Arena...' : 'Confirmar e Atualizar Ranking'}
-              </button>
-
-            </form>
-
-          </div>
-        </div>
-      )}
-
-      {/* Custom Delete Confirmation Modal */}
-      {showDeleteModal && (
-        <div className="fixed inset-0 bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-in" id="delete-match-modal">
-          <div className="bg-slate-900 border border-slate-800 w-full max-w-md rounded-2xl shadow-2xl overflow-hidden p-6 space-y-5 animate-scale-up">
-            <div className="text-center space-y-2">
-              <div className="inline-flex w-12 h-12 bg-rose-950/40 border border-rose-500/30 rounded-full items-center justify-center text-rose-400 mb-2">
-                <span className="text-2xl">🗑️</span>
-              </div>
-              <h3 className="text-lg font-bold text-white">Apagar Partidas Selecionadas</h3>
-              <p className="text-xs text-slate-400 leading-relaxed">
-                Você tem certeza que deseja apagar as <strong className="text-rose-400">{selectedMatches.length}</strong> partidas selecionadas?
-              </p>
-              <div className="p-3 bg-slate-950/60 border border-slate-850 rounded-xl text-left">
-                <p className="text-[11px] text-amber-400 font-semibold flex items-start gap-1.5 leading-normal">
-                  <span>⚠️</span>
-                  <span>Esta ação é irreversível e irá recalcular as estatísticas (vitórias, derrotas, empates) de todos os membros envolvidos.</span>
-                </p>
               </div>
             </div>
+          )}
 
-            <div className="flex gap-3">
-              <button
-                type="button"
-                onClick={() => setShowDeleteModal(false)}
-                className="flex-1 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-bold transition-all cursor-pointer"
-              >
-                Cancelar
-              </button>
-              <button
-                type="button"
-                onClick={handleDeleteSelected}
-                className="flex-1 py-2.5 bg-rose-600 hover:bg-rose-500 text-white rounded-lg text-xs font-bold transition-all cursor-pointer shadow-lg shadow-rose-950/30"
-              >
-                Sim, apagar
-              </button>
+          {/* Custom Delete Confirmation Modal */}
+          {showDeleteModal && (
+            <div className="fixed inset-0 bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-in" id="delete-match-modal">
+              <div className="bg-slate-900 border border-slate-800 w-full max-w-md rounded-2xl shadow-2xl overflow-hidden p-6 space-y-5 animate-scale-up">
+                <div className="text-center space-y-2">
+                  <div className="inline-flex w-12 h-12 bg-rose-950/40 border border-rose-500/30 rounded-full items-center justify-center text-rose-400 mb-2">
+                    <span className="text-2xl">🗑️</span>
+                  </div>
+                  <h3 className="text-lg font-bold text-white">Apagar Partidas Selecionadas</h3>
+                  <p className="text-xs text-slate-400 leading-relaxed">
+                    Você tem certeza que deseja apagar as <strong className="text-rose-400">{selectedMatches.length}</strong> partidas selecionadas?
+                  </p>
+                  <div className="p-3 bg-slate-950/60 border border-slate-850 rounded-xl text-left">
+                    <p className="text-[11px] text-amber-400 font-semibold flex items-start gap-1.5 leading-normal">
+                      <span>⚠️</span>
+                      <span>Esta ação é irreversível e irá recalcular as estatísticas (vitórias, derrotas, empates) de todos os membros envolvidos.</span>
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setShowDeleteModal(false)}
+                    className="flex-1 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-bold transition-all cursor-pointer"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleDeleteSelected}
+                    className="flex-1 py-2.5 bg-rose-600 hover:bg-rose-500 text-white rounded-lg text-xs font-bold transition-all cursor-pointer shadow-lg shadow-rose-950/30"
+                  >
+                    Sim, apagar
+                  </button>
+                </div>
+              </div>
             </div>
-          </div>
+          )}
+
         </div>
       )}
-
     </div>
   );
 }
