@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import PokemonSprite from './PokemonSprite';
 import { convertLocalIdToPTCGL, normalizeTPCiSetCode } from '../utils/cardImages';
+import { COMPREHENSIVE_SETS, MODERN_CARDS_CATALOG, searchCardsLocally } from '../data/pokemonCatalog';
 
 interface CollectionProps {
   currentMember: Member;
@@ -25,12 +26,12 @@ interface CollectionProps {
 export default function Collection({ currentMember }: CollectionProps) {
   const [collectionCards, setCollectionCards] = useState<CardItem[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [searchResults, setSearchResults] = useState<any[]>(MODERN_CARDS_CATALOG.slice(0, 16));
   const [searching, setSearching] = useState(false);
   const [loading, setLoading] = useState(true);
   
-  // Sets & set selection state
-  const [sets, setSets] = useState<any[]>([]);
+  // Sets & set selection state - default to comprehensive master catalog
+  const [sets, setSets] = useState<any[]>(COMPREHENSIVE_SETS);
   const [selectedSet, setSelectedSet] = useState('');
   
   // Modals / forms state
@@ -39,17 +40,19 @@ export default function Collection({ currentMember }: CollectionProps) {
   const [quantity, setQuantity] = useState(1);
   const [isLendable, setIsLendable] = useState(true);
 
-  // Load available sets from the TCG API proxy
+  // Load available sets from the TCG API proxy, gracefully falling back to COMPREHENSIVE_SETS
   useEffect(() => {
     async function fetchSets() {
       try {
         const res = await fetch('/api/pokemon/sets');
         if (res.ok) {
           const data = await res.json();
-          setSets(data);
+          if (Array.isArray(data) && data.length > 0) {
+            setSets(data);
+          }
         }
       } catch (err) {
-        console.error('Error fetching sets:', err);
+        console.info('Usando catálogo local de coleções.');
       }
     }
     fetchSets();
@@ -78,20 +81,39 @@ export default function Collection({ currentMember }: CollectionProps) {
     fetchCollection();
   }, [currentMember, collectionTab]);
 
-  // Handle live database search via backend API proxy
+  // Handle live database search via backend API proxy with instant local catalog fallback
   const handleDatabaseSearch = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    if (!searchQuery.trim() && !selectedSet) return;
+    
+    // If both empty, show top modern cards
+    if (!searchQuery.trim() && !selectedSet) {
+      setSearchResults(MODERN_CARDS_CATALOG.slice(0, 16));
+      return;
+    }
 
     try {
       setSearching(true);
-      const res = await fetch(`/api/pokemon/search?q=${encodeURIComponent(searchQuery)}&set=${encodeURIComponent(selectedSet)}`);
-      if (res.ok) {
-        const data = await res.json();
-        setSearchResults(data);
+      let found: any[] = [];
+      try {
+        const res = await fetch(`/api/pokemon/search?q=${encodeURIComponent(searchQuery)}&set=${encodeURIComponent(selectedSet)}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data) && data.length > 0) {
+            found = data;
+          }
+        }
+      } catch (netErr) {
+        // Fallback silently if offline or on static host
       }
+
+      // If backend was 404, unavailable, or empty, search local 2025+ modern catalog
+      if (found.length === 0) {
+        found = searchCardsLocally(searchQuery, selectedSet);
+      }
+
+      setSearchResults(found);
     } catch (err) {
-      console.error('Error searching cards:', err);
+      setSearchResults(searchCardsLocally(searchQuery, selectedSet));
     } finally {
       setSearching(false);
     }
@@ -99,7 +121,7 @@ export default function Collection({ currentMember }: CollectionProps) {
 
   // Auto-search when selected set changes (allows fast browsing of entire sets!)
   useEffect(() => {
-    if (selectedSet) {
+    if (selectedSet || searchQuery) {
       handleDatabaseSearch();
     }
   }, [selectedSet]);
@@ -224,8 +246,9 @@ export default function Collection({ currentMember }: CollectionProps) {
           id="btn-add-card-to-collection"
           onClick={() => {
             setSelectedCard(null);
-            setSearchResults([]);
             setSearchQuery('');
+            setSelectedSet('');
+            setSearchResults(MODERN_CARDS_CATALOG.slice(0, 16));
             setShowAddModal(true);
           }}
           className="px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white rounded-lg font-bold text-sm flex items-center gap-2 shadow-lg shadow-purple-950/40 cursor-pointer transition-all duration-300 transform hover:-translate-y-0.5 shrink-0"
@@ -302,6 +325,10 @@ export default function Collection({ currentMember }: CollectionProps) {
                   alt={card.name} 
                   className="max-h-full max-w-full object-contain drop-shadow-[0_4px_12px_rgba(0,0,0,0.7)] group-hover:scale-105 transition-transform duration-300" 
                   referrerPolicy="no-referrer"
+                  onError={(e) => {
+                    e.currentTarget.onerror = null;
+                    e.currentTarget.src = 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png';
+                  }}
                 />
                 
                 {/* Quantity Badge */}
@@ -485,6 +512,10 @@ export default function Collection({ currentMember }: CollectionProps) {
                       alt={selectedCard.name} 
                       className="max-h-64 object-contain rounded-lg drop-shadow-lg" 
                       referrerPolicy="no-referrer"
+                      onError={(e) => {
+                        e.currentTarget.onerror = null;
+                        e.currentTarget.src = 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png';
+                      }}
                     />
                   </div>
                   
@@ -585,6 +616,10 @@ export default function Collection({ currentMember }: CollectionProps) {
                               alt={card.name} 
                               className="max-h-full max-w-full object-contain drop-shadow-md group-hover:scale-105 transition-transform" 
                               referrerPolicy="no-referrer"
+                              onError={(e) => {
+                                e.currentTarget.onerror = null;
+                                e.currentTarget.src = 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png';
+                              }}
                             />
                           </div>
                           <div>
