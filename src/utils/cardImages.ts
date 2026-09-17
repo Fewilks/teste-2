@@ -17,6 +17,7 @@ import {
   tcgdexUrl,
   ptcgIoUrl,
   CARD_BACK_URL,
+  SET_SYNC_TABLE as _SET_SYNC_TABLE,
 } from './setSync';
 
 export const POKEMON_CARD_BACK = 'https://images.pokemontcg.io/card-back.png';
@@ -37,6 +38,51 @@ export interface CardMetadata {
   setNumber?: string;
   localSetId?: string;
 }
+
+// ============================================================================
+// COMPATIBILIDADE — exports que existiam na versão anterior e que outros
+// arquivos (ex.: cardNormalizationService.ts) ainda importam.
+// Todos derivam do SET_SYNC_TABLE — fonte única de verdade.
+// ============================================================================
+
+/** Formato antigo: { [chave]: { tpciCode, name, localId } } */
+export const SET_LOCAL_TO_TPCI_MAP: Record<string, { tpciCode: string; name: string; localId: string }> = (() => {
+  const map: Record<string, { tpciCode: string; name: string; localId: string }> = {};
+  for (const e of _SET_SYNC_TABLE) {
+    const entry = { tpciCode: e.tpci, name: e.name, localId: e.ptcgIo || e.tcgdexSet || '' };
+    map[e.tpci.toLowerCase()] = entry;
+    if (e.tcgdexSet) map[e.tcgdexSet.toLowerCase()] = entry;
+    if (e.ptcgIo) map[e.ptcgIo.toLowerCase()] = entry;
+  }
+  return map;
+})();
+
+/** Formato antigo: { [TPCI]: localId } */
+export const SET_TPCI_TO_LOCAL_MAP: Record<string, string> = (() => {
+  const map: Record<string, string> = {};
+  for (const e of _SET_SYNC_TABLE) {
+    map[e.tpci.toUpperCase()] = e.ptcgIo || e.tcgdexSet || e.tpci.toLowerCase();
+  }
+  return map;
+})();
+
+/** Formato antigo: { [chave]: { series, set } } — usado para montar URLs TCGdex */
+export const SET_TO_TCGDEX_MAP: Record<string, { series: string; set: string }> = (() => {
+  const map: Record<string, { series: string; set: string }> = {};
+  for (const e of _SET_SYNC_TABLE) {
+    if (!e.tcgdexSeries || !e.tcgdexSet) continue;
+    const entry = { series: e.tcgdexSeries, set: e.tcgdexSet };
+    map[e.tpci] = entry;
+    map[e.tpci.toLowerCase()] = entry;
+    map[e.tcgdexSet] = entry;
+    map[e.tcgdexSet.toLowerCase()] = entry;
+    if (e.ptcgIo) {
+      map[e.ptcgIo] = entry;
+      map[e.ptcgIo.toLowerCase()] = entry;
+    }
+  }
+  return map;
+})();
 
 // ============================================================================
 // HELPERS QUE DELEGAM PARA setSync
