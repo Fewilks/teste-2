@@ -3,8 +3,8 @@
 //
 // - Registry de cartas canônicas (TPCi-first)
 // - CARD_ALIASES para PT-BR
-// - Fuzzy match com FRONTEIRA DE PALAVRA (não confunde "rotom v" com "rotom ventilador")
-// - PLAYER DECK REGISTRY (resolve versão certa quando há várias cartas de mesmo nome)
+// - Fuzzy match com FRONTEIRA DE PALAVRA
+// - PLAYER DECK REGISTRY + VERSION OVERRIDE (persistido em localStorage)
 // ============================================================================
 
 import {
@@ -35,7 +35,7 @@ export interface CardMetadata {
 }
 
 // ============================================================================
-// COMPATIBILIDADE com versões antigas
+// COMPATIBILIDADE
 // ============================================================================
 
 export const SET_LOCAL_TO_TPCI_MAP: Record<string, { tpciCode: string; name: string; localId: string }> = (() => {
@@ -188,18 +188,32 @@ export const CARD_IMAGE_DATABASE: Record<string, CardMetadata> = {
   'lumineon v':        { id: 'BRS-40',  name: 'Lumineon V',   category: 'pokemon', energyType: 'water',     stage: 'BÁSICO',    hp: 170, imageUrl: '', setCode: 'BRS', setNumber: '40', localSetId: 'swsh9' },
   'crobat v':          { id: 'DAA-104', name: 'Crobat V',     category: 'pokemon', energyType: 'darkness',  stage: 'BÁSICO',    hp: 180, imageUrl: '', setCode: 'DAA', setNumber: '104', localSetId: 'swsh3' },
 
-  // ----- Dunsparce family (múltiplas versões — deck registry resolve) -----
-  'dunsparce tef':       { id: 'TEF-128', name: 'Dunsparce', category: 'pokemon', energyType: 'colorless', stage: 'BÁSICO', hp: 70, imageUrl: '', setCode: 'TEF', setNumber: '128', localSetId: 'sv5' },
-  'dunsparce svi':       { id: 'SVI-74',  name: 'Dunsparce', category: 'pokemon', energyType: 'colorless', stage: 'BÁSICO', hp: 60, imageUrl: '', setCode: 'SVI', setNumber: '74',  localSetId: 'sv1' },
-  'dunsparce':           { id: 'TEF-128', name: 'Dunsparce', category: 'pokemon', energyType: 'colorless', stage: 'BÁSICO', hp: 70, imageUrl: '', setCode: 'TEF', setNumber: '128', localSetId: 'sv5' },
+  // ---------------------------------------------------------------------------
+  // ⚠️ VERSÕES CONFIRMADAS PELO USUÁRIO — AJUSTE AQUI SE OS NÚMEROS MUDAREM
+  // ---------------------------------------------------------------------------
+  // Dunsparce padrão (usado quando o log só diz "Dunsparce")
+  'dunsparce':           { id: 'JTG-119', name: 'Dunsparce',   category: 'pokemon', energyType: 'colorless', stage: 'BÁSICO',    hp: 70,  imageUrl: '', setCode: 'JTG', setNumber: '119', localSetId: 'jtg' },
+  'dunsparce jtg':       { id: 'JTG-119', name: 'Dunsparce',   category: 'pokemon', energyType: 'colorless', stage: 'BÁSICO',    hp: 70,  imageUrl: '', setCode: 'JTG', setNumber: '119', localSetId: 'jtg' },
+  'dunsparce tef':       { id: 'TEF-128', name: 'Dunsparce',   category: 'pokemon', energyType: 'colorless', stage: 'BÁSICO',    hp: 60,  imageUrl: '', setCode: 'TEF', setNumber: '128', localSetId: 'sv5' },
+  'dunsparce svi':       { id: 'SVI-74',  name: 'Dunsparce',   category: 'pokemon', energyType: 'colorless', stage: 'BÁSICO',    hp: 60,  imageUrl: '', setCode: 'SVI', setNumber: '74',  localSetId: 'sv1' },
+
   'dudunsparce':         { id: 'TEF-129', name: 'Dudunsparce', category: 'pokemon', energyType: 'colorless', stage: 'ESTÁGIO 1', hp: 140, imageUrl: '', setCode: 'TEF', setNumber: '129', localSetId: 'sv5' },
   'dudunsparce ex':      { id: 'TEF-121', name: 'Dudunsparce ex', category: 'pokemon', energyType: 'colorless', stage: 'ESTÁGIO 1', hp: 270, imageUrl: '', setCode: 'TEF', setNumber: '121', localSetId: 'sv5' },
-  'buneary':             { id: 'SVI-160', name: 'Buneary', category: 'pokemon', energyType: 'colorless', stage: 'BÁSICO', hp: 60, imageUrl: '', setCode: 'SVI', setNumber: '160', localSetId: 'sv1' },
-  'lopunny':             { id: 'SVI-161', name: 'Lopunny', category: 'pokemon', energyType: 'colorless', stage: 'ESTÁGIO 1', hp: 100, imageUrl: '', setCode: 'SVI', setNumber: '161', localSetId: 'sv1' },
-  'stunfisk':            { id: 'PAL-77',  name: 'Stunfisk', category: 'pokemon', energyType: 'lightning', stage: 'BÁSICO', hp: 90, imageUrl: '', setCode: 'PAL', setNumber: '77', localSetId: 'sv2' },
-  'psyduck':             { id: 'MEW-54',  name: 'Psyduck', category: 'pokemon', energyType: 'water', stage: 'BÁSICO', hp: 60, imageUrl: '', setCode: 'MEW', setNumber: '54', localSetId: 'sv3pt5' },
-  'meowth ex':           { id: 'JTG-106', name: 'Meowth ex', category: 'pokemon', energyType: 'colorless', stage: 'BÁSICO', hp: 170, imageUrl: '', setCode: 'JTG', setNumber: '106', localSetId: 'jtg' },
-  'mega lopunny ex':     { id: 'ASC-65',  name: 'Mega Lopunny ex', category: 'pokemon', energyType: 'colorless', stage: 'EX', hp: 260, imageUrl: '', setCode: 'ASC', setNumber: '65', localSetId: 'me2pt5' },
+
+  // Buneary do PFL (me02) — usado no deck do Wilksman
+  'buneary':             { id: 'PFL-83',  name: 'Buneary',     category: 'pokemon', energyType: 'colorless', stage: 'BÁSICO',    hp: 70,  imageUrl: '', setCode: 'PFL', setNumber: '83',  localSetId: 'me2' },
+  'buneary pfl':         { id: 'PFL-83',  name: 'Buneary',     category: 'pokemon', energyType: 'colorless', stage: 'BÁSICO',    hp: 70,  imageUrl: '', setCode: 'PFL', setNumber: '83',  localSetId: 'me2' },
+
+  'lopunny':             { id: 'SVI-161', name: 'Lopunny',     category: 'pokemon', energyType: 'colorless', stage: 'ESTÁGIO 1', hp: 100, imageUrl: '', setCode: 'SVI', setNumber: '161', localSetId: 'sv1' },
+  'mega lopunny ex':     { id: 'PFL-128', name: 'Mega Lopunny ex', category: 'pokemon', energyType: 'colorless', stage: 'EX', hp: 260, imageUrl: '', setCode: 'PFL', setNumber: '128', localSetId: 'me2' },
+
+  // Tandemaus — o que estava aparecendo no lugar do Buneary antes
+  'tandemaus':           { id: 'SVI-168', name: 'Tandemaus',   category: 'pokemon', energyType: 'colorless', stage: 'BÁSICO',    hp: 40,  imageUrl: '', setCode: 'SVI', setNumber: '168', localSetId: 'sv1' },
+
+  // Outros do seu log
+  'stunfisk':            { id: 'PAL-77',  name: 'Stunfisk',    category: 'pokemon', energyType: 'lightning', stage: 'BÁSICO',    hp: 90,  imageUrl: '', setCode: 'PAL', setNumber: '77', localSetId: 'sv2' },
+  'psyduck':             { id: 'MEW-54',  name: 'Psyduck',     category: 'pokemon', energyType: 'water',     stage: 'BÁSICO',    hp: 60,  imageUrl: '', setCode: 'MEW', setNumber: '54', localSetId: 'sv3pt5' },
+  'meowth ex':           { id: 'JTG-106', name: 'Meowth ex',   category: 'pokemon', energyType: 'colorless', stage: 'BÁSICO',    hp: 170, imageUrl: '', setCode: 'JTG', setNumber: '106', localSetId: 'jtg' },
   "lillie's clefairy ex": { id: 'DRI-56', name: "Lillie's Clefairy ex", category: 'pokemon', energyType: 'psychic', stage: 'BÁSICO', hp: 190, imageUrl: '', setCode: 'DRI', setNumber: '56', localSetId: 'dri' },
 
   // ----- XY Mega Evolutions -----
@@ -278,7 +292,7 @@ Object.values(CARD_IMAGE_DATABASE).forEach(card => {
 });
 
 // ============================================================================
-// CARD_ALIASES — PT-BR e variações
+// CARD_ALIASES
 // ============================================================================
 
 export const CARD_ALIASES: Record<string, string> = {
@@ -361,6 +375,7 @@ export const POKEMON_DEX_MAP: Record<string, number> = {
   'budew': 406, 'absol': 359, 'lumineon': 457, 'crobat': 169,
   'dunsparce': 206, 'dudunsparce': 982,
   'buneary': 427, 'lopunny': 428,
+  'tandemaus': 924, 'maushold': 925,
   'stunfisk': 618, 'psyduck': 54, 'meowth': 52,
 };
 
@@ -552,7 +567,7 @@ function fuzzyMatchAsWords(norm: string): CardMetadata | null {
 }
 
 // ============================================================================
-// RESOLVER (PTCGL-first, sem recursão)
+// RESOLVER
 // ============================================================================
 
 export function resolveCardByNameOnly(name: string): CardMetadata {
@@ -875,20 +890,10 @@ export function getCardImageUrl(name: string): string {
 
 // ============================================================================
 // PLAYER DECK REGISTRY
-// Registra o decklist PTCGL de cada jogador para resolver a versão correta
-// quando há várias cartas de mesmo nome (ex.: Dunsparce TEF 128 vs SVI 74).
 // ============================================================================
 
 const PLAYER_DECKS: Record<string, Record<string, CardMetadata>> = {};
 
-/**
- * Registra o decklist de um jogador.
- * Aceita formato de export PTCGL, uma carta por linha:
- *   4 Dunsparce TEF 128
- *   4 Dudunsparce TEF 129
- *   1 Mega Lopunny ex ASC 65
- * Ignora linhas em branco e cabeçalhos que não começam com número.
- */
 export function registerPlayerDeck(playerId: string, decklistText: string): void {
   const map: Record<string, CardMetadata> = {};
   const lines = String(decklistText || '').split(/\r?\n/);
@@ -912,7 +917,6 @@ export function registerPlayerDeck(playerId: string, decklistText: string): void
     if (card) {
       map[normalizeCardName(name)] = card;
     } else {
-      // Cria um card "fallback" com os dados que temos, para não perder a referência
       const fallback: CardMetadata = {
         id: `${set}-${num}`,
         name,
@@ -931,10 +935,6 @@ export function registerPlayerDeck(playerId: string, decklistText: string): void
   PLAYER_DECKS[playerId] = map;
 }
 
-/**
- * Resolve uma carta priorizando o deck registrado do jogador.
- * Cai pro resolver global se não achar no deck.
- */
 export function resolveCardForPlayer(playerId: string, cardName: string): CardMetadata {
   const deck = PLAYER_DECKS[playerId];
   if (deck) {
@@ -951,12 +951,127 @@ export function resolveCardForPlayer(playerId: string, cardName: string): CardMe
   return resolvePTCGLCard(cardName);
 }
 
-/** Limpa todos os decks registrados (útil ao trocar de partida). */
 export function clearPlayerDecks(): void {
   for (const k of Object.keys(PLAYER_DECKS)) delete PLAYER_DECKS[k];
 }
 
-/** Debug: retorna o deck registrado de um jogador. */
 export function getPlayerDeck(playerId: string): Record<string, CardMetadata> {
   return PLAYER_DECKS[playerId] || {};
+}
+
+// ============================================================================
+// CARD VERSION OVERRIDE (persistido em localStorage)
+// ============================================================================
+
+const STORAGE_KEY = 'pkmn:card-version-overrides:v1';
+
+interface VersionOverride {
+  setCode: string;
+  setNumber: string;
+  hp?: number;
+  retreat?: number;
+}
+
+type OverrideStore = Record<string, Record<string, VersionOverride>>;
+
+let _overrideStore: OverrideStore = {};
+
+function loadOverrides(): void {
+  try {
+    const raw = typeof localStorage !== 'undefined' ? localStorage.getItem(STORAGE_KEY) : null;
+    _overrideStore = raw ? JSON.parse(raw) : {};
+  } catch { _overrideStore = {}; }
+}
+
+function saveOverrides(): void {
+  try {
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(_overrideStore));
+    }
+  } catch { /* ignora */ }
+}
+
+loadOverrides();
+
+export function setCardVersionForPlayer(
+  playerId: string,
+  cardName: string,
+  setCode: string,
+  setNumber: string,
+  extra?: { hp?: number; retreat?: number }
+): void {
+  const key = normalizeCardName(cardName);
+  if (!key) return;
+  if (!_overrideStore[playerId]) _overrideStore[playerId] = {};
+  _overrideStore[playerId][key] = {
+    setCode: setCode.toUpperCase(),
+    setNumber: String(setNumber).replace(/^#/, '').trim(),
+    hp: extra?.hp,
+    retreat: extra?.retreat,
+  };
+  saveOverrides();
+}
+
+export function getCardVersionForPlayer(
+  playerId: string,
+  cardName: string
+): CardMetadata | null {
+  const key = normalizeCardName(cardName);
+  const ov = _overrideStore[playerId]?.[key];
+  if (!ov) return null;
+
+  const card =
+    PTCGL_CARD_ID_MAP[`${ov.setCode.toLowerCase()} ${ov.setNumber}`] ||
+    PTCGL_CARD_ID_MAP[`${ov.setCode.toLowerCase()}-${ov.setNumber}`];
+
+  if (card) return card;
+
+  const localSetId = mapTPCiToLocalSetId(ov.setCode);
+  const imageUrl = tcgdexUrl(ov.setCode, ov.setNumber, 'en')
+    || ptcgIoUrl(ov.setCode, ov.setNumber)
+    || POKEMON_CARD_BACK;
+
+  return {
+    id: `${ov.setCode}-${ov.setNumber}`,
+    name: cardName,
+    category: 'pokemon',
+    imageUrl,
+    setCode: ov.setCode,
+    setNumber: ov.setNumber,
+    localSetId,
+    hp: ov.hp,
+  };
+}
+
+export function listCardVersionOverrides(playerId: string): Array<{
+  cardName: string;
+  setCode: string;
+  setNumber: string;
+  hp?: number;
+  retreat?: number;
+}> {
+  const map = _overrideStore[playerId] || {};
+  return Object.entries(map).map(([cardName, ov]) => ({
+    cardName,
+    setCode: ov.setCode,
+    setNumber: ov.setNumber,
+    hp: ov.hp,
+    retreat: ov.retreat,
+  }));
+}
+
+export function clearCardVersionOverride(playerId: string, cardName?: string): void {
+  if (!_overrideStore[playerId]) return;
+  if (cardName) {
+    delete _overrideStore[playerId][normalizeCardName(cardName)];
+  } else {
+    delete _overrideStore[playerId];
+  }
+  saveOverrides();
+}
+
+export function resolveCardWithFullContext(playerId: string, cardName: string): CardMetadata {
+  const override = getCardVersionForPlayer(playerId, cardName);
+  if (override) return override;
+  return resolveCardForPlayer(playerId, cardName);
 }
