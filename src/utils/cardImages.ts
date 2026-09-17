@@ -1,8 +1,10 @@
 // ============================================================================
 // cardImages.ts — Resolver Pokémon TCG (PTCGL-first)
 //
-// FIX: fuzzy match com fronteira de palavra (impede "rotom v" ⊂ "rotom ventilador")
-// FIX: CARD_ALIASES para PT-BR
+// - Registry de cartas canônicas (TPCi-first)
+// - CARD_ALIASES para PT-BR
+// - Fuzzy match com FRONTEIRA DE PALAVRA (não confunde "rotom v" com "rotom ventilador")
+// - PLAYER DECK REGISTRY (resolve versão certa quando há várias cartas de mesmo nome)
 // ============================================================================
 
 import {
@@ -33,7 +35,7 @@ export interface CardMetadata {
 }
 
 // ============================================================================
-// COMPATIBILIDADE
+// COMPATIBILIDADE com versões antigas
 // ============================================================================
 
 export const SET_LOCAL_TO_TPCI_MAP: Record<string, { tpciCode: string; name: string; localId: string }> = (() => {
@@ -114,6 +116,7 @@ export function getPokemonTcgIoImageUrl(
 // ============================================================================
 
 export const CARD_IMAGE_DATABASE: Record<string, CardMetadata> = {
+  // ----- Pokémon standard -----
   'charizard ex':      { id: 'OBF-125', name: 'Charizard ex', category: 'pokemon', energyType: 'darkness', stage: 'ESTÁGIO 2', hp: 330, imageUrl: '', setCode: 'OBF', setNumber: '125', localSetId: 'sv3' },
   'charmander':        { id: 'OBF-26',  name: 'Charmander',   category: 'pokemon', energyType: 'fire',     stage: 'BÁSICO',    hp: 70,  imageUrl: '', setCode: 'OBF', setNumber: '26',  localSetId: 'sv3' },
   'charmeleon':        { id: 'OBF-27',  name: 'Charmeleon',   category: 'pokemon', energyType: 'fire',     stage: 'ESTÁGIO 1', hp: 90,  imageUrl: '', setCode: 'OBF', setNumber: '27',  localSetId: 'sv3' },
@@ -185,37 +188,39 @@ export const CARD_IMAGE_DATABASE: Record<string, CardMetadata> = {
   'lumineon v':        { id: 'BRS-40',  name: 'Lumineon V',   category: 'pokemon', energyType: 'water',     stage: 'BÁSICO',    hp: 170, imageUrl: '', setCode: 'BRS', setNumber: '40', localSetId: 'swsh9' },
   'crobat v':          { id: 'DAA-104', name: 'Crobat V',     category: 'pokemon', energyType: 'darkness',  stage: 'BÁSICO',    hp: 180, imageUrl: '', setCode: 'DAA', setNumber: '104', localSetId: 'swsh3' },
 
-  // Novos do log
-  'dunsparce':         { id: 'TEF-128', name: 'Dunsparce',    category: 'pokemon', energyType: 'colorless', stage: 'BÁSICO',    hp: 60,  imageUrl: '', setCode: 'TEF', setNumber: '128', localSetId: 'sv5' },
-  'dudunsparce':       { id: 'TEF-129', name: 'Dudunsparce',  category: 'pokemon', energyType: 'colorless', stage: 'ESTÁGIO 1', hp: 140, imageUrl: '', setCode: 'TEF', setNumber: '129', localSetId: 'sv5' },
-  'dudunsparce ex':    { id: 'TEF-121', name: 'Dudunsparce ex', category: 'pokemon', energyType: 'colorless', stage: 'ESTÁGIO 1', hp: 270, imageUrl: '', setCode: 'TEF', setNumber: '121', localSetId: 'sv5' },
-  'buneary':           { id: 'SVI-160', name: 'Buneary',      category: 'pokemon', energyType: 'colorless', stage: 'BÁSICO',    hp: 60,  imageUrl: '', setCode: 'SVI', setNumber: '160', localSetId: 'sv1' },
-  'lopunny':           { id: 'SVI-161', name: 'Lopunny',      category: 'pokemon', energyType: 'colorless', stage: 'ESTÁGIO 1', hp: 100, imageUrl: '', setCode: 'SVI', setNumber: '161', localSetId: 'sv1' },
-  'stunfisk':          { id: 'PAL-77',  name: 'Stunfisk',     category: 'pokemon', energyType: 'lightning', stage: 'BÁSICO',    hp: 90,  imageUrl: '', setCode: 'PAL', setNumber: '77', localSetId: 'sv2' },
-  'psyduck':           { id: 'MEW-54',  name: 'Psyduck',      category: 'pokemon', energyType: 'water',     stage: 'BÁSICO',    hp: 60,  imageUrl: '', setCode: 'MEW', setNumber: '54', localSetId: 'sv3pt5' },
-  'meowth ex':         { id: 'JTG-106', name: 'Meowth ex',    category: 'pokemon', energyType: 'colorless', stage: 'BÁSICO',    hp: 170, imageUrl: '', setCode: 'JTG', setNumber: '106', localSetId: 'jtg' },
-  'mega lopunny ex':   { id: 'ASC-65',  name: 'Mega Lopunny ex', category: 'pokemon', energyType: 'colorless', stage: 'EX',    hp: 260, imageUrl: '', setCode: 'ASC', setNumber: '65', localSetId: 'me2pt5' },
+  // ----- Dunsparce family (múltiplas versões — deck registry resolve) -----
+  'dunsparce tef':       { id: 'TEF-128', name: 'Dunsparce', category: 'pokemon', energyType: 'colorless', stage: 'BÁSICO', hp: 70, imageUrl: '', setCode: 'TEF', setNumber: '128', localSetId: 'sv5' },
+  'dunsparce svi':       { id: 'SVI-74',  name: 'Dunsparce', category: 'pokemon', energyType: 'colorless', stage: 'BÁSICO', hp: 60, imageUrl: '', setCode: 'SVI', setNumber: '74',  localSetId: 'sv1' },
+  'dunsparce':           { id: 'TEF-128', name: 'Dunsparce', category: 'pokemon', energyType: 'colorless', stage: 'BÁSICO', hp: 70, imageUrl: '', setCode: 'TEF', setNumber: '128', localSetId: 'sv5' },
+  'dudunsparce':         { id: 'TEF-129', name: 'Dudunsparce', category: 'pokemon', energyType: 'colorless', stage: 'ESTÁGIO 1', hp: 140, imageUrl: '', setCode: 'TEF', setNumber: '129', localSetId: 'sv5' },
+  'dudunsparce ex':      { id: 'TEF-121', name: 'Dudunsparce ex', category: 'pokemon', energyType: 'colorless', stage: 'ESTÁGIO 1', hp: 270, imageUrl: '', setCode: 'TEF', setNumber: '121', localSetId: 'sv5' },
+  'buneary':             { id: 'SVI-160', name: 'Buneary', category: 'pokemon', energyType: 'colorless', stage: 'BÁSICO', hp: 60, imageUrl: '', setCode: 'SVI', setNumber: '160', localSetId: 'sv1' },
+  'lopunny':             { id: 'SVI-161', name: 'Lopunny', category: 'pokemon', energyType: 'colorless', stage: 'ESTÁGIO 1', hp: 100, imageUrl: '', setCode: 'SVI', setNumber: '161', localSetId: 'sv1' },
+  'stunfisk':            { id: 'PAL-77',  name: 'Stunfisk', category: 'pokemon', energyType: 'lightning', stage: 'BÁSICO', hp: 90, imageUrl: '', setCode: 'PAL', setNumber: '77', localSetId: 'sv2' },
+  'psyduck':             { id: 'MEW-54',  name: 'Psyduck', category: 'pokemon', energyType: 'water', stage: 'BÁSICO', hp: 60, imageUrl: '', setCode: 'MEW', setNumber: '54', localSetId: 'sv3pt5' },
+  'meowth ex':           { id: 'JTG-106', name: 'Meowth ex', category: 'pokemon', energyType: 'colorless', stage: 'BÁSICO', hp: 170, imageUrl: '', setCode: 'JTG', setNumber: '106', localSetId: 'jtg' },
+  'mega lopunny ex':     { id: 'ASC-65',  name: 'Mega Lopunny ex', category: 'pokemon', energyType: 'colorless', stage: 'EX', hp: 260, imageUrl: '', setCode: 'ASC', setNumber: '65', localSetId: 'me2pt5' },
   "lillie's clefairy ex": { id: 'DRI-56', name: "Lillie's Clefairy ex", category: 'pokemon', energyType: 'psychic', stage: 'BÁSICO', hp: 190, imageUrl: '', setCode: 'DRI', setNumber: '56', localSetId: 'dri' },
 
-  // XY Mega Evolutions
-  'mega lucario ex':       { id: 'FFI-55',  name: 'Mega Lucario ex',      category: 'pokemon', energyType: 'fighting', stage: 'EX', hp: 220, imageUrl: '', setCode: 'FFI', setNumber: '55',  localSetId: 'xy3' },
-  'mega gardevoir ex':     { id: 'STS-112', name: 'Mega Gardevoir ex',    category: 'pokemon', energyType: 'psychic',  stage: 'EX', hp: 210, imageUrl: '', setCode: 'STS', setNumber: '112', localSetId: 'xy11' },
-  'mega charizard x ex':   { id: 'FLF-13',  name: 'Mega Charizard X ex',  category: 'pokemon', energyType: 'fire',     stage: 'EX', hp: 220, imageUrl: '', setCode: 'FLF', setNumber: '13',  localSetId: 'xy2' },
-  'mega charizard y ex':   { id: 'FLF-108', name: 'Mega Charizard Y ex',  category: 'pokemon', energyType: 'fire',     stage: 'EX', hp: 220, imageUrl: '', setCode: 'FLF', setNumber: '108', localSetId: 'xy2' },
-  'mega venusaur ex':      { id: 'XY-2',    name: 'Mega Venusaur ex',     category: 'pokemon', energyType: 'grass',    stage: 'EX', hp: 230, imageUrl: '', setCode: 'XY',  setNumber: '2',   localSetId: 'xy1' },
-  'mega blastoise ex':     { id: 'XY-30',   name: 'Mega Blastoise ex',    category: 'pokemon', energyType: 'water',    stage: 'EX', hp: 220, imageUrl: '', setCode: 'XY',  setNumber: '30',  localSetId: 'xy1' },
-  'mega gengar ex':        { id: 'PHF-35',  name: 'Mega Gengar ex',       category: 'pokemon', energyType: 'psychic',  stage: 'EX', hp: 220, imageUrl: '', setCode: 'PHF', setNumber: '35',  localSetId: 'xy4' },
-  'mega rayquaza ex':      { id: 'ROS-61',  name: 'Mega Rayquaza ex',     category: 'pokemon', energyType: 'colorless',stage: 'EX', hp: 220, imageUrl: '', setCode: 'ROS', setNumber: '61',  localSetId: 'xy6' },
-  'mega mewtwo x ex':      { id: 'BKT-63',  name: 'Mega Mewtwo X ex',     category: 'pokemon', energyType: 'psychic',  stage: 'EX', hp: 230, imageUrl: '', setCode: 'BKT', setNumber: '63',  localSetId: 'xy8' },
-  'mega mewtwo y ex':      { id: 'BKT-64',  name: 'Mega Mewtwo Y ex',     category: 'pokemon', energyType: 'psychic',  stage: 'EX', hp: 210, imageUrl: '', setCode: 'BKT', setNumber: '64',  localSetId: 'xy8' },
-  'mega tyranitar ex':     { id: 'AOR-43',  name: 'Mega Tyranitar ex',    category: 'pokemon', energyType: 'darkness', stage: 'EX', hp: 240, imageUrl: '', setCode: 'AOR', setNumber: '43',  localSetId: 'xy7' },
-  'mega scizor ex':        { id: 'BKP-77',  name: 'Mega Scizor ex',       category: 'pokemon', energyType: 'metal',    stage: 'EX', hp: 220, imageUrl: '', setCode: 'BKP', setNumber: '77',  localSetId: 'xy9' },
-  'mega steelix ex':       { id: 'STS-68',  name: 'Mega Steelix ex',      category: 'pokemon', energyType: 'metal',    stage: 'EX', hp: 240, imageUrl: '', setCode: 'STS', setNumber: '68',  localSetId: 'xy11' },
-  'zygarde ex':            { id: 'FCO-54',  name: 'Zygarde ex',           category: 'pokemon', energyType: 'fighting', stage: 'EX', hp: 190, imageUrl: '', setCode: 'FCO', setNumber: '54',  localSetId: 'xy10' },
-  'xerneas ex':            { id: 'XY-96',   name: 'Xerneas ex',           category: 'pokemon', energyType: 'psychic',  stage: 'EX', hp: 170, imageUrl: '', setCode: 'XY',  setNumber: '96',  localSetId: 'xy1' },
-  'yveltal ex':            { id: 'XY-78',   name: 'Yveltal ex',           category: 'pokemon', energyType: 'darkness', stage: 'EX', hp: 170, imageUrl: '', setCode: 'XY',  setNumber: '78',  localSetId: 'xy1' },
+  // ----- XY Mega Evolutions -----
+  'mega lucario ex':       { id: 'FFI-55',  name: 'Mega Lucario ex',   category: 'pokemon', energyType: 'fighting', stage: 'EX', hp: 220, imageUrl: '', setCode: 'FFI', setNumber: '55',  localSetId: 'xy3' },
+  'mega gardevoir ex':     { id: 'STS-112', name: 'Mega Gardevoir ex', category: 'pokemon', energyType: 'psychic',  stage: 'EX', hp: 210, imageUrl: '', setCode: 'STS', setNumber: '112', localSetId: 'xy11' },
+  'mega charizard x ex':   { id: 'FLF-13',  name: 'Mega Charizard X ex', category: 'pokemon', energyType: 'fire', stage: 'EX', hp: 220, imageUrl: '', setCode: 'FLF', setNumber: '13',  localSetId: 'xy2' },
+  'mega charizard y ex':   { id: 'FLF-108', name: 'Mega Charizard Y ex', category: 'pokemon', energyType: 'fire', stage: 'EX', hp: 220, imageUrl: '', setCode: 'FLF', setNumber: '108', localSetId: 'xy2' },
+  'mega venusaur ex':      { id: 'XY-2',    name: 'Mega Venusaur ex', category: 'pokemon', energyType: 'grass', stage: 'EX', hp: 230, imageUrl: '', setCode: 'XY',  setNumber: '2',   localSetId: 'xy1' },
+  'mega blastoise ex':     { id: 'XY-30',   name: 'Mega Blastoise ex', category: 'pokemon', energyType: 'water', stage: 'EX', hp: 220, imageUrl: '', setCode: 'XY',  setNumber: '30',  localSetId: 'xy1' },
+  'mega gengar ex':        { id: 'PHF-35',  name: 'Mega Gengar ex', category: 'pokemon', energyType: 'psychic', stage: 'EX', hp: 220, imageUrl: '', setCode: 'PHF', setNumber: '35',  localSetId: 'xy4' },
+  'mega rayquaza ex':      { id: 'ROS-61',  name: 'Mega Rayquaza ex', category: 'pokemon', energyType: 'colorless', stage: 'EX', hp: 220, imageUrl: '', setCode: 'ROS', setNumber: '61',  localSetId: 'xy6' },
+  'mega mewtwo x ex':      { id: 'BKT-63',  name: 'Mega Mewtwo X ex', category: 'pokemon', energyType: 'psychic', stage: 'EX', hp: 230, imageUrl: '', setCode: 'BKT', setNumber: '63',  localSetId: 'xy8' },
+  'mega mewtwo y ex':      { id: 'BKT-64',  name: 'Mega Mewtwo Y ex', category: 'pokemon', energyType: 'psychic', stage: 'EX', hp: 210, imageUrl: '', setCode: 'BKT', setNumber: '64',  localSetId: 'xy8' },
+  'mega tyranitar ex':     { id: 'AOR-43',  name: 'Mega Tyranitar ex', category: 'pokemon', energyType: 'darkness', stage: 'EX', hp: 240, imageUrl: '', setCode: 'AOR', setNumber: '43',  localSetId: 'xy7' },
+  'mega scizor ex':        { id: 'BKP-77',  name: 'Mega Scizor ex', category: 'pokemon', energyType: 'metal', stage: 'EX', hp: 220, imageUrl: '', setCode: 'BKP', setNumber: '77',  localSetId: 'xy9' },
+  'mega steelix ex':       { id: 'STS-68',  name: 'Mega Steelix ex', category: 'pokemon', energyType: 'metal', stage: 'EX', hp: 240, imageUrl: '', setCode: 'STS', setNumber: '68',  localSetId: 'xy11' },
+  'zygarde ex':            { id: 'FCO-54',  name: 'Zygarde ex', category: 'pokemon', energyType: 'fighting', stage: 'EX', hp: 190, imageUrl: '', setCode: 'FCO', setNumber: '54',  localSetId: 'xy10' },
+  'xerneas ex':            { id: 'XY-96',   name: 'Xerneas ex', category: 'pokemon', energyType: 'psychic', stage: 'EX', hp: 170, imageUrl: '', setCode: 'XY',  setNumber: '96',  localSetId: 'xy1' },
+  'yveltal ex':            { id: 'XY-78',   name: 'Yveltal ex', category: 'pokemon', energyType: 'darkness', stage: 'EX', hp: 170, imageUrl: '', setCode: 'XY',  setNumber: '78',  localSetId: 'xy1' },
 
-  // Trainers
+  // ----- Trainers -----
   'buddy-buddy poffin':      { id: 'TEF-144', name: 'Buddy-Buddy Poffin', category: 'item',      stage: 'TREINADOR', imageUrl: '', setCode: 'TEF', setNumber: '144', localSetId: 'sv5' },
   'ultra ball':              { id: 'SVI-196', name: 'Ultra Ball', category: 'item', stage: 'TREINADOR', imageUrl: '', setCode: 'SVI', setNumber: '196', localSetId: 'sv1' },
   'nest ball':               { id: 'SVI-181', name: 'Nest Ball',  category: 'item', stage: 'TREINADOR', imageUrl: '', setCode: 'SVI', setNumber: '181', localSetId: 'sv1' },
@@ -237,8 +242,6 @@ export const CARD_IMAGE_DATABASE: Record<string, CardMetadata> = {
   'neutral center':          { id: 'SCR-133', name: 'Neutral Center', category: 'stadium', stage: 'TREINADOR', imageUrl: '', setCode: 'SCR', setNumber: '133', localSetId: 'sv7' },
   'path to the peak':        { id: 'CRE-148', name: 'Path to the Peak', category: 'stadium', stage: 'TREINADOR', imageUrl: '', setCode: 'CRE', setNumber: '148', localSetId: 'swsh6' },
   'lost city':               { id: 'LOR-161', name: 'Lost City', category: 'stadium', stage: 'TREINADOR', imageUrl: '', setCode: 'LOR', setNumber: '161', localSetId: 'swsh11' },
-
-  // Novos trainers do log
   'poke tablet':             { id: 'TEF-196', name: 'Poké Tablet', category: 'item', stage: 'TREINADOR', imageUrl: '', setCode: 'TEF', setNumber: '196', localSetId: 'sv5' },
   "wally's compassion":      { id: 'JTG-160', name: "Wally's Compassion", category: 'supporter', stage: 'TREINADOR', imageUrl: '', setCode: 'JTG', setNumber: '160', localSetId: 'jtg' },
   'battle cage':             { id: 'TEF-199', name: 'Battle Cage', category: 'stadium', stage: 'TREINADOR', imageUrl: '', setCode: 'TEF', setNumber: '199', localSetId: 'sv5' },
@@ -252,7 +255,7 @@ export const CARD_IMAGE_DATABASE: Record<string, CardMetadata> = {
   'unfair stamp':            { id: 'TWM-165', name: 'Unfair Stamp', category: 'item', stage: 'TREINADOR', imageUrl: '', setCode: 'TWM', setNumber: '165', localSetId: 'sv6' },
   'risky ruins':             { id: 'TWM-168', name: 'Risky Ruins', category: 'stadium', stage: 'TREINADOR', imageUrl: '', setCode: 'TWM', setNumber: '168', localSetId: 'sv6' },
 
-  // Energies
+  // ----- Energies -----
   'basic fire energy':      { id: 'SVE-2', name: 'Basic Fire Energy',      category: 'energy', energyType: 'fire',      stage: 'ENERGIA', imageUrl: '', setCode: 'SVE', setNumber: '2', localSetId: 'sve' },
   'basic psychic energy':   { id: 'SVE-5', name: 'Basic Psychic Energy',   category: 'energy', energyType: 'psychic',   stage: 'ENERGIA', imageUrl: '', setCode: 'SVE', setNumber: '5', localSetId: 'sve' },
   'basic water energy':     { id: 'SVE-3', name: 'Basic Water Energy',     category: 'energy', energyType: 'water',     stage: 'ENERGIA', imageUrl: '', setCode: 'SVE', setNumber: '3', localSetId: 'sve' },
@@ -302,7 +305,6 @@ export const CARD_ALIASES: Record<string, string> = {
   'ordem da chefia':         "boss's orders",
   'pesquisa de professores': "professor's research",
   'pokeparada':              'pokestop',
-  'poke tablet':             'poke tablet',
   'compaixao do wally':      "wally's compassion",
   'jaula de batalha':        'battle cage',
   'martelo esmagador':       'crushing hammer',
@@ -511,7 +513,7 @@ export function formatPTCGLCardCode(cardOrName: CardMetadata | string): Formatte
 }
 
 // ============================================================================
-// FALLBACK CARD
+// HELPERS INTERNOS
 // ============================================================================
 
 function makeFallbackCard(originalName: string, norm: string): CardMetadata {
@@ -525,10 +527,6 @@ function makeFallbackCard(originalName: string, norm: string): CardMetadata {
     setCode: 'SVI', setNumber: '1', localSetId: 'sv1',
   };
 }
-
-// ============================================================================
-// MATCH COM FRONTEIRA DE PALAVRA
-// ============================================================================
 
 function matchesAsWholeWords(haystack: string, needle: string): boolean {
   let start = 0;
@@ -576,16 +574,13 @@ export function resolveCardByNameOnly(name: string): CardMetadata {
 
   const norm = normalizeCardName(name);
 
-  // Exact
   if (CARD_IMAGE_DATABASE[norm]) return CARD_IMAGE_DATABASE[norm];
 
-  // Alias exato
   const aliasTarget = CARD_ALIASES[norm];
   if (aliasTarget && CARD_IMAGE_DATABASE[aliasTarget]) {
     return CARD_IMAGE_DATABASE[aliasTarget];
   }
 
-  // Compound depois de normalizar
   const normCompound = norm.match(/^(.+?)\s+([a-z]{2,5})[-\s#]+(\d+)$/);
   if (normCompound && isKnownTPCiCode(normCompound[2])) {
     const tpci = normalizeTPCiSetCode(normCompound[2]);
@@ -593,11 +588,9 @@ export function resolveCardByNameOnly(name: string): CardMetadata {
     if (PTCGL_CARD_ID_MAP[key]) return PTCGL_CARD_ID_MAP[key];
   }
 
-  // Fuzzy com fronteira de palavra
   const fuzzy = fuzzyMatchAsWords(norm);
   if (fuzzy) return fuzzy;
 
-  // Alias como prefixo (para nomes com sufixo)
   const aliasKeys = Object.keys(CARD_ALIASES).sort((a, b) => b.length - a.length);
   for (const aliasKey of aliasKeys) {
     if (matchesAsWholeWords(norm, aliasKey)) {
@@ -878,4 +871,92 @@ export function verifyPTCGLCardMapping(cardNameOrId: string): PTCGLCardVerificat
 
 export function getCardImageUrl(name: string): string {
   return getAuthenticCardImageUrl(name);
+}
+
+// ============================================================================
+// PLAYER DECK REGISTRY
+// Registra o decklist PTCGL de cada jogador para resolver a versão correta
+// quando há várias cartas de mesmo nome (ex.: Dunsparce TEF 128 vs SVI 74).
+// ============================================================================
+
+const PLAYER_DECKS: Record<string, Record<string, CardMetadata>> = {};
+
+/**
+ * Registra o decklist de um jogador.
+ * Aceita formato de export PTCGL, uma carta por linha:
+ *   4 Dunsparce TEF 128
+ *   4 Dudunsparce TEF 129
+ *   1 Mega Lopunny ex ASC 65
+ * Ignora linhas em branco e cabeçalhos que não começam com número.
+ */
+export function registerPlayerDeck(playerId: string, decklistText: string): void {
+  const map: Record<string, CardMetadata> = {};
+  const lines = String(decklistText || '').split(/\r?\n/);
+
+  for (const raw of lines) {
+    const line = raw.trim();
+    if (!line) continue;
+    if (!/^\d/.test(line)) continue;
+
+    const m = line.match(/^(\d+)\s+(.+?)\s+([A-Za-z]{2,5})\s+(\d+)(?:\s+[A-Z]+)?$/);
+    if (!m) continue;
+
+    const name = m[2].trim();
+    const set = m[3].toUpperCase();
+    const num = m[4];
+
+    const card =
+      PTCGL_CARD_ID_MAP[`${set.toLowerCase()} ${num}`] ||
+      PTCGL_CARD_ID_MAP[`${set.toLowerCase()}-${num}`];
+
+    if (card) {
+      map[normalizeCardName(name)] = card;
+    } else {
+      // Cria um card "fallback" com os dados que temos, para não perder a referência
+      const fallback: CardMetadata = {
+        id: `${set}-${num}`,
+        name,
+        category: 'pokemon',
+        imageUrl: '',
+        setCode: set,
+        setNumber: num,
+        localSetId: mapTPCiToLocalSetId(set),
+      };
+      const url = tcgdexUrl(set, num, 'en') || ptcgIoUrl(set, num);
+      if (url) fallback.imageUrl = url;
+      map[normalizeCardName(name)] = fallback;
+    }
+  }
+
+  PLAYER_DECKS[playerId] = map;
+}
+
+/**
+ * Resolve uma carta priorizando o deck registrado do jogador.
+ * Cai pro resolver global se não achar no deck.
+ */
+export function resolveCardForPlayer(playerId: string, cardName: string): CardMetadata {
+  const deck = PLAYER_DECKS[playerId];
+  if (deck) {
+    const norm = normalizeCardName(cardName);
+    if (deck[norm]) return deck[norm];
+
+    const alias = CARD_ALIASES[norm];
+    if (alias && deck[alias]) return deck[alias];
+
+    for (const deckKey of Object.keys(deck)) {
+      if (matchesAsWholeWords(norm, deckKey)) return deck[deckKey];
+    }
+  }
+  return resolvePTCGLCard(cardName);
+}
+
+/** Limpa todos os decks registrados (útil ao trocar de partida). */
+export function clearPlayerDecks(): void {
+  for (const k of Object.keys(PLAYER_DECKS)) delete PLAYER_DECKS[k];
+}
+
+/** Debug: retorna o deck registrado de um jogador. */
+export function getPlayerDeck(playerId: string): Record<string, CardMetadata> {
+  return PLAYER_DECKS[playerId] || {};
 }
