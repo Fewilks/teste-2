@@ -189,28 +189,28 @@ export const CARD_IMAGE_DATABASE: Record<string, CardMetadata> = {
   'crobat v':          { id: 'DAA-104', name: 'Crobat V',     category: 'pokemon', energyType: 'darkness',  stage: 'BÁSICO',    hp: 180, imageUrl: '', setCode: 'DAA', setNumber: '104', localSetId: 'swsh3' },
 
   // ---------------------------------------------------------------------------
-  // ⚠️ VERSÕES CONFIRMADAS PELO USUÁRIO — AJUSTE AQUI SE OS NÚMEROS MUDAREM
+  // Versões específicas — CONFIRMAR no TCGdex quando possível
   // ---------------------------------------------------------------------------
+
   // Dunsparce padrão (usado quando o log só diz "Dunsparce")
-  'dunsparce':           { id: 'JTG-119', name: 'Dunsparce',   category: 'pokemon', energyType: 'colorless', stage: 'BÁSICO',    hp: 70,  imageUrl: '', setCode: 'JTG', setNumber: '119', localSetId: 'jtg' },
-  'dunsparce jtg':       { id: 'JTG-119', name: 'Dunsparce',   category: 'pokemon', energyType: 'colorless', stage: 'BÁSICO',    hp: 70,  imageUrl: '', setCode: 'JTG', setNumber: '119', localSetId: 'jtg' },
-  'dunsparce tef':       { id: 'TEF-128', name: 'Dunsparce',   category: 'pokemon', energyType: 'colorless', stage: 'BÁSICO',    hp: 60,  imageUrl: '', setCode: 'TEF', setNumber: '128', localSetId: 'sv5' },
+  'dunsparce':           { id: 'TEF-128', name: 'Dunsparce',   category: 'pokemon', energyType: 'colorless', stage: 'BÁSICO',    hp: 70,  imageUrl: '', setCode: 'TEF', setNumber: '128', localSetId: 'sv5' },
+  'dunsparce tef':       { id: 'TEF-128', name: 'Dunsparce',   category: 'pokemon', energyType: 'colorless', stage: 'BÁSICO',    hp: 70,  imageUrl: '', setCode: 'TEF', setNumber: '128', localSetId: 'sv5' },
   'dunsparce svi':       { id: 'SVI-74',  name: 'Dunsparce',   category: 'pokemon', energyType: 'colorless', stage: 'BÁSICO',    hp: 60,  imageUrl: '', setCode: 'SVI', setNumber: '74',  localSetId: 'sv1' },
 
   'dudunsparce':         { id: 'TEF-129', name: 'Dudunsparce', category: 'pokemon', energyType: 'colorless', stage: 'ESTÁGIO 1', hp: 140, imageUrl: '', setCode: 'TEF', setNumber: '129', localSetId: 'sv5' },
   'dudunsparce ex':      { id: 'TEF-121', name: 'Dudunsparce ex', category: 'pokemon', energyType: 'colorless', stage: 'ESTÁGIO 1', hp: 270, imageUrl: '', setCode: 'TEF', setNumber: '121', localSetId: 'sv5' },
 
-  // Buneary do PFL (me02) — usado no deck do Wilksman
+  // Buneary — versão PFL (me02)
   'buneary':             { id: 'PFL-83',  name: 'Buneary',     category: 'pokemon', energyType: 'colorless', stage: 'BÁSICO',    hp: 70,  imageUrl: '', setCode: 'PFL', setNumber: '83',  localSetId: 'me2' },
   'buneary pfl':         { id: 'PFL-83',  name: 'Buneary',     category: 'pokemon', energyType: 'colorless', stage: 'BÁSICO',    hp: 70,  imageUrl: '', setCode: 'PFL', setNumber: '83',  localSetId: 'me2' },
 
   'lopunny':             { id: 'SVI-161', name: 'Lopunny',     category: 'pokemon', energyType: 'colorless', stage: 'ESTÁGIO 1', hp: 100, imageUrl: '', setCode: 'SVI', setNumber: '161', localSetId: 'sv1' },
   'mega lopunny ex':     { id: 'PFL-128', name: 'Mega Lopunny ex', category: 'pokemon', energyType: 'colorless', stage: 'EX', hp: 260, imageUrl: '', setCode: 'PFL', setNumber: '128', localSetId: 'me2' },
 
-  // Tandemaus — o que estava aparecendo no lugar do Buneary antes
+  // Tandemaus
   'tandemaus':           { id: 'SVI-168', name: 'Tandemaus',   category: 'pokemon', energyType: 'colorless', stage: 'BÁSICO',    hp: 40,  imageUrl: '', setCode: 'SVI', setNumber: '168', localSetId: 'sv1' },
 
-  // Outros do seu log
+  // Outros do log
   'stunfisk':            { id: 'PAL-77',  name: 'Stunfisk',    category: 'pokemon', energyType: 'lightning', stage: 'BÁSICO',    hp: 90,  imageUrl: '', setCode: 'PAL', setNumber: '77', localSetId: 'sv2' },
   'psyduck':             { id: 'MEW-54',  name: 'Psyduck',     category: 'pokemon', energyType: 'water',     stage: 'BÁSICO',    hp: 60,  imageUrl: '', setCode: 'MEW', setNumber: '54', localSetId: 'sv3pt5' },
   'meowth ex':           { id: 'JTG-106', name: 'Meowth ex',   category: 'pokemon', energyType: 'colorless', stage: 'BÁSICO',    hp: 170, imageUrl: '', setCode: 'JTG', setNumber: '106', localSetId: 'jtg' },
