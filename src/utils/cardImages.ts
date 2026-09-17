@@ -1,9 +1,9 @@
 // ============================================================================
-// cardImages.ts — Resolver de cartas Pokémon TCG (PTCGL-first)
+// cardImages.ts — Resolver Pokémon TCG (PTCGL-first)
 //
-// FIX: recursão infinita entre resolvePTCGLCard e parsePTCGLLogLine.
-//      Agora resolvePTCGLCard NUNCA chama parsePTCGLLogLine, e
-//      parsePTCGLLogLine usa resolveCardByNameOnly (sem recursão).
+// FIX: fuzzy match agora usa FRONTEIRA DE PALAVRA. Isso impede que
+//      "rotom ventilador" case com "rotom v" (substring solto).
+// FIX: adicionado CARD_ALIASES para PT-BR.
 // ============================================================================
 
 import {
@@ -74,7 +74,7 @@ export const SET_TO_TCGDEX_MAP: Record<string, { series: string; set: string }> 
 })();
 
 // ============================================================================
-// HELPERS QUE DELEGAM PARA setSync
+// HELPERS
 // ============================================================================
 
 export function normalizeTPCiSetCode(setCode: string): string {
@@ -115,6 +115,7 @@ export function getPokemonTcgIoImageUrl(
 // ============================================================================
 
 export const CARD_IMAGE_DATABASE: Record<string, CardMetadata> = {
+  // ---------- Pokémon Standard ----------
   'charizard ex':      { id: 'OBF-125', name: 'Charizard ex', category: 'pokemon', energyType: 'darkness', stage: 'ESTÁGIO 2', hp: 330, imageUrl: '', setCode: 'OBF', setNumber: '125', localSetId: 'sv3' },
   'charmander':        { id: 'OBF-26',  name: 'Charmander',   category: 'pokemon', energyType: 'fire',     stage: 'BÁSICO',    hp: 70,  imageUrl: '', setCode: 'OBF', setNumber: '26',  localSetId: 'sv3' },
   'charmeleon':        { id: 'OBF-27',  name: 'Charmeleon',   category: 'pokemon', energyType: 'fire',     stage: 'ESTÁGIO 1', hp: 90,  imageUrl: '', setCode: 'OBF', setNumber: '27',  localSetId: 'sv3' },
@@ -133,6 +134,7 @@ export const CARD_IMAGE_DATABASE: Record<string, CardMetadata> = {
   'dusclops':          { id: 'SFA-19',  name: 'Dusclops',     category: 'pokemon', energyType: 'psychic',   stage: 'ESTÁGIO 1', hp: 90,  imageUrl: '', setCode: 'SFA', setNumber: '19', localSetId: 'sv6pt5' },
   'dusknoir':          { id: 'SFA-20',  name: 'Dusknoir',     category: 'pokemon', energyType: 'psychic',   stage: 'ESTÁGIO 2', hp: 160, imageUrl: '', setCode: 'SFA', setNumber: '20', localSetId: 'sv6pt5' },
   'rotom v':           { id: 'LOR-58',  name: 'Rotom V',      category: 'pokemon', energyType: 'lightning', stage: 'BÁSICO',    hp: 190, imageUrl: '', setCode: 'LOR', setNumber: '58', localSetId: 'swsh11' },
+  'fan rotom':         { id: 'SCR-118', name: 'Fan Rotom',    category: 'pokemon', energyType: 'colorless', stage: 'BÁSICO',    hp: 70,  imageUrl: '', setCode: 'SCR', setNumber: '118', localSetId: 'sv7' },
   'fezandipiti ex':    { id: 'SFA-38',  name: 'Fezandipiti ex', category: 'pokemon', energyType: 'psychic', stage: 'BÁSICO',  hp: 210, imageUrl: '', setCode: 'SFA', setNumber: '38', localSetId: 'sv6pt5' },
   'manaphy':           { id: 'BRS-41',  name: 'Manaphy',      category: 'pokemon', energyType: 'water',     stage: 'BÁSICO',    hp: 70,  imageUrl: '', setCode: 'BRS', setNumber: '41', localSetId: 'swsh9' },
   'radiant alakazam':  { id: 'SIT-59',  name: 'Radiant Alakazam', category: 'pokemon', energyType: 'psychic', stage: 'BÁSICO', hp: 130, imageUrl: '', setCode: 'SIT', setNumber: '59', localSetId: 'swsh12' },
@@ -161,7 +163,6 @@ export const CARD_IMAGE_DATABASE: Record<string, CardMetadata> = {
   'noctowl':           { id: 'SCR-115', name: 'Noctowl',      category: 'pokemon', energyType: 'colorless', stage: 'ESTÁGIO 1', hp: 100, imageUrl: '', setCode: 'SCR', setNumber: '115', localSetId: 'sv7' },
   'hoothoot':          { id: 'SCR-114', name: 'Hoothoot',     category: 'pokemon', energyType: 'colorless', stage: 'BÁSICO',    hp: 70,  imageUrl: '', setCode: 'SCR', setNumber: '114', localSetId: 'sv7' },
   'bouffalant':        { id: 'SCR-119', name: 'Bouffalant',   category: 'pokemon', energyType: 'colorless', stage: 'BÁSICO',    hp: 100, imageUrl: '', setCode: 'SCR', setNumber: '119', localSetId: 'sv7' },
-  'fan rotom':         { id: 'SCR-118', name: 'Fan Rotom',    category: 'pokemon', energyType: 'colorless', stage: 'BÁSICO',    hp: 70,  imageUrl: '', setCode: 'SCR', setNumber: '118', localSetId: 'sv7' },
   'gholdengo ex':      { id: 'PAR-139', name: 'Gholdengo ex', category: 'pokemon', energyType: 'metal',     stage: 'ESTÁGIO 1', hp: 260, imageUrl: '', setCode: 'PAR', setNumber: '139', localSetId: 'sv4' },
   'gimmighoul':        { id: 'PAR-87',  name: 'Gimmighoul',   category: 'pokemon', energyType: 'psychic',   stage: 'BÁSICO',    hp: 50,  imageUrl: '', setCode: 'PAR', setNumber: '87', localSetId: 'sv4' },
   'scizor':            { id: 'OBF-141', name: 'Scizor',       category: 'pokemon', energyType: 'metal',     stage: 'ESTÁGIO 1', hp: 140, imageUrl: '', setCode: 'OBF', setNumber: '141', localSetId: 'sv3' },
@@ -186,11 +187,21 @@ export const CARD_IMAGE_DATABASE: Record<string, CardMetadata> = {
   'lumineon v':        { id: 'BRS-40',  name: 'Lumineon V',   category: 'pokemon', energyType: 'water',     stage: 'BÁSICO',    hp: 170, imageUrl: '', setCode: 'BRS', setNumber: '40', localSetId: 'swsh9' },
   'crobat v':          { id: 'DAA-104', name: 'Crobat V',     category: 'pokemon', energyType: 'darkness',  stage: 'BÁSICO',    hp: 180, imageUrl: '', setCode: 'DAA', setNumber: '104', localSetId: 'swsh3' },
 
+  // ---------- NOVOS: Pokémon do log (Standard 2025) ----------
+  'dunsparce':         { id: 'TEF-128', name: 'Dunsparce',    category: 'pokemon', energyType: 'colorless', stage: 'BÁSICO',    hp: 60,  imageUrl: '', setCode: 'TEF', setNumber: '128', localSetId: 'sv5' },
+  'dudunsparce':       { id: 'TEF-129', name: 'Dudunsparce',  category: 'pokemon', energyType: 'colorless', stage: 'ESTÁGIO 1', hp: 140, imageUrl: '', setCode: 'TEF', setNumber: '129', localSetId: 'sv5' },
+  'buneary':           { id: 'SVI-160', name: 'Buneary',      category: 'pokemon', energyType: 'colorless', stage: 'BÁSICO',    hp: 60,  imageUrl: '', setCode: 'SVI', setNumber: '160', localSetId: 'sv1' },
+  'lopunny':           { id: 'SVI-161', name: 'Lopunny',      category: 'pokemon', energyType: 'colorless', stage: 'ESTÁGIO 1', hp: 100, imageUrl: '', setCode: 'SVI', setNumber: '161', localSetId: 'sv1' },
+  'stunfisk':          { id: 'PAL-77',  name: 'Stunfisk',     category: 'pokemon', energyType: 'lightning', stage: 'BÁSICO',    hp: 90,  imageUrl: '', setCode: 'PAL', setNumber: '77', localSetId: 'sv2' },
+  'psyduck':           { id: 'MEW-54',  name: 'Psyduck',      category: 'pokemon', energyType: 'water',     stage: 'BÁSICO',    hp: 60,  imageUrl: '', setCode: 'MEW', setNumber: '54', localSetId: 'sv3pt5' },
+  'meowth ex':         { id: 'JTG-106', name: 'Meowth ex',    category: 'pokemon', energyType: 'colorless', stage: 'BÁSICO',    hp: 170, imageUrl: '', setCode: 'JTG', setNumber: '106', localSetId: 'jtg' },
+  'mega lopunny ex':   { id: 'ASC-065', name: 'Mega Lopunny ex', category: 'pokemon', energyType: 'colorless', stage: 'EX',    hp: 260, imageUrl: '', setCode: 'ASC', setNumber: '065', localSetId: 'me2pt5' },
+  "lillie's clefairy ex": { id: 'DRI-056', name: "Lillie's Clefairy ex", category: 'pokemon', energyType: 'psychic', stage: 'BÁSICO', hp: 190, imageUrl: '', setCode: 'DRI', setNumber: '056', localSetId: 'dri' },
+
+  // XY Mega Evolutions
   'mega lucario ex':       { id: 'FFI-55',  name: 'Mega Lucario ex',      category: 'pokemon', energyType: 'fighting', stage: 'EX', hp: 220, imageUrl: '', setCode: 'FFI', setNumber: '55',  localSetId: 'xy3' },
-  'mega lucario ex (ilustracao especial rara)': { id: 'FFI-113', name: 'Mega Lucario ex (Ilustração Especial Rara)', category: 'pokemon', energyType: 'fighting', stage: 'EX', hp: 220, imageUrl: '', setCode: 'FFI', setNumber: '113', localSetId: 'xy3' },
   'mega gardevoir ex':     { id: 'STS-112', name: 'Mega Gardevoir ex',    category: 'pokemon', energyType: 'psychic',  stage: 'EX', hp: 210, imageUrl: '', setCode: 'STS', setNumber: '112', localSetId: 'xy11' },
   'mega charizard x ex':   { id: 'FLF-13',  name: 'Mega Charizard X ex',  category: 'pokemon', energyType: 'fire',     stage: 'EX', hp: 220, imageUrl: '', setCode: 'FLF', setNumber: '13',  localSetId: 'xy2' },
-  'mega charizard x ex (ilustracao rara)': { id: 'FLF-107', name: 'Mega Charizard X ex (Ilustração Rara)', category: 'pokemon', energyType: 'fire', stage: 'EX', hp: 220, imageUrl: '', setCode: 'FLF', setNumber: '107', localSetId: 'xy2' },
   'mega charizard y ex':   { id: 'FLF-108', name: 'Mega Charizard Y ex',  category: 'pokemon', energyType: 'fire',     stage: 'EX', hp: 220, imageUrl: '', setCode: 'FLF', setNumber: '108', localSetId: 'xy2' },
   'mega venusaur ex':      { id: 'XY-2',    name: 'Mega Venusaur ex',     category: 'pokemon', energyType: 'grass',    stage: 'EX', hp: 230, imageUrl: '', setCode: 'XY',  setNumber: '2',   localSetId: 'xy1' },
   'mega blastoise ex':     { id: 'XY-30',   name: 'Mega Blastoise ex',    category: 'pokemon', energyType: 'water',    stage: 'EX', hp: 220, imageUrl: '', setCode: 'XY',  setNumber: '30',  localSetId: 'xy1' },
@@ -198,81 +209,138 @@ export const CARD_IMAGE_DATABASE: Record<string, CardMetadata> = {
   'mega rayquaza ex':      { id: 'ROS-61',  name: 'Mega Rayquaza ex',     category: 'pokemon', energyType: 'colorless',stage: 'EX', hp: 220, imageUrl: '', setCode: 'ROS', setNumber: '61',  localSetId: 'xy6' },
   'mega mewtwo x ex':      { id: 'BKT-63',  name: 'Mega Mewtwo X ex',     category: 'pokemon', energyType: 'psychic',  stage: 'EX', hp: 230, imageUrl: '', setCode: 'BKT', setNumber: '63',  localSetId: 'xy8' },
   'mega mewtwo y ex':      { id: 'BKT-64',  name: 'Mega Mewtwo Y ex',     category: 'pokemon', energyType: 'psychic',  stage: 'EX', hp: 210, imageUrl: '', setCode: 'BKT', setNumber: '64',  localSetId: 'xy8' },
-  'mega kangaskhan ex':    { id: 'FLF-79',  name: 'Mega Kangaskhan ex',   category: 'pokemon', energyType: 'colorless',stage: 'EX', hp: 230, imageUrl: '', setCode: 'FLF', setNumber: '79',  localSetId: 'xy2' },
   'mega tyranitar ex':     { id: 'AOR-43',  name: 'Mega Tyranitar ex',    category: 'pokemon', energyType: 'darkness', stage: 'EX', hp: 240, imageUrl: '', setCode: 'AOR', setNumber: '43',  localSetId: 'xy7' },
   'mega scizor ex':        { id: 'BKP-77',  name: 'Mega Scizor ex',       category: 'pokemon', energyType: 'metal',    stage: 'EX', hp: 220, imageUrl: '', setCode: 'BKP', setNumber: '77',  localSetId: 'xy9' },
-  'mega gallade ex':       { id: 'ROS-35',  name: 'Mega Gallade ex',      category: 'pokemon', energyType: 'psychic',  stage: 'EX', hp: 220, imageUrl: '', setCode: 'ROS', setNumber: '35',  localSetId: 'xy6' },
   'mega steelix ex':       { id: 'STS-68',  name: 'Mega Steelix ex',      category: 'pokemon', energyType: 'metal',    stage: 'EX', hp: 240, imageUrl: '', setCode: 'STS', setNumber: '68',  localSetId: 'xy11' },
-  'mega latias ex':        { id: 'ROS-59',  name: 'Mega Latias ex',       category: 'pokemon', energyType: 'dragon',   stage: 'EX', hp: 190, imageUrl: '', setCode: 'ROS', setNumber: '59',  localSetId: 'xy6' },
-  'mega darkrai ex':       { id: 'BKP-74',  name: 'Mega Darkrai ex',      category: 'pokemon', energyType: 'darkness', stage: 'EX', hp: 180, imageUrl: '', setCode: 'BKP', setNumber: '74',  localSetId: 'xy9' },
   'zygarde ex':            { id: 'FCO-54',  name: 'Zygarde ex',           category: 'pokemon', energyType: 'fighting', stage: 'EX', hp: 190, imageUrl: '', setCode: 'FCO', setNumber: '54',  localSetId: 'xy10' },
   'xerneas ex':            { id: 'XY-96',   name: 'Xerneas ex',           category: 'pokemon', energyType: 'psychic',  stage: 'EX', hp: 170, imageUrl: '', setCode: 'XY',  setNumber: '96',  localSetId: 'xy1' },
   'yveltal ex':            { id: 'XY-78',   name: 'Yveltal ex',           category: 'pokemon', energyType: 'darkness', stage: 'EX', hp: 170, imageUrl: '', setCode: 'XY',  setNumber: '78',  localSetId: 'xy1' },
 
+  // ---------- TRAINERS ----------
   'buddy-buddy poffin':      { id: 'TEF-144', name: 'Buddy-Buddy Poffin', category: 'item',      stage: 'TREINADOR', imageUrl: '', setCode: 'TEF', setNumber: '144', localSetId: 'sv5' },
-  'poffin de companheiro':   { id: 'TEF-144', name: 'Buddy-Buddy Poffin', category: 'item',      stage: 'TREINADOR', imageUrl: '', setCode: 'TEF', setNumber: '144', localSetId: 'sv5' },
-  'pedaco de poffin de companheiro': { id: 'TEF-144', name: 'Buddy-Buddy Poffin', category: 'item', stage: 'TREINADOR', imageUrl: '', setCode: 'TEF', setNumber: '144', localSetId: 'sv5' },
   'ultra ball':              { id: 'SVI-196', name: 'Ultra Ball', category: 'item', stage: 'TREINADOR', imageUrl: '', setCode: 'SVI', setNumber: '196', localSetId: 'sv1' },
-  'ultra bola':              { id: 'SVI-196', name: 'Ultra Ball', category: 'item', stage: 'TREINADOR', imageUrl: '', setCode: 'SVI', setNumber: '196', localSetId: 'sv1' },
   'nest ball':               { id: 'SVI-181', name: 'Nest Ball',  category: 'item', stage: 'TREINADOR', imageUrl: '', setCode: 'SVI', setNumber: '181', localSetId: 'sv1' },
-  'bola ninho':              { id: 'SVI-181', name: 'Nest Ball',  category: 'item', stage: 'TREINADOR', imageUrl: '', setCode: 'SVI', setNumber: '181', localSetId: 'sv1' },
   'rare candy':              { id: 'SVI-191', name: 'Rare Candy', category: 'item', stage: 'TREINADOR', imageUrl: '', setCode: 'SVI', setNumber: '191', localSetId: 'sv1' },
-  'doce raro':               { id: 'SVI-191', name: 'Rare Candy', category: 'item', stage: 'TREINADOR', imageUrl: '', setCode: 'SVI', setNumber: '191', localSetId: 'sv1' },
   'super rod':               { id: 'PAL-188', name: 'Super Rod',  category: 'item', stage: 'TREINADOR', imageUrl: '', setCode: 'PAL', setNumber: '188', localSetId: 'sv2' },
-  'supervara':               { id: 'PAL-188', name: 'Super Rod',  category: 'item', stage: 'TREINADOR', imageUrl: '', setCode: 'PAL', setNumber: '188', localSetId: 'sv2' },
   'prime catcher':           { id: 'TEF-157', name: 'Prime Catcher', category: 'item', stage: 'TREINADOR', imageUrl: '', setCode: 'TEF', setNumber: '157', localSetId: 'sv5' },
-  'pegador primordial':      { id: 'TEF-157', name: 'Prime Catcher', category: 'item', stage: 'TREINADOR', imageUrl: '', setCode: 'TEF', setNumber: '157', localSetId: 'sv5' },
   'counter catcher':         { id: 'PAR-160', name: 'Counter Catcher', category: 'item', stage: 'TREINADOR', imageUrl: '', setCode: 'PAR', setNumber: '160', localSetId: 'sv4' },
-  'pegador de revanche':     { id: 'PAR-160', name: 'Counter Catcher', category: 'item', stage: 'TREINADOR', imageUrl: '', setCode: 'PAR', setNumber: '160', localSetId: 'sv4' },
   'night stretcher':         { id: 'SFA-61',  name: 'Night Stretcher', category: 'item', stage: 'TREINADOR', imageUrl: '', setCode: 'SFA', setNumber: '61', localSetId: 'sv6pt5' },
-  'maca noturna':            { id: 'SFA-61',  name: 'Night Stretcher', category: 'item', stage: 'TREINADOR', imageUrl: '', setCode: 'SFA', setNumber: '61', localSetId: 'sv6pt5' },
   'earthen vessel':          { id: 'PAR-163', name: 'Earthen Vessel', category: 'item', stage: 'TREINADOR', imageUrl: '', setCode: 'PAR', setNumber: '163', localSetId: 'sv4' },
-  'recipiente terrestre':    { id: 'PAR-163', name: 'Earthen Vessel', category: 'item', stage: 'TREINADOR', imageUrl: '', setCode: 'PAR', setNumber: '163', localSetId: 'sv4' },
   'forest seal stone':       { id: 'SIT-156', name: 'Forest Seal Stone', category: 'tool', stage: 'TREINADOR', imageUrl: '', setCode: 'SIT', setNumber: '156', localSetId: 'swsh12' },
   'arven':                   { id: 'SVI-166', name: 'Arven', category: 'supporter', stage: 'TREINADOR', imageUrl: '', setCode: 'SVI', setNumber: '166', localSetId: 'sv1' },
   'iono':                    { id: 'PAL-185', name: 'Iono',  category: 'supporter', stage: 'TREINADOR', imageUrl: '', setCode: 'PAL', setNumber: '185', localSetId: 'sv2' },
   "boss's orders":           { id: 'SVI-172', name: "Boss's Orders", category: 'supporter', stage: 'TREINADOR', imageUrl: '', setCode: 'SVI', setNumber: '172', localSetId: 'sv1' },
-  'ordens da chefia':        { id: 'SVI-172', name: "Boss's Orders", category: 'supporter', stage: 'TREINADOR', imageUrl: '', setCode: 'SVI', setNumber: '172', localSetId: 'sv1' },
   "professor's research":    { id: 'SVI-189', name: "Professor's Research", category: 'supporter', stage: 'TREINADOR', imageUrl: '', setCode: 'SVI', setNumber: '189', localSetId: 'sv1' },
-  'pesquisa de professores': { id: 'SVI-189', name: "Professor's Research", category: 'supporter', stage: 'TREINADOR', imageUrl: '', setCode: 'SVI', setNumber: '189', localSetId: 'sv1' },
   'artazon':                 { id: 'PAL-171', name: 'Artazon', category: 'stadium', stage: 'TREINADOR', imageUrl: '', setCode: 'PAL', setNumber: '171', localSetId: 'sv2' },
   'pokestop':                { id: 'PGO-68',  name: 'PokéStop', category: 'stadium', stage: 'TREINADOR', imageUrl: '', setCode: 'PGO', setNumber: '68', localSetId: 'pgo' },
-  'pokeparada':              { id: 'PGO-68',  name: 'PokéStop', category: 'stadium', stage: 'TREINADOR', imageUrl: '', setCode: 'PGO', setNumber: '68', localSetId: 'pgo' },
   'jamming tower':           { id: 'TWM-153', name: 'Jamming Tower', category: 'stadium', stage: 'TREINADOR', imageUrl: '', setCode: 'TWM', setNumber: '153', localSetId: 'sv6' },
-  'torre interferente':      { id: 'TWM-153', name: 'Jamming Tower', category: 'stadium', stage: 'TREINADOR', imageUrl: '', setCode: 'TWM', setNumber: '153', localSetId: 'sv6' },
   'area zero underdepths':   { id: 'SCR-131', name: 'Area Zero Underdepths', category: 'stadium', stage: 'TREINADOR', imageUrl: '', setCode: 'SCR', setNumber: '131', localSetId: 'sv7' },
-  'subterraneo da area zero':{ id: 'SCR-131', name: 'Area Zero Underdepths', category: 'stadium', stage: 'TREINADOR', imageUrl: '', setCode: 'SCR', setNumber: '131', localSetId: 'sv7' },
   'neutral center':          { id: 'SCR-133', name: 'Neutral Center', category: 'stadium', stage: 'TREINADOR', imageUrl: '', setCode: 'SCR', setNumber: '133', localSetId: 'sv7' },
-  'centro neutro':           { id: 'SCR-133', name: 'Neutral Center', category: 'stadium', stage: 'TREINADOR', imageUrl: '', setCode: 'SCR', setNumber: '133', localSetId: 'sv7' },
   'path to the peak':        { id: 'CRE-148', name: 'Path to the Peak', category: 'stadium', stage: 'TREINADOR', imageUrl: '', setCode: 'CRE', setNumber: '148', localSetId: 'swsh6' },
   'lost city':               { id: 'LOR-161', name: 'Lost City', category: 'stadium', stage: 'TREINADOR', imageUrl: '', setCode: 'LOR', setNumber: '161', localSetId: 'swsh11' },
 
+  // ---------- NOVOS: Treinadores do log ----------
+  'poke tablet':             { id: 'TEF-196', name: 'Poké Tablet', category: 'item', stage: 'TREINADOR', imageUrl: '', setCode: 'TEF', setNumber: '196', localSetId: 'sv5' },
+  "wally's compassion":      { id: 'JTG-160', name: "Wally's Compassion", category: 'supporter', stage: 'TREINADOR', imageUrl: '', setCode: 'JTG', setNumber: '160', localSetId: 'jtg' },
+  'battle cage':             { id: 'TEF-199', name: 'Battle Cage', category: 'stadium', stage: 'TREINADOR', imageUrl: '', setCode: 'TEF', setNumber: '199', localSetId: 'sv5' },
+  'crushing hammer':         { id: 'SVI-168', name: 'Crushing Hammer', category: 'item', stage: 'TREINADOR', imageUrl: '', setCode: 'SVI', setNumber: '168', localSetId: 'sv1' },
+  "lillie's determination":  { id: 'JTG-158', name: "Lillie's Determination", category: 'supporter', stage: 'TREINADOR', imageUrl: '', setCode: 'JTG', setNumber: '158', localSetId: 'jtg' },
+  'special red card':        { id: 'SVI-192', name: 'Special Red Card', category: 'item', stage: 'TREINADOR', imageUrl: '', setCode: 'SVI', setNumber: '192', localSetId: 'sv1' },
+  'air balloon':             { id: 'SVI-153', name: 'Air Balloon', category: 'tool', stage: 'TREINADOR', imageUrl: '', setCode: 'SVI', setNumber: '153', localSetId: 'sv1' },
+  'hilda':                   { id: 'TEF-195', name: 'Hilda', category: 'supporter', stage: 'TREINADOR', imageUrl: '', setCode: 'TEF', setNumber: '195', localSetId: 'sv5' },
+  'pokegear 3.0':            { id: 'SVI-186', name: 'Pokégear 3.0', category: 'item', stage: 'TREINADOR', imageUrl: '', setCode: 'SVI', setNumber: '186', localSetId: 'sv1' },
+  'clavell':                 { id: 'SVI-177', name: 'Clavell', category: 'supporter', stage: 'TREINADOR', imageUrl: '', setCode: 'SVI', setNumber: '177', localSetId: 'sv1' },
+  'unfair stamp':            { id: 'TWM-165', name: 'Unfair Stamp', category: 'item', stage: 'TREINADOR', imageUrl: '', setCode: 'TWM', setNumber: '165', localSetId: 'sv6' },
+  'risky ruins':             { id: 'TWM-168', name: 'Risky Ruins', category: 'stadium', stage: 'TREINADOR', imageUrl: '', setCode: 'TWM', setNumber: '168', localSetId: 'sv6' },
+
+  // ---------- ENERGIES ----------
   'basic fire energy':      { id: 'SVE-2', name: 'Basic Fire Energy',      category: 'energy', energyType: 'fire',      stage: 'ENERGIA', imageUrl: '', setCode: 'SVE', setNumber: '2', localSetId: 'sve' },
-  'energia de fogo basica': { id: 'SVE-2', name: 'Basic Fire Energy',      category: 'energy', energyType: 'fire',      stage: 'ENERGIA', imageUrl: '', setCode: 'SVE', setNumber: '2', localSetId: 'sve' },
-  'energia de fogo':        { id: 'SVE-2', name: 'Basic Fire Energy',      category: 'energy', energyType: 'fire',      stage: 'ENERGIA', imageUrl: '', setCode: 'SVE', setNumber: '2', localSetId: 'sve' },
   'basic psychic energy':   { id: 'SVE-5', name: 'Basic Psychic Energy',   category: 'energy', energyType: 'psychic',   stage: 'ENERGIA', imageUrl: '', setCode: 'SVE', setNumber: '5', localSetId: 'sve' },
-  'energia psiquica basica':{ id: 'SVE-5', name: 'Basic Psychic Energy',   category: 'energy', energyType: 'psychic',   stage: 'ENERGIA', imageUrl: '', setCode: 'SVE', setNumber: '5', localSetId: 'sve' },
-  'energia psiquica':       { id: 'SVE-5', name: 'Basic Psychic Energy',   category: 'energy', energyType: 'psychic',   stage: 'ENERGIA', imageUrl: '', setCode: 'SVE', setNumber: '5', localSetId: 'sve' },
   'basic water energy':     { id: 'SVE-3', name: 'Basic Water Energy',     category: 'energy', energyType: 'water',     stage: 'ENERGIA', imageUrl: '', setCode: 'SVE', setNumber: '3', localSetId: 'sve' },
-  'energia de agua basica': { id: 'SVE-3', name: 'Basic Water Energy',     category: 'energy', energyType: 'water',     stage: 'ENERGIA', imageUrl: '', setCode: 'SVE', setNumber: '3', localSetId: 'sve' },
   'basic lightning energy': { id: 'SVE-4', name: 'Basic Lightning Energy', category: 'energy', energyType: 'lightning', stage: 'ENERGIA', imageUrl: '', setCode: 'SVE', setNumber: '4', localSetId: 'sve' },
-  'energia de raios basica':{ id: 'SVE-4', name: 'Basic Lightning Energy', category: 'energy', energyType: 'lightning', stage: 'ENERGIA', imageUrl: '', setCode: 'SVE', setNumber: '4', localSetId: 'sve' },
   'basic fighting energy':  { id: 'SVE-6', name: 'Basic Fighting Energy',  category: 'energy', energyType: 'fighting',  stage: 'ENERGIA', imageUrl: '', setCode: 'SVE', setNumber: '6', localSetId: 'sve' },
-  'energia de luta basica': { id: 'SVE-6', name: 'Basic Fighting Energy',  category: 'energy', energyType: 'fighting',  stage: 'ENERGIA', imageUrl: '', setCode: 'SVE', setNumber: '6', localSetId: 'sve' },
   'basic darkness energy':  { id: 'SVE-7', name: 'Basic Darkness Energy',  category: 'energy', energyType: 'darkness',  stage: 'ENERGIA', imageUrl: '', setCode: 'SVE', setNumber: '7', localSetId: 'sve' },
-  'energia de escuridao basica': { id: 'SVE-7', name: 'Basic Darkness Energy', category: 'energy', energyType: 'darkness', stage: 'ENERGIA', imageUrl: '', setCode: 'SVE', setNumber: '7', localSetId: 'sve' },
   'basic metal energy':     { id: 'SVE-8', name: 'Basic Metal Energy',     category: 'energy', energyType: 'metal',     stage: 'ENERGIA', imageUrl: '', setCode: 'SVE', setNumber: '8', localSetId: 'sve' },
   'basic grass energy':     { id: 'SVE-1', name: 'Basic Grass Energy',     category: 'energy', energyType: 'grass',     stage: 'ENERGIA', imageUrl: '', setCode: 'SVE', setNumber: '1', localSetId: 'sve' },
-  'energia de planta basica': { id: 'SVE-1', name: 'Basic Grass Energy',   category: 'energy', energyType: 'grass',     stage: 'ENERGIA', imageUrl: '', setCode: 'SVE', setNumber: '1', localSetId: 'sve' },
   'double turbo energy':    { id: 'BRS-151', name: 'Double Turbo Energy',  category: 'energy', energyType: 'colorless', stage: 'ENERGIA', imageUrl: '', setCode: 'BRS', setNumber: '151', localSetId: 'swsh9' },
+  'prism energy':           { id: 'TEF-203', name: 'Prism Energy',         category: 'energy', energyType: 'colorless', stage: 'ENERGIA', imageUrl: '', setCode: 'TEF', setNumber: '203', localSetId: 'sv5' },
+  'mist energy':            { id: 'TWM-191', name: 'Mist Energy',          category: 'energy', energyType: 'colorless', stage: 'ENERGIA', imageUrl: '', setCode: 'TWM', setNumber: '191', localSetId: 'sv6' },
+  'enriching energy':       { id: 'TWM-191', name: 'Enriching Energy',     category: 'energy', energyType: 'colorless', stage: 'ENERGIA', imageUrl: '', setCode: 'TWM', setNumber: '191', localSetId: 'sv6' },
 };
 
+// Popula imageUrl via TCGdex
 Object.values(CARD_IMAGE_DATABASE).forEach(card => {
   if (card.setCode && card.setNumber) {
     const url = tcgdexUrl(card.setCode, card.setNumber, 'en') || ptcgIoUrl(card.setCode, card.setNumber);
     if (url) card.imageUrl = url;
   }
 });
+
+// ============================================================================
+// CARD_ALIASES — PT-BR / nomes alternativos → chave canônica da DB
+// Chaves DEVEM estar normalizadas (lowercase, sem acento, sem apóstrofo)
+// ============================================================================
+
+export const CARD_ALIASES: Record<string, string> = {
+  // Pokémon
+  'rotom ventilador':        'fan rotom',
+  'clefairy ex da lilian':   "lillie's clefairy ex",
+  'clefairy ex de lilian':   "lillie's clefairy ex",
+  'lillies clefairy ex':     "lillie's clefairy ex",
+  'mega lopunny':            'mega lopunny ex',
+
+  // Trainers — PT-BR
+  'ultra bola':              'ultra ball',
+  'bola ninho':              'nest ball',
+  'doce raro':               'rare candy',
+  'supervara':               'super rod',
+  'pegador primordial':      'prime catcher',
+  'pegador de revanche':     'counter catcher',
+  'maca noturna':            'night stretcher',
+  'poffin de companheiro':   'buddy-buddy poffin',
+  'poffin de colega':        'buddy-buddy poffin',
+  'pedaco de poffin de companheiro': 'buddy-buddy poffin',
+  'torre interferente':      'jamming tower',
+  'subterraneo da area zero':'area zero underdepths',
+  'centro neutro':           'neutral center',
+  'ordens da chefia':        "boss's orders",
+  'ordem da chefia':         "boss's orders",
+  'pesquisa de professores': "professor's research",
+  'pokeparada':              'pokestop',
+  'poké tablet':             'poke tablet',
+  'compaixao do wally':      "wally's compassion",
+  'jaula de batalha':        'battle cage',
+  'martelo esmagador':       'crushing hammer',
+  'determinacao da lilian':  "lillie's determination",
+  'cartao vermelho especial':'special red card',
+  'balao de ar':             'air balloon',
+  'pokegear 30':             'pokegear 3.0',
+  'plinio':                  'clavell',
+  'carimbo da injustica':    'unfair stamp',
+  'ruinas arriscadas':       'risky ruins',
+
+  // Energies — PT-BR
+  'energia de fogo basica':        'basic fire energy',
+  'energia de fogo':               'basic fire energy',
+  'energia fogo basica':           'basic fire energy',
+  'energia psiquica basica':       'basic psychic energy',
+  'energia psiquica':              'basic psychic energy',
+  'energia psiquico basica':       'basic psychic energy',
+  'energia de agua basica':        'basic water energy',
+  'energia de agua':               'basic water energy',
+  'energia de raios basica':       'basic lightning energy',
+  'energia de raios':              'basic lightning energy',
+  'energia de luta basica':        'basic fighting energy',
+  'energia de luta':               'basic fighting energy',
+  'energia de escuridao basica':   'basic darkness energy',
+  'energia de escuridao':          'basic darkness energy',
+  'energia escuridao basica':      'basic darkness energy',
+  'energia de planta basica':      'basic grass energy',
+  'energia de planta':             'basic grass energy',
+  'energia de prisma':             'prism energy',
+  'energia nebulosa':              'mist energy',
+  'energia enriquecedora':         'enriching energy',
+};
 
 // ============================================================================
 // POKEMON DEX MAP
@@ -285,23 +353,23 @@ export const POKEMON_DEX_MAP: Record<string, number> = {
   'dreepy': 885, 'drakloak': 886, 'dragapult': 887,
   'rotom': 479, 'fezandipiti': 1016, 'manaphy': 490,
   'alakazam': 65, 'lugia': 249, 'archeops': 567,
-  'cinccino': 573, 'minccino': 572,
   'gardevoir': 282, 'kirlia': 281, 'ralts': 280,
-  'drifloon': 425, 'munkidori': 1015,
-  'miraidon': 1008, 'koraidon': 1007,
-  'snorlax': 143, 'pikachu': 25, 'ceruledge': 937, 'charcadet': 935,
+  'munkidori': 1015, 'miraidon': 1008, 'koraidon': 1007,
+  'snorlax': 143, 'pikachu': 25, 'ceruledge': 937,
   'comfey': 764, 'sableye': 302, 'cramorant': 845,
-  'greninja': 658, 'mew': 151, 'palkia': 484, 'giratina': 487,
+  'greninja': 658, 'mew': 151, 'palkia': 484,
   'regidrago': 895, 'scizor': 212, 'scyther': 123,
   'gholdengo': 1000, 'gimmighoul': 999,
   'bibarel': 400, 'bidoof': 399,
   'noctowl': 164, 'hoothoot': 163, 'bouffalant': 626,
-  'budew': 406, 'absol': 359,
-  'lumineon': 457, 'crobat': 169,
+  'budew': 406, 'absol': 359, 'lumineon': 457, 'crobat': 169,
+  'dunsparce': 206, 'dudunsparce': 982,
+  'buneary': 427, 'lopunny': 428,
+  'stunfisk': 618, 'psyduck': 54, 'meowth': 52,
 };
 
 // ============================================================================
-// NAME NORMALIZATION
+// NORMALIZATION
 // ============================================================================
 
 export function normalizeCardName(name: string): string {
@@ -350,13 +418,11 @@ Object.values(CARD_IMAGE_DATABASE).forEach(card => {
     const local = card.localSetId || mapTPCiToLocalSetId(tpci);
     if (local) registerCardId(`${local}-${num}`, card);
     if (local) registerCardId(`${local} ${num}`, card);
-  } else if (card.id) {
-    registerCardId(card.id, card);
   }
 });
 
 // ============================================================================
-// PTCGL FORMAT
+// FORMAT PTCGL
 // ============================================================================
 
 export interface FormattedPTCGLCard {
@@ -398,13 +464,7 @@ export function convertLocalIdToPTCGL(
     };
   }
 
-  let cleanId = rawStr;
-  if (rawStr.includes('_')) {
-    const parts = rawStr.split('_');
-    if (/^[a-z0-9]{15,}$/i.test(parts[0])) cleanId = parts.slice(1).join('_');
-  }
-
-  const ptcglExportMatch = cleanId.match(/^(?:(.+?)\s+)?([A-Za-z0-9.]{2,7})\s+(\d+|promo)$/i);
+  const ptcglExportMatch = rawStr.match(/^(?:(.+?)\s+)?([A-Za-z0-9.]{2,7})\s+(\d+|promo)$/i);
   if (ptcglExportMatch && isKnownTPCiCode(ptcglExportMatch[2])) {
     const detectedName = ptcglExportMatch[1]?.trim();
     const rawSet = ptcglExportMatch[2];
@@ -422,7 +482,7 @@ export function convertLocalIdToPTCGL(
     };
   }
 
-  const hyphenMatch = cleanId.match(/^([a-z0-9.]+)[-_](\d+|promo)$/i);
+  const hyphenMatch = rawStr.match(/^([a-z0-9.]+)[-_](\d+|promo)$/i);
   if (hyphenMatch) {
     const rawSet = hyphenMatch[1];
     const rawNum = hyphenMatch[2];
@@ -457,25 +517,62 @@ export function formatPTCGLCardCode(cardOrName: CardMetadata | string): Formatte
 }
 
 // ============================================================================
-// NAME-ONLY RESOLVER (sem parse de log — quebra o ciclo de recursão)
+// FALLBACK CARD
+// ============================================================================
+
+function makeFallbackCard(originalName: string, norm: string): CardMetadata {
+  return {
+    id: 'SVI-1',
+    name: originalName || 'Pokémon',
+    category: 'pokemon',
+    stage: norm.includes('ex') ? 'EX' : 'BÁSICO',
+    hp: norm.includes('ex') ? 280 : 70,
+    imageUrl: POKEMON_CARD_BACK,
+    setCode: 'SVI', setNumber: '1', localSetId: 'sv1',
+  };
+}
+
+// ============================================================================
+// MATCH COM FRONTEIRA DE PALAVRA (corrige "rotom v" ⊂ "rotom ventilador")
+// ============================================================================
+
+function matchesAsWholeWords(haystack: string, needle: string): boolean {
+  let start = 0;
+  while (start <= haystack.length) {
+    const idx = haystack.indexOf(needle, start);
+    if (idx === -1) return false;
+    const before = idx === 0 ? ' ' : haystack[idx - 1];
+    const afterIdx = idx + needle.length;
+    const after = afterIdx >= haystack.length ? ' ' : haystack[afterIdx];
+    if (/[\s-]/.test(before) && /[\s-]/.test(after)) return true;
+    start = idx + 1;
+  }
+  return false;
+}
+
+function fuzzyMatchAsWords(norm: string): CardMetadata | null {
+  const keys = Object.keys(CARD_IMAGE_DATABASE).sort((a, b) => b.length - a.length);
+  for (const key of keys) {
+    if (key.length < 4) continue;
+    if (matchesAsWholeWords(norm, key)) return CARD_IMAGE_DATABASE[key];
+  }
+  return null;
+}
+
+// ============================================================================
+// RESOLVER (PTCGL-first, sem recursão)
 // ============================================================================
 
 export function resolveCardByNameOnly(name: string): CardMetadata {
-  if (!name) {
-    return {
-      id: 'SVI-1', name: 'Pokémon', category: 'pokemon',
-      stage: 'BÁSICO', hp: 70, imageUrl: POKEMON_CARD_BACK,
-      setCode: 'SVI', setNumber: '1', localSetId: 'sv1'
-    };
-  }
+  if (!name) return makeFallbackCard(name, '');
 
-  // Registry primeiro
+  // 1) Registry (id direto)
   const cleanId = name.toLowerCase().trim().replace(/[^a-z0-9.-]/g, '');
   if (PTCGL_CARD_ID_MAP[cleanId]) return PTCGL_CARD_ID_MAP[cleanId];
   const cleanSpaced = name.toLowerCase().trim();
   if (PTCGL_CARD_ID_MAP[cleanSpaced]) return PTCGL_CARD_ID_MAP[cleanSpaced];
 
-  // Compound "Nome OBF 125"
+  // 2) Compound "Nome OBF 125"
   const compound = name.match(/^(.+?)\s+(?:\[|\()?([a-z0-9.]+)[-# ]+(\d+)(?:\]|\))?$/i);
   if (compound && isKnownTPCiCode(compound[2])) {
     const rawSet = compound[2].toLowerCase();
@@ -483,82 +580,48 @@ export function resolveCardByNameOnly(name: string): CardMetadata {
     const tpci = normalizeTPCiSetCode(compound[2]);
     if (PTCGL_CARD_ID_MAP[`${rawSet}-${num}`]) return PTCGL_CARD_ID_MAP[`${rawSet}-${num}`];
     if (PTCGL_CARD_ID_MAP[`${tpci.toLowerCase()} ${num}`]) return PTCGL_CARD_ID_MAP[`${tpci.toLowerCase()} ${num}`];
-    const normMon = normalizeCardName(compound[1]);
-    if (CARD_IMAGE_DATABASE[normMon]) return CARD_IMAGE_DATABASE[normMon];
   }
 
   const norm = normalizeCardName(name);
+
+  // 3) Exact DB
   if (CARD_IMAGE_DATABASE[norm]) return CARD_IMAGE_DATABASE[norm];
 
-  // Fuzzy archetype
-  if (norm.includes('pidgeotto')) return CARD_IMAGE_DATABASE['pidgeotto'];
-  if (norm.includes('pidgeot')) return CARD_IMAGE_DATABASE['pidgeot ex'];
-  if (norm.includes('pidgey')) return CARD_IMAGE_DATABASE['pidgey'];
-  if (/\bbudew\b/.test(norm)) return CARD_IMAGE_DATABASE['budew'];
-  if (/\babsol\b/.test(norm) && !norm.includes('pidgeot') && !norm.includes('charizard') && !norm.includes('dragapult')) {
-    return CARD_IMAGE_DATABASE['absol ex'];
-  }
-  if (norm.includes('charizard')) return CARD_IMAGE_DATABASE['charizard ex'];
-  if (norm.includes('charmeleon')) return CARD_IMAGE_DATABASE['charmeleon'];
-  if (norm.includes('charmander')) return CARD_IMAGE_DATABASE['charmander'];
-  if (norm.includes('dragapult')) return CARD_IMAGE_DATABASE['dragapult ex'];
-  if (norm.includes('drakloak')) return CARD_IMAGE_DATABASE['drakloak'];
-  if (norm.includes('dreepy')) return CARD_IMAGE_DATABASE['dreepy'];
-  if (norm.includes('dusknoir')) return CARD_IMAGE_DATABASE['dusknoir'];
-  if (norm.includes('dusclops')) return CARD_IMAGE_DATABASE['dusclops'];
-  if (norm.includes('duskull')) return CARD_IMAGE_DATABASE['duskull'];
-  if (norm.includes('lugia vstar')) return CARD_IMAGE_DATABASE['lugia vstar'];
-  if (norm.includes('lugia')) return CARD_IMAGE_DATABASE['lugia v'];
-  if (norm.includes('gardevoir')) return CARD_IMAGE_DATABASE['gardevoir ex'];
-  if (norm.includes('kirlia')) return CARD_IMAGE_DATABASE['kirlia'];
-  if (norm.includes('ralts')) return CARD_IMAGE_DATABASE['ralts'];
-  if (norm.includes('raging bolt') || norm.includes('bolt')) return CARD_IMAGE_DATABASE['raging bolt ex'];
-  if (norm.includes('ogerpon')) return CARD_IMAGE_DATABASE['teal mask ogerpon ex'];
-  if (norm.includes('miraidon')) return CARD_IMAGE_DATABASE['miraidon ex'];
-  if (norm.includes('roaring moon') || norm.includes('moon')) return CARD_IMAGE_DATABASE['roaring moon ex'];
-  if (norm.includes('terapagos')) return CARD_IMAGE_DATABASE['terapagos ex'];
-  if (norm.includes('gholdengo')) return CARD_IMAGE_DATABASE['gholdengo ex'];
-  if (norm.includes('iron thorns')) return CARD_IMAGE_DATABASE['iron thorns ex'];
-  if (norm.includes('iron hands')) return CARD_IMAGE_DATABASE['iron hands ex'];
-  if (norm.includes('iron bundle')) return CARD_IMAGE_DATABASE['iron bundle'];
-  if (norm.includes('comfey')) return CARD_IMAGE_DATABASE['comfey'];
-  if (norm.includes('palkia')) return CARD_IMAGE_DATABASE['origin forme palkia vstar'];
-  if (norm.includes('snorlax')) return CARD_IMAGE_DATABASE['snorlax'];
-  if (norm.includes('fogo') || norm.includes('fire energy')) return CARD_IMAGE_DATABASE['basic fire energy'];
-  if (norm.includes('psiquica') || norm.includes('psychic energy')) return CARD_IMAGE_DATABASE['basic psychic energy'];
-  if (norm.includes('agua') || norm.includes('water energy')) return CARD_IMAGE_DATABASE['basic water energy'];
-  if (norm.includes('raio') || norm.includes('lightning energy')) return CARD_IMAGE_DATABASE['basic lightning energy'];
-  if (norm.includes('poffin')) return CARD_IMAGE_DATABASE['buddy-buddy poffin'];
-  if (norm.includes('ultra')) return CARD_IMAGE_DATABASE['ultra ball'];
-  if (norm.includes('ninho') || norm.includes('nest')) return CARD_IMAGE_DATABASE['nest ball'];
-  if (norm.includes('doce') || norm.includes('candy')) return CARD_IMAGE_DATABASE['rare candy'];
-  if (norm.includes('arven')) return CARD_IMAGE_DATABASE['arven'];
-  if (norm.includes('iono')) return CARD_IMAGE_DATABASE['iono'];
-  if (norm.includes('ordens') || norm.includes('boss')) return CARD_IMAGE_DATABASE["boss's orders"];
-  if (norm.includes('pesquisa') || norm.includes('research')) return CARD_IMAGE_DATABASE["professor's research"];
-  if (norm.includes('supervara') || norm.includes('rod')) return CARD_IMAGE_DATABASE['super rod'];
-  if (norm.includes('primordial') || norm.includes('prime')) return CARD_IMAGE_DATABASE['prime catcher'];
-  if (norm.includes('revanche') || norm.includes('counter')) return CARD_IMAGE_DATABASE['counter catcher'];
-  if (norm.includes('maca') || norm.includes('stretcher')) return CARD_IMAGE_DATABASE['night stretcher'];
-
-  const keys = Object.keys(CARD_IMAGE_DATABASE).sort((a, b) => b.length - a.length);
-  for (const key of keys) {
-    if (key.length >= 4 && norm.includes(key)) return CARD_IMAGE_DATABASE[key];
+  // 4) Alias
+  const aliasTarget = CARD_ALIASES[norm];
+  if (aliasTarget && CARD_IMAGE_DATABASE[aliasTarget]) {
+    return CARD_IMAGE_DATABASE[aliasTarget];
   }
 
-  return {
-    id: 'SVI-1',
-    name: name || 'Pokémon',
-    category: 'pokemon',
-    stage: norm.includes('ex') ? 'EX' : 'BÁSICO',
-    hp: norm.includes('ex') ? 280 : 70,
-    imageUrl: POKEMON_CARD_BACK,
-    setCode: 'SVI', setNumber: '1', localSetId: 'sv1'
-  };
+  // 5) Compound depois de normalizar (para casos como "Clefairy ex da Lílian OBF 125")
+  const normCompound = norm.match(/^(.+?)\s+([a-z]{2,5})[-\s#]+(\d+)$/);
+  if (normCompound && isKnownTPCiCode(normCompound[2])) {
+    const tpci = normalizeTPCiSetCode(normCompound[2]);
+    const key = `${tpci.toLowerCase()} ${normCompound[3]}`;
+    if (PTCGL_CARD_ID_MAP[key]) return PTCGL_CARD_ID_MAP[key];
+  }
+
+  // 6) Fuzzy com fronteira de palavra
+  const fuzzy = fuzzyMatchAsWords(norm);
+  if (fuzzy) return fuzzy;
+
+  // 7) Aliases aplicados sobre prefixo normalizado (para nomes com sufixo)
+  //    Ex.: "clefairy ex da lilian jogado" → normalize → "clefairy ex da lilian jogado"
+  //    Testa cada alias como prefixo
+  const aliasKeys = Object.keys(CARD_ALIASES).sort((a, b) => b.length - a.length);
+  for (const aliasKey of aliasKeys) {
+    if (matchesAsWholeWords(norm, aliasKey)) {
+      const target = CARD_ALIASES[aliasKey];
+      if (CARD_IMAGE_DATABASE[target]) return CARD_IMAGE_DATABASE[target];
+    }
+  }
+
+  // 8) Fallback final
+  return makeFallbackCard(name, norm);
 }
 
 // ============================================================================
-// PTCGL LOG LINE PARSER — não chama mais resolvePTCGLCard
+// PTCGL LOG LINE PARSER
 // ============================================================================
 
 export function parsePTCGLLogLine(line: string): FormattedPTCGLCard | null {
@@ -582,46 +645,39 @@ export function parsePTCGLLogLine(line: string): FormattedPTCGLCard | null {
   text = text.trim();
 
   const compound = text.match(/^(?:(.+?)\s+)?([A-Za-z]{2,5})[-\s#]+(\d{1,4})$/);
-  if (compound) {
-    const maybeSet = compound[2];
-    if (isKnownTPCiCode(maybeSet)) {
-      const tpciSetCode = normalizeTPCiSetCode(maybeSet);
-      const setNumber = compound[3];
-      const detectedName = compound[1]?.trim();
-      const mapped = PTCGL_CARD_ID_MAP[`${tpciSetCode.toLowerCase()} ${setNumber}`]
-        || PTCGL_CARD_ID_MAP[`${maybeSet.toLowerCase()} ${setNumber}`];
-      const displayName = detectedName || mapped?.name || 'Pokémon';
-      const canonicalCode = `${tpciSetCode} ${setNumber}`;
-      return {
-        canonicalCode, setCode: tpciSetCode, tpciSetCode, setNumber,
-        displayName, ptcglIdentifier: `${displayName} ${canonicalCode}`,
-        localSetId: mapped?.localSetId || mapTPCiToLocalSetId(tpciSetCode),
-        rawLocalId: line
-      };
-    }
+  if (compound && isKnownTPCiCode(compound[2])) {
+    const tpciSetCode = normalizeTPCiSetCode(compound[2]);
+    const setNumber = compound[3];
+    const detectedName = compound[1]?.trim();
+    const mapped = PTCGL_CARD_ID_MAP[`${tpciSetCode.toLowerCase()} ${setNumber}`]
+      || PTCGL_CARD_ID_MAP[`${compound[2].toLowerCase()} ${setNumber}`];
+    const displayName = detectedName || mapped?.name || 'Pokémon';
+    const canonicalCode = `${tpciSetCode} ${setNumber}`;
+    return {
+      canonicalCode, setCode: tpciSetCode, tpciSetCode, setNumber,
+      displayName, ptcglIdentifier: `${displayName} ${canonicalCode}`,
+      localSetId: mapped?.localSetId || mapTPCiToLocalSetId(tpciSetCode),
+      rawLocalId: line
+    };
   }
 
   const hyphen = text.match(/([a-z0-9.]+)[-_](\d{1,4})$/i);
-  if (hyphen) {
-    const rawSet = hyphen[1];
+  if (hyphen && findSet(hyphen[1])) {
+    const entry = findSet(hyphen[1])!;
+    const tpciSetCode = entry.tpci;
     const rawNum = hyphen[2];
-    const entry = findSet(rawSet);
-    if (entry) {
-      const tpciSetCode = entry.tpci;
-      const mapped = PTCGL_CARD_ID_MAP[`${rawSet.toLowerCase()}-${rawNum}`]
-        || PTCGL_CARD_ID_MAP[`${tpciSetCode.toLowerCase()} ${rawNum}`];
-      const displayName = mapped?.name || 'Pokémon';
-      const canonicalCode = `${tpciSetCode} ${rawNum}`;
-      return {
-        canonicalCode, setCode: tpciSetCode, tpciSetCode, setNumber: rawNum,
-        displayName, ptcglIdentifier: `${displayName} ${canonicalCode}`,
-        localSetId: mapped?.localSetId || mapTPCiToLocalSetId(tpciSetCode),
-        rawLocalId: line
-      };
-    }
+    const mapped = PTCGL_CARD_ID_MAP[`${hyphen[1].toLowerCase()}-${rawNum}`]
+      || PTCGL_CARD_ID_MAP[`${tpciSetCode.toLowerCase()} ${rawNum}`];
+    const displayName = mapped?.name || 'Pokémon';
+    const canonicalCode = `${tpciSetCode} ${rawNum}`;
+    return {
+      canonicalCode, setCode: tpciSetCode, tpciSetCode, setNumber: rawNum,
+      displayName, ptcglIdentifier: `${displayName} ${canonicalCode}`,
+      localSetId: mapped?.localSetId || mapTPCiToLocalSetId(tpciSetCode),
+      rawLocalId: line
+    };
   }
 
-  // Fallback: usa resolveCardByNameOnly (NÃO chama resolvePTCGLCard → sem recursão)
   const resolved = resolveCardByNameOnly(text);
   if (resolved.setCode && resolved.setNumber && resolved.id !== 'SVI-1') {
     const tpci = normalizeTPCiSetCode(resolved.setCode);
@@ -637,26 +693,17 @@ export function parsePTCGLLogLine(line: string): FormattedPTCGLCard | null {
 }
 
 // ============================================================================
-// MAIN RESOLVER — não chama mais parsePTCGLLogLine (quebra o ciclo)
+// MAIN RESOLVER
 // ============================================================================
 
 export function resolvePTCGLCard(name: string): CardMetadata {
-  if (!name) {
-    return {
-      id: 'SVI-1', name: 'Pokémon', category: 'pokemon',
-      stage: 'BÁSICO', hp: 70, imageUrl: POKEMON_CARD_BACK,
-      setCode: 'SVI', setNumber: '1', localSetId: 'sv1'
-    };
-  }
+  if (!name) return makeFallbackCard(name, '');
 
-  // 1) Registry — caminho rápido
   const cleanId = name.toLowerCase().trim().replace(/[^a-z0-9.-]/g, '');
   if (PTCGL_CARD_ID_MAP[cleanId]) return PTCGL_CARD_ID_MAP[cleanId];
   const cleanSpaced = name.toLowerCase().trim();
   if (PTCGL_CARD_ID_MAP[cleanSpaced]) return PTCGL_CARD_ID_MAP[cleanSpaced];
 
-  // 2) Tentativa estrutural: "Nome TWM 130" / "TWM 130"
-  //    (regex inline — SEM chamar parsePTCGLLogLine)
   const structMatch = name.match(/^(?:(.+?)\s+)?([A-Za-z]{2,5})[-\s#]+(\d{1,4})$/);
   if (structMatch && isKnownTPCiCode(structMatch[2])) {
     const tpciSetCode = normalizeTPCiSetCode(structMatch[2]);
@@ -667,181 +714,5 @@ export function resolvePTCGLCard(name: string): CardMetadata {
     if (direct) return direct;
   }
 
-  // 3) Compound "Pidgeot ex OBF 164" / "sv6-130"
   const compound = name.match(/^(.+?)\s+(?:\[|\()?([a-z0-9.]+)[-# ]+(\d+)(?:\]|\))?$/i);
-  if (compound && isKnownTPCiCode(compound[2])) {
-    const rawSet = compound[2].toLowerCase();
-    const num = compound[3];
-    const tpci = normalizeTPCiSetCode(compound[2]);
-    if (PTCGL_CARD_ID_MAP[`${rawSet}-${num}`]) return PTCGL_CARD_ID_MAP[`${rawSet}-${num}`];
-    if (PTCGL_CARD_ID_MAP[`${tpci.toLowerCase()} ${num}`]) return PTCGL_CARD_ID_MAP[`${tpci.toLowerCase()} ${num}`];
-  }
-
-  const hyphen = name.match(/^([a-z0-9.]+)[-_](\d+)$/i);
-  if (hyphen) {
-    const rawSet = hyphen[1].toLowerCase();
-    const num = hyphen[2];
-    const entry = findSet(rawSet);
-    if (entry) {
-      const tpci = entry.tpci;
-      const direct = PTCGL_CARD_ID_MAP[`${rawSet}-${num}`]
-        || PTCGL_CARD_ID_MAP[`${tpci.toLowerCase()} ${num}`];
-      if (direct) return direct;
-    }
-  }
-
-  // 4) Lookup fuzzy — DELEGA pra resolveCardByNameOnly (sem recursão)
-  return resolveCardByNameOnly(name);
-}
-
-export const resolveCard = resolvePTCGLCard;
-
-// ============================================================================
-// SPRITE DETECTION
-// ============================================================================
-
-export function isSpriteUrl(url?: string): boolean {
-  if (!url) return true;
-  const lower = url.toLowerCase();
-  return (
-    lower.includes('/sprites/') ||
-    lower.includes('official-artwork') ||
-    lower.includes('pokemonshowdown.com') ||
-    lower.endsWith('poke-ball.png') ||
-    lower.endsWith('ultra-ball.png') ||
-    lower.endsWith('nest-ball.png') ||
-    lower.endsWith('rare-candy.png') ||
-    lower.endsWith('poffin-case.png') ||
-    lower.endsWith('master-ball.png') ||
-    (lower.includes('/items/') && lower.includes('pokeapi'))
-  );
-}
-
-// ============================================================================
-// AUTHENTIC CARD IMAGE
-// ============================================================================
-
-export interface SpriteSources {
-  primary: string;
-  artwork: string;
-  battleSprite: string;
-  dexSprite: string;
-  fallback: string;
-}
-
-export function getAuthenticCardImageUrl(cardOrName: any): string {
-  if (!cardOrName) return POKEMON_CARD_BACK;
-
-  if (typeof cardOrName === 'string') {
-    const card = resolvePTCGLCard(cardOrName);
-    if (card?.imageUrl && !isSpriteUrl(card.imageUrl)) return card.imageUrl;
-    return POKEMON_CARD_BACK;
-  }
-
-  const setCode = String(cardOrName.setCode || cardOrName.set || '').trim();
-  const setNumber = cardOrName.setNumber ?? cardOrName.number;
-
-  if (setCode && setNumber !== undefined && setNumber !== null) {
-    const tcgdex = tcgdexUrl(setCode, setNumber, 'en');
-    if (tcgdex) return tcgdex;
-    const tcgIo = ptcgIoUrl(setCode, setNumber);
-    if (tcgIo) return tcgIo;
-  }
-
-  if (cardOrName.imageUrl && !isSpriteUrl(cardOrName.imageUrl)) return cardOrName.imageUrl;
-
-  if (cardOrName.name) {
-    const norm = normalizeCardName(cardOrName.name);
-    const db = CARD_IMAGE_DATABASE[norm];
-    if (db?.imageUrl && !isSpriteUrl(db.imageUrl)) return db.imageUrl;
-    const resolved = resolveCardByNameOnly(cardOrName.name);
-    if (resolved?.imageUrl && !isSpriteUrl(resolved.imageUrl)) return resolved.imageUrl;
-  }
-  return POKEMON_CARD_BACK;
-}
-
-export function getCardScanHierarchy(cardOrName: any): {
-  primary: string; secondary: string; tertiary: string; quaternary: string; fallback: string;
-} {
-  if (typeof cardOrName === 'object' && cardOrName !== null) {
-    const set = String(cardOrName.setCode || cardOrName.set || '').trim();
-    const num = cardOrName.setNumber ?? cardOrName.number;
-    if (set && num !== undefined && num !== null) {
-      return buildImageHierarchy(set, num, 'pt');
-    }
-  }
-  const url = getAuthenticCardImageUrl(cardOrName);
-  return {
-    primary: url, secondary: url, tertiary: url, quaternary: url,
-    fallback: POKEMON_CARD_BACK,
-  };
-}
-
-export function getPokemonSpriteHierarchy(cardOrName: CardMetadata | string): SpriteSources {
-  const card = typeof cardOrName === 'string' ? resolvePTCGLCard(cardOrName) : cardOrName;
-  const h = getCardScanHierarchy(card);
-  return {
-    primary: h.primary,
-    artwork: h.secondary,
-    battleSprite: h.tertiary,
-    dexSprite: h.secondary,
-    fallback: POKEMON_CARD_BACK,
-  };
-}
-
-// ============================================================================
-// VERIFICATION
-// ============================================================================
-
-export interface PTCGLCardVerification {
-  input: string;
-  isValid: boolean;
-  isPTCGLMapped: boolean;
-  card: CardMetadata;
-  setCode?: string;
-  setNumber?: string;
-  resolvedName: string;
-  verificationStatus: 'verified_ptcgl' | 'fuzzy_matched' | 'generated_fallback';
-}
-
-export function verifyPTCGLCardMapping(cardNameOrId: string): PTCGLCardVerification {
-  if (!cardNameOrId) {
-    const fallbackCard = resolvePTCGLCard('');
-    return {
-      input: '', isValid: false, isPTCGLMapped: false, card: fallbackCard,
-      resolvedName: 'Pokémon', verificationStatus: 'generated_fallback'
-    };
-  }
-  const clean = cardNameOrId.toLowerCase().trim();
-  const cleanId = clean.replace(/[^a-z0-9.-]/g, '');
-  if (PTCGL_CARD_ID_MAP[cleanId] || PTCGL_CARD_ID_MAP[clean]) {
-    const card = PTCGL_CARD_ID_MAP[cleanId] || PTCGL_CARD_ID_MAP[clean];
-    return {
-      input: cardNameOrId, isValid: true, isPTCGLMapped: true, card,
-      setCode: card.setCode, setNumber: card.setNumber, resolvedName: card.name,
-      verificationStatus: 'verified_ptcgl'
-    };
-  }
-  const norm = normalizeCardName(cardNameOrId);
-  if (CARD_IMAGE_DATABASE[norm]) {
-    const card = CARD_IMAGE_DATABASE[norm];
-    return {
-      input: cardNameOrId, isValid: true, isPTCGLMapped: !!card.setCode, card,
-      setCode: card.setCode, setNumber: card.setNumber, resolvedName: card.name,
-      verificationStatus: 'verified_ptcgl'
-    };
-  }
-  const resolved = resolvePTCGLCard(cardNameOrId);
-  const isFallback = resolved.id === 'SVI-1' && resolved.imageUrl === POKEMON_CARD_BACK;
-  return {
-    input: cardNameOrId, isValid: !isFallback,
-    isPTCGLMapped: !isFallback && !!resolved.setCode,
-    card: resolved, setCode: resolved.setCode, setNumber: resolved.setNumber,
-    resolvedName: resolved.name,
-    verificationStatus: isFallback ? 'generated_fallback' : 'fuzzy_matched'
-  };
-}
-
-export function getCardImageUrl(name: string): string {
-  return getAuthenticCardImageUrl(name);
-}
+  if (compound
