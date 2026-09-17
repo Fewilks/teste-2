@@ -16,7 +16,14 @@ import {
   Info
 } from 'lucide-react';
 import PokemonSprite from './PokemonSprite';
-import { convertLocalIdToPTCGL, normalizeTPCiSetCode, getAuthenticCardImageUrl, getCardScanHierarchy, POKEMON_CARD_BACK } from '../utils/cardImages';
+import { getAuthenticCardImageUrl, getCardScanHierarchy, POKEMON_CARD_BACK } from '../utils/cardImages';
+import { 
+  normalizePokemonCard, 
+  normalizeCollectionCards, 
+  retroactiveNormalizeCardItem, 
+  getPTCGLId, 
+  getNormalizedCardId 
+} from '../services/cardNormalizationService';
 import { COMPREHENSIVE_SETS, MODERN_CARDS_CATALOG, searchCardsLocally } from '../data/pokemonCatalog';
 
 interface CollectionProps {
@@ -26,7 +33,7 @@ interface CollectionProps {
 export default function Collection({ currentMember }: CollectionProps) {
   const [collectionCards, setCollectionCards] = useState<CardItem[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState<any[]>(MODERN_CARDS_CATALOG.slice(0, 16));
+  const [searchResults, setSearchResults] = useState<any[]>(() => normalizeCollectionCards(MODERN_CARDS_CATALOG.slice(0, 16)));
   const [searching, setSearching] = useState(false);
   const [loading, setLoading] = useState(true);
   
@@ -70,8 +77,11 @@ export default function Collection({ currentMember }: CollectionProps) {
           ? query(collectionCol, where('ownerId', '==', currentMember.id))
           : collectionCol;
         const snap = await getDocs(q);
-        const cards = snap.docs.map(d => ({ id: d.id, ...d.data() } as CardItem));
-        setCollectionCards(cards);
+        const rawCards = snap.docs.map(d => ({ id: d.id, ...d.data() } as CardItem));
+        
+        // Mapeamento retroativo: normaliza cartas da coleção para priorizar o ID do PTCGL
+        const normalizedCards = normalizeCollectionCards(rawCards);
+        setCollectionCards(normalizedCards as any);
       } catch (err) {
         console.error('Error fetching collection:', err);
       } finally {
@@ -87,7 +97,7 @@ export default function Collection({ currentMember }: CollectionProps) {
     
     // If both empty, show top modern cards
     if (!searchQuery.trim() && !selectedSet) {
-      setSearchResults(MODERN_CARDS_CATALOG.slice(0, 16));
+      setSearchResults(normalizeCollectionCards(MODERN_CARDS_CATALOG.slice(0, 16)));
       return;
     }
 
@@ -111,9 +121,10 @@ export default function Collection({ currentMember }: CollectionProps) {
         found = searchCardsLocally(searchQuery, selectedSet);
       }
 
-      setSearchResults(found);
+      // Normaliza todos os resultados com prioridade ao ID do PTCGL
+      setSearchResults(normalizeCollectionCards(found));
     } catch (err) {
-      setSearchResults(searchCardsLocally(searchQuery, selectedSet));
+      setSearchResults(normalizeCollectionCards(searchCardsLocally(searchQuery, selectedSet)));
     } finally {
       setSearching(false);
     }
@@ -127,7 +138,8 @@ export default function Collection({ currentMember }: CollectionProps) {
   }, [selectedSet]);
 
   const handleOpenAdd = (card: any) => {
-    setSelectedCard(card);
+    const normalized = normalizePokemonCard(card);
+    setSelectedCard(normalized);
     setQuantity(1);
     setIsLendable(true);
     setShowAddModal(true);
@@ -137,33 +149,35 @@ export default function Collection({ currentMember }: CollectionProps) {
     if (!selectedCard) return;
 
     try {
-      // Use composite, non-conflicting ID so multiple players can register same card
-      const userCardId = `${currentMember.id}_${selectedCard.id}`;
+      // Normaliza dados da carta priorizando a nomenclatura oficial do PTCGL
+      const normalized = normalizePokemonCard(selectedCard);
+      const userCardId = `${currentMember.id}_${normalized.normalizedCardId}`;
       const cardRef = doc(db, 'collection', userCardId);
       
-      // Look up if user already has this card in their local state
-      const existingCard = collectionCards.find(c => c.id === userCardId);
+      // Look up if user already has this card (checking PTCGL ID and legacy IDs)
+      const existingCard = collectionCards.find(c => 
+        c.id === userCardId ||
+        c.id === `${currentMember.id}_${selectedCard.id}` ||
+        (getPTCGLId(c) === normalized.ptcglId && c.ownerId === currentMember.id)
+      );
       
       if (existingCard) {
-        // Just increment quantity
+        // Increment quantity on existing record
         const newQty = existingCard.quantity + quantity;
-        await updateDoc(cardRef, { quantity: newQty });
+        await updateDoc(doc(db, 'collection', existingCard.id), { quantity: newQty });
         
         setCollectionCards(prev => prev.map(c => 
-          c.id === userCardId ? { ...c, quantity: newQty } : c
+          c.id === existingCard.id ? { ...c, quantity: newQty } : c
         ));
       } else {
-        // Standardize card to official PTCGL / TPCi format
-        const ptcglData = convertLocalIdToPTCGL(selectedCard);
-        
-        // Create new item
+        // Save using canonical PTCGL metadata and authentic scans
         const newCard: CardItem = {
           id: userCardId,
-          name: selectedCard.name,
-          imageUrl: getAuthenticCardImageUrl(selectedCard),
-          setCode: ptcglData.tpciSetCode || selectedCard.setCode || 'SVI',
-          setName: selectedCard.setName || 'Unknown Set',
-          setNumber: ptcglData.setNumber || selectedCard.setNumber || '1',
+          name: normalized.name,
+          imageUrl: normalized.imageUrl,
+          setCode: normalized.setCode,
+          setName: normalized.setName,
+          setNumber: normalized.setNumber,
           quantity: quantity,
           ownerId: currentMember.id,
           ownerName: currentMember.name,
@@ -172,7 +186,7 @@ export default function Collection({ currentMember }: CollectionProps) {
         };
         
         await setDoc(cardRef, newCard);
-        setCollectionCards(prev => [...prev, newCard]);
+        setCollectionCards(prev => [...prev, normalizePokemonCard(newCard) as any]);
       }
 
       setShowAddModal(false);
@@ -358,7 +372,7 @@ export default function Collection({ currentMember }: CollectionProps) {
                   <div className="card-data-field text-[10px] text-slate-400 flex items-center justify-between mt-1">
                     <span className="truncate max-w-[110px]">{card.setName}</span>
                     <span className="font-mono text-purple-300 font-bold bg-purple-950/70 px-1.5 py-0.5 rounded border border-purple-500/20 shrink-0">
-                      {convertLocalIdToPTCGL(card).canonicalCode}
+                      {getPTCGLId(card)}
                     </span>
                   </div>
                 </div>
@@ -531,7 +545,7 @@ export default function Collection({ currentMember }: CollectionProps) {
                       <div className="card-data-field text-xs text-slate-400 mt-1 flex flex-wrap items-center gap-2">
                         <span>Coleção: <strong className="text-slate-200">{selectedCard.setName}</strong></span>
                         <span>•</span>
-                        <span>Código Oficial PTCGL: <strong className="font-mono text-purple-300 font-bold bg-purple-950/80 px-2 py-0.5 rounded border border-purple-500/30">{convertLocalIdToPTCGL(selectedCard).canonicalCode}</strong></span>
+                        <span>Código Oficial PTCGL: <strong className="font-mono text-purple-300 font-bold bg-purple-950/80 px-2 py-0.5 rounded border border-purple-500/30">{getPTCGLId(selectedCard)}</strong></span>
                       </div>
                     </div>
 
@@ -632,7 +646,7 @@ export default function Collection({ currentMember }: CollectionProps) {
                             <div className="card-data-field text-[9px] text-slate-400 mt-0.5 flex items-center justify-between">
                               <span className="truncate max-w-[85px]">{card.setName}</span>
                               <span className="font-mono text-purple-300 font-bold bg-purple-950/60 px-1 py-0.2 rounded border border-purple-500/20 shrink-0">
-                                {convertLocalIdToPTCGL(card).canonicalCode}
+                                {getPTCGLId(card)}
                               </span>
                             </div>
                           </div>

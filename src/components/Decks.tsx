@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import PokemonSprite from './PokemonSprite';
 import { fallbackMetaDecks } from '../data/fallbackDecks';
+import { normalizePokemonCard, parsePTCGLString, getPTCGLId } from '../services/cardNormalizationService';
 
 interface DecksProps {
   currentMember: Member;
@@ -140,18 +141,37 @@ export default function Decks({ currentMember }: DecksProps) {
     try {
       setParsing(true);
       
-      // Parse list to visual structure with backend Gemini endpoint
-      const res = await fetch('/api/pokemon/parse-deck', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ deckText: metaDeck.rawList })
-      });
+      let parsedCards: ParsedDeckCard[] = [];
+      try {
+        // Parse list to visual structure with backend Gemini endpoint
+        const res = await fetch('/api/pokemon/parse-deck', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ deckText: metaDeck.rawList })
+        });
 
-      if (!res.ok) {
-        throw new Error('Falha no analisador backend');
+        if (res.ok) {
+          parsedCards = await res.json();
+        }
+      } catch (e) {
+        // Silently fallback to local PTCGL parser
       }
 
-      const parsedCards: ParsedDeckCard[] = await res.json();
+      // Fallback to client-side PTCGL First parser if backend was unavailable or empty
+      if (!parsedCards || parsedCards.length === 0) {
+        parsedCards = parsePTCGLString(metaDeck.rawList);
+      }
+
+      // Normaliza todas as cartas garantindo ID canônico do PTCGL
+      const normalizedCards: ParsedDeckCard[] = parsedCards.map(c => {
+        const norm = normalizePokemonCard({ name: c.name, setCode: c.set, setNumber: c.number });
+        return {
+          ...c,
+          set: norm.setCode,
+          number: norm.setNumber,
+          imageUrl: norm.imageUrl || c.imageUrl
+        };
+      });
       
       const newDeck: Omit<DeckRecord, 'id'> = {
         userId: currentMember.id,
@@ -159,7 +179,7 @@ export default function Decks({ currentMember }: DecksProps) {
         deckName: `Meta - ${metaDeck.name}`,
         archetype: metaDeck.name,
         rawList: metaDeck.rawList,
-        parsedCards: parsedCards,
+        parsedCards: normalizedCards,
         createdAt: new Date().toISOString()
       };
 
@@ -173,7 +193,7 @@ export default function Decks({ currentMember }: DecksProps) {
       alert(`O deck "${metaDeck.name}" foi importado com sucesso para a lista de decks do time!`);
     } catch (err) {
       console.error('Error importing meta deck:', err);
-      alert('Erro ao importar o meta deck com inteligência artificial.');
+      alert('Erro ao importar o meta deck.');
     } finally {
       setParsing(false);
     }
@@ -189,22 +209,41 @@ export default function Decks({ currentMember }: DecksProps) {
     try {
       setParsing(true);
       
-      const res = await fetch('/api/pokemon/parse-deck', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ deckText: rawText })
-      });
+      let parsedCards: ParsedDeckCard[] = [];
+      try {
+        const res = await fetch('/api/pokemon/parse-deck', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ deckText: rawText })
+        });
 
-      if (!res.ok) {
-        throw new Error('Falha no analisador backend');
+        if (res.ok) {
+          parsedCards = await res.json();
+        }
+      } catch (err) {
+        // Fallback to client-side parser
       }
 
-      const parsedCards: ParsedDeckCard[] = await res.json();
+      // Client-side PTCGL First parser fallback
+      if (!parsedCards || parsedCards.length === 0) {
+        parsedCards = parsePTCGLString(rawText);
+      }
       
       if (parsedCards.length === 0) {
         alert('Não foi possível extrair nenhuma carta da lista colada. Verifique o formato!');
         return;
       }
+
+      // Normaliza todas as cartas garantindo identificador oficial do PTCGL
+      const normalizedCards: ParsedDeckCard[] = parsedCards.map(c => {
+        const norm = normalizePokemonCard({ name: c.name, setCode: c.set, setNumber: c.number });
+        return {
+          ...c,
+          set: norm.setCode,
+          number: norm.setNumber,
+          imageUrl: norm.imageUrl || c.imageUrl
+        };
+      });
 
       const newDeck: Omit<DeckRecord, 'id'> = {
         userId: currentMember.id,
@@ -212,7 +251,7 @@ export default function Decks({ currentMember }: DecksProps) {
         deckName: deckName,
         archetype: archetype,
         rawList: rawText,
-        parsedCards: parsedCards,
+        parsedCards: normalizedCards,
         createdAt: new Date().toISOString()
       };
 
@@ -447,9 +486,9 @@ export default function Decks({ currentMember }: DecksProps) {
                             <img src={card.imageUrl} alt={card.name} className="w-8 h-11 object-contain rounded shrink-0" />
                             <div className="min-w-0">
                               <div className="text-white font-bold text-xs truncate">{card.name}</div>
-                              <div className="text-[9px] text-slate-500 font-mono">{card.set} {card.number}</div>
+                              <div className="text-[9px] font-mono text-purple-300 font-bold bg-purple-950/70 px-1.5 py-0.5 rounded border border-purple-500/20 inline-block mt-0.5">{card.set} {card.number}</div>
                             </div>
-                            <div className="ml-auto text-xs font-extrabold text-white font-mono bg-slate-900 border border-slate-800 px-2 py-0.5 rounded">
+                            <div className="ml-auto text-xs font-extrabold text-white font-mono bg-slate-900 border border-slate-850 px-2 py-0.5 rounded">
                               x{card.count}
                             </div>
 
@@ -473,9 +512,9 @@ export default function Decks({ currentMember }: DecksProps) {
                             <img src={card.imageUrl} alt={card.name} className="w-8 h-11 object-contain rounded shrink-0" />
                             <div className="min-w-0">
                               <div className="text-white font-bold text-xs truncate">{card.name}</div>
-                              <div className="text-[9px] text-slate-500 font-mono">{card.set} {card.number}</div>
+                              <div className="text-[9px] font-mono text-indigo-300 font-bold bg-indigo-950/70 px-1.5 py-0.5 rounded border border-indigo-500/20 inline-block mt-0.5">{card.set} {card.number}</div>
                             </div>
-                            <div className="ml-auto text-xs font-extrabold text-white font-mono bg-slate-900 border border-slate-800 px-2 py-0.5 rounded">
+                            <div className="ml-auto text-xs font-extrabold text-white font-mono bg-slate-900 border border-slate-850 px-2 py-0.5 rounded">
                               x{card.count}
                             </div>
 
@@ -499,9 +538,9 @@ export default function Decks({ currentMember }: DecksProps) {
                             <img src={card.imageUrl} alt={card.name} className="w-8 h-11 object-contain rounded shrink-0" />
                             <div className="min-w-0">
                               <div className="text-white font-bold text-xs truncate">{card.name}</div>
-                              <div className="text-[9px] text-slate-500 font-mono">{card.set} {card.number}</div>
+                              <div className="text-[9px] font-mono text-amber-300 font-bold bg-amber-950/70 px-1.5 py-0.5 rounded border border-amber-500/20 inline-block mt-0.5">{card.set} {card.number}</div>
                             </div>
-                            <div className="ml-auto text-xs font-extrabold text-white font-mono bg-slate-900 border border-slate-800 px-2 py-0.5 rounded">
+                            <div className="ml-auto text-xs font-extrabold text-white font-mono bg-slate-900 border border-slate-850 px-2 py-0.5 rounded">
                               x{card.count}
                             </div>
 

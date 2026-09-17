@@ -17,6 +17,8 @@ import {
   X
 } from 'lucide-react';
 import PokemonSprite from './PokemonSprite';
+import { normalizeCollectionCards, getPTCGLId } from '../services/cardNormalizationService';
+import { getAuthenticCardImageUrl } from '../utils/cardImages';
 
 interface LoansProps {
   currentMember: Member;
@@ -51,10 +53,12 @@ export default function Loans({ currentMember }: LoansProps) {
       
       // 1. Load active lendable cards from all team members EXCEPT current user
       const cardsSnap = await getDocs(collectionCol);
-      const cardsList = cardsSnap.docs
+      const rawCards = cardsSnap.docs
         .map(d => ({ id: d.id, ...d.data() } as CardItem))
         .filter(c => c && c.ownerId !== currentMember.id && Boolean(c.isLendable));
-      setAvailableCards(cardsList);
+      // Normalização retroativa de dados priorizando o código e número oficial do PTCGL
+      const normalizedCards = normalizeCollectionCards(rawCards);
+      setAvailableCards(normalizedCards as any);
 
       // 2. Load all Loans
       const loansSnap = await getDocs(loansCol);
@@ -429,9 +433,14 @@ export default function Loans({ currentMember }: LoansProps) {
                         
                         <div className="flex-1 flex flex-col justify-between min-w-0">
                           <div>
-                            <span className="text-[9px] uppercase font-mono text-purple-400 font-bold tracking-wider truncate block">
-                              {card.setName || 'Coleção TCG'}
-                            </span>
+                            <div className="flex items-center justify-between gap-1">
+                              <span className="text-[9px] uppercase font-mono text-purple-400 font-bold tracking-wider truncate block">
+                                {card.setName || 'Coleção TCG'}
+                              </span>
+                              <span className="font-mono text-[9px] text-purple-300 font-bold bg-purple-950/70 px-1.5 py-0.5 rounded border border-purple-500/20 shrink-0">
+                                {getPTCGLId(card)}
+                              </span>
+                            </div>
                             <h3 className="text-white font-bold text-sm mt-0.5 truncate" title={card.name}>
                               {card.name}
                             </h3>
