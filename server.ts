@@ -294,92 +294,175 @@ Energy: 10
   }
 ];
 
+// Mapping of TPCi official 3-4 letter set codes to TCGdex series & set codes
+const SET_TO_TCGDEX_MAP: Record<string, { series: string; set: string }> = {
+  'ASC': { series: 'me', set: 'me02.5' },
+  'asc': { series: 'me', set: 'me02.5' },
+  'PFL': { series: 'me', set: 'me02' },
+  'pfl': { series: 'me', set: 'me02' },
+  'POR': { series: 'me', set: 'me03' },
+  'por': { series: 'me', set: 'me03' },
+  'MEG': { series: 'me', set: 'me01' },
+  'meg': { series: 'me', set: 'me01' },
+  'CRI': { series: 'me', set: 'me04' },
+  'cri': { series: 'me', set: 'me04' },
+  'PBL': { series: 'me', set: 'me05' },
+  'pbl': { series: 'me', set: 'me05' },
+  'PRE': { series: 'sv', set: 'sv08.5' },
+  'pre': { series: 'sv', set: 'sv08.5' },
+  'JTG': { series: 'sv', set: 'sv09' },
+  'jtg': { series: 'sv', set: 'sv09' },
+  'DRI': { series: 'sv', set: 'sv09.5' },
+  'dri': { series: 'sv', set: 'sv09.5' },
+  'BLK': { series: 'sv', set: 'sv10' },
+  'blk': { series: 'sv', set: 'sv10' },
+  'WHT': { series: 'sv', set: 'sv10.5' },
+  'wht': { series: 'sv', set: 'sv10.5' },
+  'SSP': { series: 'sv', set: 'sv08' },
+  'ssp': { series: 'sv', set: 'sv08' },
+  'sv8': { series: 'sv', set: 'sv08' },
+  'SCR': { series: 'sv', set: 'sv07' },
+  'scr': { series: 'sv', set: 'sv07' },
+  'sv7': { series: 'sv', set: 'sv07' },
+  'SFA': { series: 'sv', set: 'sv06.5' },
+  'sfa': { series: 'sv', set: 'sv06.5' },
+  'sv6pt5': { series: 'sv', set: 'sv06.5' },
+  'TWM': { series: 'sv', set: 'sv06' },
+  'twm': { series: 'sv', set: 'sv06' },
+  'sv6': { series: 'sv', set: 'sv06' },
+  'TEF': { series: 'sv', set: 'sv05' },
+  'tef': { series: 'sv', set: 'sv05' },
+  'sv5': { series: 'sv', set: 'sv05' },
+  'PAF': { series: 'sv', set: 'sv04.5' },
+  'paf': { series: 'sv', set: 'sv04.5' },
+  'sv45': { series: 'sv', set: 'sv04.5' },
+  'PAR': { series: 'sv', set: 'sv04' },
+  'par': { series: 'sv', set: 'sv04' },
+  'sv4': { series: 'sv', set: 'sv04' },
+  'MEW': { series: 'sv', set: 'sv03.5' },
+  'mew': { series: 'sv', set: 'sv03.5' },
+  'sv3pt5': { series: 'sv', set: 'sv03.5' },
+  'OBF': { series: 'sv', set: 'sv03' },
+  'obf': { series: 'sv', set: 'sv03' },
+  'sv3': { series: 'sv', set: 'sv03' },
+  'PAL': { series: 'sv', set: 'sv02' },
+  'pal': { series: 'sv', set: 'sv02' },
+  'sv2': { series: 'sv', set: 'sv02' },
+  'SVI': { series: 'sv', set: 'sv01' },
+  'svi': { series: 'sv', set: 'sv01' },
+  'sv1': { series: 'sv', set: 'sv01' },
+  'SVE': { series: 'sv', set: 'sve' },
+  'sve': { series: 'sv', set: 'sve' },
+  'SVP': { series: 'sv', set: 'svp' },
+  'CRZ': { series: 'swsh', set: 'swsh12.5' },
+  'SIT': { series: 'swsh', set: 'swsh12' },
+  'LOR': { series: 'swsh', set: 'swsh11' },
+  'ASR': { series: 'swsh', set: 'swsh10' },
+  'BRS': { series: 'swsh', set: 'swsh09' },
+  'FST': { series: 'swsh', set: 'swsh08' },
+  'EVS': { series: 'swsh', set: 'swsh07' },
+  'CRE': { series: 'swsh', set: 'swsh06' },
+  'BST': { series: 'swsh', set: 'swsh05' }
+};
+
+function getTCGdexImageUrl(setCode: string, setNumber: string | number, lang: 'pt' | 'en' = 'en'): string {
+  if (!setCode || !setNumber) return 'https://images.pokemontcg.io/sv1/1.png';
+  const cleanSet = setCode.trim();
+  const mapping = SET_TO_TCGDEX_MAP[cleanSet] || SET_TO_TCGDEX_MAP[cleanSet.toUpperCase()] || SET_TO_TCGDEX_MAP[cleanSet.toLowerCase()];
+  const cleanNum = String(setNumber).trim().replace(/^0+/, '') || '1';
+
+  if (mapping) {
+    return `https://assets.tcgdex.net/${lang}/${mapping.series}/${mapping.set}/${cleanNum}/high.webp`;
+  }
+  return `https://assets.tcgdex.net/${lang}/sv/${cleanSet.toLowerCase()}/${cleanNum}/high.webp`;
+}
+
 // 2. Default iconic cards database to fallback on when external APIs fail
 // Contains ONLY modern 2025+ Mega Evolution era cards (Mega ... ex) and recent Scarlet & Violet staples
 const fallbackCards = [
   // --- NOVA ERA MEGA EVOLUÇÃO (Lançadas a partir de 2025 para frente) ---
   // Heróis Excelsos (Mega Evolution: Ascended Heroes - ASC - 2026)
-  { id: 'asc-085', name: 'Mega Lucario ex', imageUrl: 'https://images.pokemontcg.io/xy3/55.png', setCode: 'asc', setName: 'Heróis Excelsos (Ascended Heroes)', setNumber: '085' },
-  { id: 'asc-120', name: 'Mega Lucario ex (Ilustração Especial Rara)', imageUrl: 'https://images.pokemontcg.io/xy3/113.png', setCode: 'asc', setName: 'Heróis Excelsos (Ascended Heroes)', setNumber: '120' },
-  { id: 'asc-092', name: 'Mega Gardevoir ex', imageUrl: 'https://images.pokemontcg.io/xy11/112.png', setCode: 'asc', setName: 'Heróis Excelsos (Ascended Heroes)', setNumber: '092' },
-  { id: 'asc-068', name: 'Mega Greninja ex', imageUrl: 'https://images.pokemontcg.io/sv6/106.png', setCode: 'asc', setName: 'Heróis Excelsos (Ascended Heroes)', setNumber: '068' },
-  { id: 'asc-010', name: 'Mega Meganium ex', imageUrl: 'https://images.pokemontcg.io/col1/11.png', setCode: 'asc', setName: 'Heróis Excelsos (Ascended Heroes)', setNumber: '010' },
-  { id: 'asc-024', name: 'Mega Feraligatr ex', imageUrl: 'https://images.pokemontcg.io/col1/9.png', setCode: 'asc', setName: 'Heróis Excelsos (Ascended Heroes)', setNumber: '024' },
-  { id: 'asc-035', name: 'Mega Emboar ex', imageUrl: 'https://images.pokemontcg.io/bw1/19.png', setCode: 'asc', setName: 'Heróis Excelsos (Ascended Heroes)', setNumber: '035' },
-  { id: 'asc-101', name: 'Zygarde ex', imageUrl: 'https://images.pokemontcg.io/xy10/54.png', setCode: 'asc', setName: 'Heróis Excelsos (Ascended Heroes)', setNumber: '101' },
-  { id: 'asc-112', name: 'Treinador AZ & Floette Eterna', imageUrl: 'https://images.pokemontcg.io/xy4/91.png', setCode: 'asc', setName: 'Heróis Excelsos (Ascended Heroes)', setNumber: '112' },
+  { id: 'ASC-085', name: 'Mega Lucario ex', imageUrl: getTCGdexImageUrl('ASC', '085'), setCode: 'ASC', setName: 'Heróis Excelsos (Ascended Heroes)', setNumber: '085', tpciCode: 'ASC 085', tpciSetCode: 'ASC', localSetId: 'asc' },
+  { id: 'ASC-120', name: 'Mega Lucario ex (Ilustração Especial Rara)', imageUrl: getTCGdexImageUrl('ASC', '120'), setCode: 'ASC', setName: 'Heróis Excelsos (Ascended Heroes)', setNumber: '120', tpciCode: 'ASC 120', tpciSetCode: 'ASC', localSetId: 'asc' },
+  { id: 'ASC-092', name: 'Mega Gardevoir ex', imageUrl: getTCGdexImageUrl('ASC', '092'), setCode: 'ASC', setName: 'Heróis Excelsos (Ascended Heroes)', setNumber: '092', tpciCode: 'ASC 092', tpciSetCode: 'ASC', localSetId: 'asc' },
+  { id: 'ASC-068', name: 'Mega Greninja ex', imageUrl: getTCGdexImageUrl('ASC', '068'), setCode: 'ASC', setName: 'Heróis Excelsos (Ascended Heroes)', setNumber: '068', tpciCode: 'ASC 068', tpciSetCode: 'ASC', localSetId: 'asc' },
+  { id: 'ASC-010', name: 'Mega Meganium ex', imageUrl: getTCGdexImageUrl('ASC', '010'), setCode: 'ASC', setName: 'Heróis Excelsos (Ascended Heroes)', setNumber: '010', tpciCode: 'ASC 010', tpciSetCode: 'ASC', localSetId: 'asc' },
+  { id: 'ASC-024', name: 'Mega Feraligatr ex', imageUrl: getTCGdexImageUrl('ASC', '024'), setCode: 'ASC', setName: 'Heróis Excelsos (Ascended Heroes)', setNumber: '024', tpciCode: 'ASC 024', tpciSetCode: 'ASC', localSetId: 'asc' },
+  { id: 'ASC-035', name: 'Mega Emboar ex', imageUrl: getTCGdexImageUrl('ASC', '035'), setCode: 'ASC', setName: 'Heróis Excelsos (Ascended Heroes)', setNumber: '035', tpciCode: 'ASC 035', tpciSetCode: 'ASC', localSetId: 'asc' },
+  { id: 'ASC-101', name: 'Zygarde ex', imageUrl: getTCGdexImageUrl('ASC', '101'), setCode: 'ASC', setName: 'Heróis Excelsos (Ascended Heroes)', setNumber: '101', tpciCode: 'ASC 101', tpciSetCode: 'ASC', localSetId: 'asc' },
+  { id: 'ASC-112', name: 'Treinador AZ & Floette Eterna', imageUrl: getTCGdexImageUrl('ASC', '112'), setCode: 'ASC', setName: 'Heróis Excelsos (Ascended Heroes)', setNumber: '112', tpciCode: 'ASC 112', tpciSetCode: 'ASC', localSetId: 'asc' },
 
   // Fogo Fantasmagórico (Mega Evolution: Phantasmal Flames - PFL - 2025)
-  { id: 'pfl-013', name: 'Mega Charizard X ex', imageUrl: 'https://images.pokemontcg.io/xy2/13.png', setCode: 'pfl', setName: 'Fogo Fantasmagórico (Phantasmal Flames)', setNumber: '013' },
-  { id: 'pfl-130', name: 'Mega Charizard X ex (Ilustração Rara)', imageUrl: 'https://images.pokemontcg.io/xy2/107.png', setCode: 'pfl', setName: 'Fogo Fantasmagórico (Phantasmal Flames)', setNumber: '130' },
-  { id: 'pfl-025', name: 'Mega Blaziken ex', imageUrl: 'https://images.pokemontcg.io/xyp/XY86.png', setCode: 'pfl', setName: 'Fogo Fantasmagórico (Phantasmal Flames)', setNumber: '025' },
-  { id: 'pfl-038', name: 'Mega Camerupt ex', imageUrl: 'https://images.pokemontcg.io/xyp/XY198.png', setCode: 'pfl', setName: 'Fogo Fantasmagórico (Phantasmal Flames)', setNumber: '038' },
-  { id: 'pfl-045', name: 'Mega Houndoom ex', imageUrl: 'https://images.pokemontcg.io/xy8/22.png', setCode: 'pfl', setName: 'Fogo Fantasmagórico (Phantasmal Flames)', setNumber: '045' },
-  { id: 'pfl-052', name: 'Ceruledge ex', imageUrl: 'https://images.pokemontcg.io/sv8/36.png', setCode: 'pfl', setName: 'Fogo Fantasmagórico (Phantasmal Flames)', setNumber: '052' },
-  { id: 'pfl-060', name: 'Chandelure ex', imageUrl: 'https://images.pokemontcg.io/swsh8/39.png', setCode: 'pfl', setName: 'Fogo Fantasmagórico (Phantasmal Flames)', setNumber: '060' },
+  { id: 'PFL-013', name: 'Mega Charizard X ex', imageUrl: getTCGdexImageUrl('PFL', '013'), setCode: 'PFL', setName: 'Fogo Fantasmagórico (Phantasmal Flames)', setNumber: '013', tpciCode: 'PFL 013', tpciSetCode: 'PFL', localSetId: 'pfl' },
+  { id: 'PFL-130', name: 'Mega Charizard X ex (Ilustração Rara)', imageUrl: getTCGdexImageUrl('PFL', '130'), setCode: 'PFL', setName: 'Fogo Fantasmagórico (Phantasmal Flames)', setNumber: '130', tpciCode: 'PFL 130', tpciSetCode: 'PFL', localSetId: 'pfl' },
+  { id: 'PFL-025', name: 'Mega Blaziken ex', imageUrl: getTCGdexImageUrl('PFL', '025'), setCode: 'PFL', setName: 'Fogo Fantasmagórico (Phantasmal Flames)', setNumber: '025', tpciCode: 'PFL 025', tpciSetCode: 'PFL', localSetId: 'pfl' },
+  { id: 'PFL-038', name: 'Mega Camerupt ex', imageUrl: getTCGdexImageUrl('PFL', '038'), setCode: 'PFL', setName: 'Fogo Fantasmagórico (Phantasmal Flames)', setNumber: '038', tpciCode: 'PFL 038', tpciSetCode: 'PFL', localSetId: 'pfl' },
+  { id: 'PFL-045', name: 'Mega Houndoom ex', imageUrl: getTCGdexImageUrl('PFL', '045'), setCode: 'PFL', setName: 'Fogo Fantasmagórico (Phantasmal Flames)', setNumber: '045', tpciCode: 'PFL 045', tpciSetCode: 'PFL', localSetId: 'pfl' },
+  { id: 'PFL-052', name: 'Ceruledge ex', imageUrl: getTCGdexImageUrl('PFL', '052'), setCode: 'PFL', setName: 'Fogo Fantasmagórico (Phantasmal Flames)', setNumber: '052', tpciCode: 'PFL 052', tpciSetCode: 'PFL', localSetId: 'pfl' },
+  { id: 'PFL-060', name: 'Chandelure ex', imageUrl: getTCGdexImageUrl('PFL', '060'), setCode: 'PFL', setName: 'Fogo Fantasmagórico (Phantasmal Flames)', setNumber: '060', tpciCode: 'PFL 060', tpciSetCode: 'PFL', localSetId: 'pfl' },
 
   // Ordem Perfeita (Mega Evolution: Perfect Order - POR - 2026)
-  { id: 'por-001', name: 'Mega Zygarde Forma Completa ex', imageUrl: 'https://images.pokemontcg.io/xy10/54.png', setCode: 'por', setName: 'Ordem Perfeita (Perfect Order)', setNumber: '001' },
-  { id: 'por-028', name: 'Mega Clefable ex', imageUrl: 'https://images.pokemontcg.io/sv4/82.png', setCode: 'por', setName: 'Ordem Perfeita (Perfect Order)', setNumber: '028' },
-  { id: 'por-042', name: 'Mega Starmie ex', imageUrl: 'https://images.pokemontcg.io/sv3pt5/121.png', setCode: 'por', setName: 'Ordem Perfeita (Perfect Order)', setNumber: '042' },
-  { id: 'por-058', name: 'Mega Absol ex', imageUrl: 'https://images.pokemontcg.io/xyp/XY63.png', setCode: 'por', setName: 'Ordem Perfeita (Perfect Order)', setNumber: '058' },
-  { id: 'por-072', name: 'Mega Steelix ex', imageUrl: 'https://images.pokemontcg.io/xy11/68.png', setCode: 'por', setName: 'Ordem Perfeita (Perfect Order)', setNumber: '072' },
-  { id: 'por-089', name: 'Mega Metagross ex', imageUrl: 'https://images.pokemontcg.io/xyp/XY35.png', setCode: 'por', setName: 'Ordem Perfeita (Perfect Order)', setNumber: '089' },
-  { id: 'por-095', name: 'Xerneas ex', imageUrl: 'https://images.pokemontcg.io/xy1/96.png', setCode: 'por', setName: 'Ordem Perfeita (Perfect Order)', setNumber: '095' },
-  { id: 'por-104', name: 'Yveltal ex', imageUrl: 'https://images.pokemontcg.io/xy1/78.png', setCode: 'por', setName: 'Ordem Perfeita (Perfect Order)', setNumber: '104' },
+  { id: 'POR-001', name: 'Mega Zygarde Forma Completa ex', imageUrl: getTCGdexImageUrl('POR', '001'), setCode: 'POR', setName: 'Ordem Perfeita (Perfect Order)', setNumber: '001', tpciCode: 'POR 001', tpciSetCode: 'POR', localSetId: 'por' },
+  { id: 'POR-028', name: 'Mega Clefable ex', imageUrl: getTCGdexImageUrl('POR', '028'), setCode: 'POR', setName: 'Ordem Perfeita (Perfect Order)', setNumber: '028', tpciCode: 'POR 028', tpciSetCode: 'POR', localSetId: 'por' },
+  { id: 'POR-042', name: 'Mega Starmie ex', imageUrl: getTCGdexImageUrl('POR', '042'), setCode: 'POR', setName: 'Ordem Perfeita (Perfect Order)', setNumber: '042', tpciCode: 'POR 042', tpciSetCode: 'POR', localSetId: 'por' },
+  { id: 'POR-058', name: 'Mega Absol ex', imageUrl: getTCGdexImageUrl('POR', '058'), setCode: 'POR', setName: 'Ordem Perfeita (Perfect Order)', setNumber: '058', tpciCode: 'POR 058', tpciSetCode: 'POR', localSetId: 'por' },
+  { id: 'POR-072', name: 'Mega Steelix ex', imageUrl: getTCGdexImageUrl('POR', '072'), setCode: 'POR', setName: 'Ordem Perfeita (Perfect Order)', setNumber: '072', tpciCode: 'POR 072', tpciSetCode: 'POR', localSetId: 'por' },
+  { id: 'POR-089', name: 'Mega Metagross ex', imageUrl: getTCGdexImageUrl('POR', '089'), setCode: 'POR', setName: 'Ordem Perfeita (Perfect Order)', setNumber: '089', tpciCode: 'POR 089', tpciSetCode: 'POR', localSetId: 'por' },
+  { id: 'POR-095', name: 'Xerneas ex', imageUrl: getTCGdexImageUrl('POR', '095'), setCode: 'POR', setName: 'Ordem Perfeita (Perfect Order)', setNumber: '095', tpciCode: 'POR 095', tpciSetCode: 'POR', localSetId: 'por' },
+  { id: 'POR-104', name: 'Yveltal ex', imageUrl: getTCGdexImageUrl('POR', '104'), setCode: 'POR', setName: 'Ordem Perfeita (Perfect Order)', setNumber: '104', tpciCode: 'POR 104', tpciSetCode: 'POR', localSetId: 'por' },
 
   // Mega Evolução Base (Mega Evolution - MEG - 2025)
-  { id: 'meg-015', name: 'Mega Charizard Y ex', imageUrl: 'https://images.pokemontcg.io/xy2/108.png', setCode: 'meg', setName: 'Mega Evolução (Mega Evolution)', setNumber: '015' },
-  { id: 'meg-002', name: 'Mega Venusaur ex', imageUrl: 'https://images.pokemontcg.io/xy1/2.png', setCode: 'meg', setName: 'Mega Evolução (Mega Evolution)', setNumber: '002' },
-  { id: 'meg-031', name: 'Mega Blastoise ex', imageUrl: 'https://images.pokemontcg.io/xy1/30.png', setCode: 'meg', setName: 'Mega Evolução (Mega Evolution)', setNumber: '031' },
-  { id: 'meg-049', name: 'Mega Gengar ex', imageUrl: 'https://images.pokemontcg.io/xy4/35.png', setCode: 'meg', setName: 'Mega Evolução (Mega Evolution)', setNumber: '049' },
-  { id: 'meg-088', name: 'Mega Rayquaza ex', imageUrl: 'https://images.pokemontcg.io/xy6/61.png', setCode: 'meg', setName: 'Mega Evolução (Mega Evolution)', setNumber: '088' },
-  { id: 'meg-099', name: 'Mega Mewtwo X ex', imageUrl: 'https://images.pokemontcg.io/xy8/63.png', setCode: 'meg', setName: 'Mega Evolução (Mega Evolution)', setNumber: '099' },
-  { id: 'meg-100', name: 'Mega Mewtwo Y ex', imageUrl: 'https://images.pokemontcg.io/xy8/64.png', setCode: 'meg', setName: 'Mega Evolução (Mega Evolution)', setNumber: '100' },
-  { id: 'meg-077', name: 'Mega Tyranitar ex', imageUrl: 'https://images.pokemontcg.io/xy7/43.png', setCode: 'meg', setName: 'Mega Evolução (Mega Evolution)', setNumber: '077' },
-  { id: 'meg-065', name: 'Mega Scizor ex', imageUrl: 'https://images.pokemontcg.io/xy9/77.png', setCode: 'meg', setName: 'Mega Evolução (Mega Evolution)', setNumber: '065' },
-  { id: 'meg-082', name: 'Mega Aerodactyl ex', imageUrl: 'https://images.pokemontcg.io/xyp/XY98.png', setCode: 'meg', setName: 'Mega Evolução (Mega Evolution)', setNumber: '082' },
-  { id: 'meg-090', name: 'Mega Salamence ex', imageUrl: 'https://images.pokemontcg.io/xyp/XY171.png', setCode: 'meg', setName: 'Mega Evolução (Mega Evolution)', setNumber: '090' },
-  { id: 'meg-084', name: 'Mega Lopunny ex', imageUrl: 'https://images.pokemontcg.io/sm12/165.png', setCode: 'meg', setName: 'Mega Evolução (Mega Evolution)', setNumber: '084' },
-  { id: 'meg-080', name: 'Mega Gallade ex', imageUrl: 'https://images.pokemontcg.io/xy6/35.png', setCode: 'meg', setName: 'Mega Evolução (Mega Evolution)', setNumber: '080' },
-  { id: 'meg-083', name: 'Mega Diancie ex', imageUrl: 'https://images.pokemontcg.io/xyp/XY44.png', setCode: 'meg', setName: 'Mega Evolução (Mega Evolution)', setNumber: '083' },
-  { id: 'meg-091', name: 'Mega Latias ex', imageUrl: 'https://images.pokemontcg.io/xy6/59.png', setCode: 'meg', setName: 'Mega Evolução (Mega Evolution)', setNumber: '091' },
-  { id: 'meg-092', name: 'Mega Latios ex', imageUrl: 'https://images.pokemontcg.io/xy6/59.png', setCode: 'meg', setName: 'Mega Evolução (Mega Evolution)', setNumber: '092' },
-  { id: 'meg-016', name: 'Budew', imageUrl: 'https://images.pokemontcg.io/dp7/33.png', setCode: 'meg', setName: 'Mega Evolução (Mega Evolution)', setNumber: '016' },
-  { id: 'meg-221', name: 'Budew (Ilustração Rara)', imageUrl: 'https://images.pokemontcg.io/dp7/33.png', setCode: 'meg', setName: 'Mega Evolução (Mega Evolution)', setNumber: '221' },
+  { id: 'MEG-015', name: 'Mega Charizard Y ex', imageUrl: getTCGdexImageUrl('MEG', '015'), setCode: 'MEG', setName: 'Mega Evolução (Mega Evolution)', setNumber: '015', tpciCode: 'MEG 015', tpciSetCode: 'MEG', localSetId: 'meg' },
+  { id: 'MEG-002', name: 'Mega Venusaur ex', imageUrl: getTCGdexImageUrl('MEG', '002'), setCode: 'MEG', setName: 'Mega Evolução (Mega Evolution)', setNumber: '002', tpciCode: 'MEG 002', tpciSetCode: 'MEG', localSetId: 'meg' },
+  { id: 'MEG-031', name: 'Mega Blastoise ex', imageUrl: getTCGdexImageUrl('MEG', '031'), setCode: 'MEG', setName: 'Mega Evolução (Mega Evolution)', setNumber: '031', tpciCode: 'MEG 031', tpciSetCode: 'MEG', localSetId: 'meg' },
+  { id: 'MEG-049', name: 'Mega Gengar ex', imageUrl: getTCGdexImageUrl('MEG', '049'), setCode: 'MEG', setName: 'Mega Evolução (Mega Evolution)', setNumber: '049', tpciCode: 'MEG 049', tpciSetCode: 'MEG', localSetId: 'meg' },
+  { id: 'MEG-088', name: 'Mega Rayquaza ex', imageUrl: getTCGdexImageUrl('MEG', '088'), setCode: 'MEG', setName: 'Mega Evolução (Mega Evolution)', setNumber: '088', tpciCode: 'MEG 088', tpciSetCode: 'MEG', localSetId: 'meg' },
+  { id: 'MEG-099', name: 'Mega Mewtwo X ex', imageUrl: getTCGdexImageUrl('MEG', '099'), setCode: 'MEG', setName: 'Mega Evolução (Mega Evolution)', setNumber: '099', tpciCode: 'MEG 099', tpciSetCode: 'MEG', localSetId: 'meg' },
+  { id: 'MEG-100', name: 'Mega Mewtwo Y ex', imageUrl: getTCGdexImageUrl('MEG', '100'), setCode: 'MEG', setName: 'Mega Evolução (Mega Evolution)', setNumber: '100', tpciCode: 'MEG 100', tpciSetCode: 'MEG', localSetId: 'meg' },
+  { id: 'MEG-077', name: 'Mega Tyranitar ex', imageUrl: getTCGdexImageUrl('MEG', '077'), setCode: 'MEG', setName: 'Mega Evolução (Mega Evolution)', setNumber: '077', tpciCode: 'MEG 077', tpciSetCode: 'MEG', localSetId: 'meg' },
+  { id: 'MEG-065', name: 'Mega Scizor ex', imageUrl: getTCGdexImageUrl('MEG', '065'), setCode: 'MEG', setName: 'Mega Evolução (Mega Evolution)', setNumber: '065', tpciCode: 'MEG 065', tpciSetCode: 'MEG', localSetId: 'meg' },
+  { id: 'MEG-082', name: 'Mega Aerodactyl ex', imageUrl: getTCGdexImageUrl('MEG', '082'), setCode: 'MEG', setName: 'Mega Evolução (Mega Evolution)', setNumber: '082', tpciCode: 'MEG 082', tpciSetCode: 'MEG', localSetId: 'meg' },
+  { id: 'MEG-090', name: 'Mega Salamence ex', imageUrl: getTCGdexImageUrl('MEG', '090'), setCode: 'MEG', setName: 'Mega Evolução (Mega Evolution)', setNumber: '090', tpciCode: 'MEG 090', tpciSetCode: 'MEG', localSetId: 'meg' },
+  { id: 'MEG-084', name: 'Mega Lopunny ex', imageUrl: getTCGdexImageUrl('MEG', '084'), setCode: 'MEG', setName: 'Mega Evolução (Mega Evolution)', setNumber: '084', tpciCode: 'MEG 084', tpciSetCode: 'MEG', localSetId: 'meg' },
+  { id: 'MEG-080', name: 'Mega Gallade ex', imageUrl: getTCGdexImageUrl('MEG', '080'), setCode: 'MEG', setName: 'Mega Evolução (Mega Evolution)', setNumber: '080', tpciCode: 'MEG 080', tpciSetCode: 'MEG', localSetId: 'meg' },
+  { id: 'MEG-083', name: 'Mega Diancie ex', imageUrl: getTCGdexImageUrl('MEG', '083'), setCode: 'MEG', setName: 'Mega Evolução (Mega Evolution)', setNumber: '083', tpciCode: 'MEG 083', tpciSetCode: 'MEG', localSetId: 'meg' },
+  { id: 'MEG-091', name: 'Mega Latias ex', imageUrl: getTCGdexImageUrl('MEG', '091'), setCode: 'MEG', setName: 'Mega Evolução (Mega Evolution)', setNumber: '091', tpciCode: 'MEG 091', tpciSetCode: 'MEG', localSetId: 'meg' },
+  { id: 'MEG-092', name: 'Mega Latios ex', imageUrl: getTCGdexImageUrl('MEG', '092'), setCode: 'MEG', setName: 'Mega Evolução (Mega Evolution)', setNumber: '092', tpciCode: 'MEG 092', tpciSetCode: 'MEG', localSetId: 'meg' },
+  { id: 'MEG-016', name: 'Budew', imageUrl: getTCGdexImageUrl('MEG', '016'), setCode: 'MEG', setName: 'Mega Evolução (Mega Evolution)', setNumber: '016', tpciCode: 'MEG 016', tpciSetCode: 'MEG', localSetId: 'meg' },
+  { id: 'MEG-221', name: 'Budew (Ilustração Rara)', imageUrl: getTCGdexImageUrl('MEG', '221'), setCode: 'MEG', setName: 'Mega Evolução (Mega Evolution)', setNumber: '221', tpciCode: 'MEG 221', tpciSetCode: 'MEG', localSetId: 'meg' },
 
   // Evoluções Prismáticas (Prismatic Evolutions - PRE - 2025)
-  { id: 'pre-075', name: 'Eevee ex (Stellar)', imageUrl: 'https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/tpci/PRE/PRE_075_R_EN_LG.png', setCode: 'pre', setName: 'Evoluções Prismáticas (Prismatic Evolutions)', setNumber: '075' },
-  { id: 'pre-060', name: 'Umbreon ex', imageUrl: 'https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/tpci/PRE/PRE_060_R_EN_LG.png', setCode: 'pre', setName: 'Evoluções Prismáticas (Prismatic Evolutions)', setNumber: '060' },
-  { id: 'pre-042', name: 'Sylveon ex', imageUrl: 'https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/tpci/PRE/PRE_042_R_EN_LG.png', setCode: 'pre', setName: 'Evoluções Prismáticas (Prismatic Evolutions)', setNumber: '042' },
-  { id: 'pre-035', name: 'Espeon ex', imageUrl: 'https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/tpci/PRE/PRE_035_R_EN_LG.png', setCode: 'pre', setName: 'Evoluções Prismáticas (Prismatic Evolutions)', setNumber: '035' },
-  { id: 'pre-020', name: 'Vaporeon ex', imageUrl: 'https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/tpci/PRE/PRE_020_R_EN_LG.png', setCode: 'pre', setName: 'Evoluções Prismáticas (Prismatic Evolutions)', setNumber: '020' },
-  { id: 'pre-025', name: 'Jolteon ex', imageUrl: 'https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/tpci/PRE/PRE_025_R_EN_LG.png', setCode: 'pre', setName: 'Evoluções Prismáticas (Prismatic Evolutions)', setNumber: '025' },
-  { id: 'pre-015', name: 'Flareon ex', imageUrl: 'https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/tpci/PRE/PRE_015_R_EN_LG.png', setCode: 'pre', setName: 'Evoluções Prismáticas (Prismatic Evolutions)', setNumber: '015' },
+  { id: 'PRE-075', name: 'Eevee ex (Stellar)', imageUrl: getTCGdexImageUrl('PRE', '075'), setCode: 'PRE', setName: 'Evoluções Prismáticas (Prismatic Evolutions)', setNumber: '075', tpciCode: 'PRE 075', tpciSetCode: 'PRE', localSetId: 'pre' },
+  { id: 'PRE-060', name: 'Umbreon ex', imageUrl: getTCGdexImageUrl('PRE', '060'), setCode: 'PRE', setName: 'Evoluções Prismáticas (Prismatic Evolutions)', setNumber: '060', tpciCode: 'PRE 060', tpciSetCode: 'PRE', localSetId: 'pre' },
+  { id: 'PRE-042', name: 'Sylveon ex', imageUrl: getTCGdexImageUrl('PRE', '042'), setCode: 'PRE', setName: 'Evoluções Prismáticas (Prismatic Evolutions)', setNumber: '042', tpciCode: 'PRE 042', tpciSetCode: 'PRE', localSetId: 'pre' },
+  { id: 'PRE-035', name: 'Espeon ex', imageUrl: getTCGdexImageUrl('PRE', '035'), setCode: 'PRE', setName: 'Evoluções Prismáticas (Prismatic Evolutions)', setNumber: '035', tpciCode: 'PRE 035', tpciSetCode: 'PRE', localSetId: 'pre' },
+  { id: 'PRE-020', name: 'Vaporeon ex', imageUrl: getTCGdexImageUrl('PRE', '020'), setCode: 'PRE', setName: 'Evoluções Prismáticas (Prismatic Evolutions)', setNumber: '020', tpciCode: 'PRE 020', tpciSetCode: 'PRE', localSetId: 'pre' },
+  { id: 'PRE-025', name: 'Jolteon ex', imageUrl: getTCGdexImageUrl('PRE', '025'), setCode: 'PRE', setName: 'Evoluções Prismáticas (Prismatic Evolutions)', setNumber: '025', tpciCode: 'PRE 025', tpciSetCode: 'PRE', localSetId: 'pre' },
+  { id: 'PRE-015', name: 'Flareon ex', imageUrl: getTCGdexImageUrl('PRE', '015'), setCode: 'PRE', setName: 'Evoluções Prismáticas (Prismatic Evolutions)', setNumber: '015', tpciCode: 'PRE 015', tpciSetCode: 'PRE', localSetId: 'pre' },
 
   // Jornada em Conjunto & Rivais Destinados (JTG & DRI - 2025)
-  { id: 'jtg-010', name: 'Red\'s Pikachu ex', imageUrl: 'https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/tpci/JTG/JTG_010_R_EN_LG.png', setCode: 'jtg', setName: 'Jornada em Conjunto (Journey Together)', setNumber: '010' },
-  { id: 'jtg-022', name: 'N\'s Reshiram ex', imageUrl: 'https://images.pokemontcg.io/bw11/114.png', setCode: 'jtg', setName: 'Jornada em Conjunto (Journey Together)', setNumber: '022' },
-  { id: 'jtg-045', name: 'Cynthia\'s Garchomp ex', imageUrl: 'https://images.pokemontcg.io/sm115/45.png', setCode: 'jtg', setName: 'Jornada em Conjunto (Journey Together)', setNumber: '045' },
-  { id: 'dri-020', name: 'Red\'s Charizard ex', imageUrl: 'https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/tpci/DRI/DRI_020_R_EN_LG.png', setCode: 'dri', setName: 'Rivais Destinados (Destined Rivals)', setNumber: '020' },
-  { id: 'dri-015', name: 'Blue\'s Blastoise ex', imageUrl: 'https://images.pokemontcg.io/xy1/30.png', setCode: 'dri', setName: 'Rivais Destinados (Destined Rivals)', setNumber: '015' },
-  { id: 'dri-030', name: 'Ethan\'s Lugia ex', imageUrl: 'https://images.pokemontcg.io/xy10/78.png', setCode: 'dri', setName: 'Rivais Destinados (Destined Rivals)', setNumber: '030' },
-  { id: 'blk-050', name: 'Black Kyurem ex', imageUrl: 'https://images.pokemontcg.io/bw7/101.png', setCode: 'blk', setName: 'Raio Negro (Black Bolt)', setNumber: '050' },
-  { id: 'wht-050', name: 'White Kyurem ex', imageUrl: 'https://images.pokemontcg.io/bw7/103.png', setCode: 'wht', setName: 'Chama Branca (White Flare)', setNumber: '050' },
+  { id: 'JTG-010', name: 'Red\'s Pikachu ex', imageUrl: getTCGdexImageUrl('JTG', '010'), setCode: 'JTG', setName: 'Jornada em Conjunto (Journey Together)', setNumber: '010', tpciCode: 'JTG 010', tpciSetCode: 'JTG', localSetId: 'jtg' },
+  { id: 'JTG-022', name: 'N\'s Reshiram ex', imageUrl: getTCGdexImageUrl('JTG', '022'), setCode: 'JTG', setName: 'Jornada em Conjunto (Journey Together)', setNumber: '022', tpciCode: 'JTG 022', tpciSetCode: 'JTG', localSetId: 'jtg' },
+  { id: 'JTG-045', name: 'Cynthia\'s Garchomp ex', imageUrl: getTCGdexImageUrl('JTG', '045'), setCode: 'JTG', setName: 'Jornada em Conjunto (Journey Together)', setNumber: '045', tpciCode: 'JTG 045', tpciSetCode: 'JTG', localSetId: 'jtg' },
+  { id: 'DRI-020', name: 'Red\'s Charizard ex', imageUrl: getTCGdexImageUrl('DRI', '020'), setCode: 'DRI', setName: 'Rivais Destinados (Destined Rivals)', setNumber: '020', tpciCode: 'DRI 020', tpciSetCode: 'DRI', localSetId: 'dri' },
+  { id: 'DRI-015', name: 'Blue\'s Blastoise ex', imageUrl: getTCGdexImageUrl('DRI', '015'), setCode: 'DRI', setName: 'Rivais Destinados (Destined Rivals)', setNumber: '015', tpciCode: 'DRI 015', tpciSetCode: 'DRI', localSetId: 'dri' },
+  { id: 'DRI-030', name: 'Ethan\'s Lugia ex', imageUrl: getTCGdexImageUrl('DRI', '030'), setCode: 'DRI', setName: 'Rivais Destinados (Destined Rivals)', setNumber: '030', tpciCode: 'DRI 030', tpciSetCode: 'DRI', localSetId: 'dri' },
+  { id: 'BLK-050', name: 'Black Kyurem ex', imageUrl: getTCGdexImageUrl('BLK', '050'), setCode: 'BLK', setName: 'Raio Negro (Black Bolt)', setNumber: '050', tpciCode: 'BLK 050', tpciSetCode: 'BLK', localSetId: 'blk' },
+  { id: 'WHT-050', name: 'White Kyurem ex', imageUrl: getTCGdexImageUrl('WHT', '050'), setCode: 'WHT', setName: 'Chama Branca (White Flare)', setNumber: '050', tpciCode: 'WHT 050', tpciSetCode: 'WHT', localSetId: 'wht' },
 
   // Staples Competitivos do Formato Standard Atual (Scarlet & Violet)
-  { id: 'sv3-125', name: 'Charizard ex', imageUrl: 'https://images.pokemontcg.io/sv3/125.png', setCode: 'sv3', setName: 'Obsidian Flames', setNumber: '125' },
-  { id: 'sv6-130', name: 'Dragapult ex', imageUrl: 'https://images.pokemontcg.io/sv6/130.png', setCode: 'sv6', setName: 'Twilight Masquerade', setNumber: '130' },
-  { id: 'sv3-164', name: 'Pidgeot ex', imageUrl: 'https://images.pokemontcg.io/sv3/164.png', setCode: 'sv3', setName: 'Obsidian Flames', setNumber: '164' },
-  { id: 'sv6pt5-96', name: 'Fezandipiti ex', imageUrl: 'https://images.pokemontcg.io/sv6pt5/38.png', setCode: 'sv6pt5', setName: 'Shrouded Fable', setNumber: '96' },
-  { id: 'sv7-128', name: 'Terapagos ex', imageUrl: 'https://images.pokemontcg.io/sv7/128.png', setCode: 'sv7', setName: 'Stellar Crown', setNumber: '128' },
-  { id: 'sv8-57', name: 'Pikachu ex', imageUrl: 'https://images.pokemontcg.io/sv8/57.png', setCode: 'sv8', setName: 'Surging Sparks', setNumber: '57' },
-  { id: 'sv4-139', name: 'Gholdengo ex', imageUrl: 'https://images.pokemontcg.io/sv4/139.png', setCode: 'sv4', setName: 'Paradox Rift', setNumber: '139' },
-  { id: 'sv2-185', name: 'Iono', imageUrl: 'https://images.pokemontcg.io/sv2/185.png', setCode: 'sv2', setName: 'Paldea Evolved', setNumber: '185' },
-  { id: 'sv1-166', name: 'Arven', imageUrl: 'https://images.pokemontcg.io/sv1/166.png', setCode: 'sv1', setName: 'Scarlet & Violet Base', setNumber: '166' },
-  { id: 'sv5-144', name: 'Buddy-Buddy Poffin', imageUrl: 'https://images.pokemontcg.io/sv5/144.png', setCode: 'sv5', setName: 'Temporal Forces', setNumber: '144' },
-  { id: 'sv5-157', name: 'Prime Catcher', imageUrl: 'https://images.pokemontcg.io/sv5/157.png', setCode: 'sv5', setName: 'Temporal Forces', setNumber: '157' },
-  { id: 'sv7-131', name: 'Area Zero Underdepths', imageUrl: 'https://images.pokemontcg.io/sv7/131.png', setCode: 'sv7', setName: 'Stellar Crown', setNumber: '131' }
+  { id: 'OBF-125', name: 'Charizard ex', imageUrl: getTCGdexImageUrl('OBF', '125'), setCode: 'OBF', setName: 'Obsidian Flames', setNumber: '125', tpciCode: 'OBF 125', tpciSetCode: 'OBF', localSetId: 'sv3' },
+  { id: 'TWM-130', name: 'Dragapult ex', imageUrl: getTCGdexImageUrl('TWM', '130'), setCode: 'TWM', setName: 'Twilight Masquerade', setNumber: '130', tpciCode: 'TWM 130', tpciSetCode: 'TWM', localSetId: 'sv6' },
+  { id: 'OBF-164', name: 'Pidgeot ex', imageUrl: getTCGdexImageUrl('OBF', '164'), setCode: 'OBF', setName: 'Obsidian Flames', setNumber: '164', tpciCode: 'OBF 164', tpciSetCode: 'OBF', localSetId: 'sv3' },
+  { id: 'SFA-038', name: 'Fezandipiti ex', imageUrl: getTCGdexImageUrl('SFA', '038'), setCode: 'SFA', setName: 'Shrouded Fable', setNumber: '038', tpciCode: 'SFA 038', tpciSetCode: 'SFA', localSetId: 'sv6pt5' },
+  { id: 'SCR-128', name: 'Terapagos ex', imageUrl: getTCGdexImageUrl('SCR', '128'), setCode: 'SCR', setName: 'Stellar Crown', setNumber: '128', tpciCode: 'SCR 128', tpciSetCode: 'SCR', localSetId: 'sv7' },
+  { id: 'SSP-057', name: 'Pikachu ex', imageUrl: getTCGdexImageUrl('SSP', '057'), setCode: 'SSP', setName: 'Surging Sparks', setNumber: '057', tpciCode: 'SSP 057', tpciSetCode: 'SSP', localSetId: 'sv8' },
+  { id: 'PAR-139', name: 'Gholdengo ex', imageUrl: getTCGdexImageUrl('PAR', '139'), setCode: 'PAR', setName: 'Paradox Rift', setNumber: '139', tpciCode: 'PAR 139', tpciSetCode: 'PAR', localSetId: 'sv4' },
+  { id: 'PAL-185', name: 'Iono', imageUrl: getTCGdexImageUrl('PAL', '185'), setCode: 'PAL', setName: 'Paldea Evolved', setNumber: '185', tpciCode: 'PAL 185', tpciSetCode: 'PAL', localSetId: 'sv2' },
+  { id: 'SVI-166', name: 'Arven', imageUrl: getTCGdexImageUrl('SVI', '166'), setCode: 'SVI', setName: 'Scarlet & Violet Base', setNumber: '166', tpciCode: 'SVI 166', tpciSetCode: 'SVI', localSetId: 'sv1' },
+  { id: 'TEF-144', name: 'Buddy-Buddy Poffin', imageUrl: getTCGdexImageUrl('TEF', '144'), setCode: 'TEF', setName: 'Temporal Forces', setNumber: '144', tpciCode: 'TEF 144', tpciSetCode: 'TEF', localSetId: 'sv5' },
+  { id: 'TEF-157', name: 'Prime Catcher', imageUrl: getTCGdexImageUrl('TEF', '157'), setCode: 'TEF', setName: 'Temporal Forces', setNumber: '157', tpciCode: 'TEF 157', tpciSetCode: 'TEF', localSetId: 'sv5' },
+  { id: 'SCR-131', name: 'Area Zero Underdepths', imageUrl: getTCGdexImageUrl('SCR', '131'), setCode: 'SCR', setName: 'Stellar Crown', setNumber: '131', tpciCode: 'SCR 131', tpciSetCode: 'SCR', localSetId: 'sv7' }
 ];
 
 // Helper to look up an image link or search pokemontcg.io
@@ -402,11 +485,13 @@ async function findCardInTcgio(name: string, set?: string, number?: string): Pro
       const data = await res.json();
       if (data.data && data.data.length > 0) {
         const card = data.data[0];
+        const setId = card.set.id.toLowerCase();
+        const tpciSet = LOCAL_TO_TPCI_SET_MAP[setId] || card.set.id.toUpperCase();
         return {
-          id: card.id,
+          id: `${tpciSet}-${card.number}`,
           name: card.name,
-          imageUrl: card.images.small || card.images.large,
-          setCode: card.set.id,
+          imageUrl: getTCGdexImageUrl(tpciSet, card.number) || card.images.small || card.images.large,
+          setCode: tpciSet,
           setName: card.set.name,
           setNumber: card.number
         };
@@ -839,32 +924,32 @@ const SET_QUERY_ALIASES: Record<string, string> = {
 // Master catalog of modern Pokémon TCG collections (2025+ Mega Evolution Era & Modern Standard)
 const COMPREHENSIVE_SETS = [
   // 1. Nova Era Mega Evolution (Lançadas a partir de 2025 para frente)
-  { id: 'asc', name: 'Heróis Excelsos (Mega Evolution: Ascended Heroes - ASC)', series: 'Mega Evolution', releaseDate: '2026-01-30' },
-  { id: 'pfl', name: 'Fogo Fantasmagórico (Mega Evolution: Phantasmal Flames - PFL)', series: 'Mega Evolution', releaseDate: '2025-11-14' },
-  { id: 'por', name: 'Ordem Perfeita (Mega Evolution: Perfect Order - POR)', series: 'Mega Evolution', releaseDate: '2026-03-27' },
-  { id: 'meg', name: 'Mega Evolução Base (Mega Evolution - MEG)', series: 'Mega Evolution', releaseDate: '2025-09-26' },
-  { id: 'cri', name: 'Caos Ascendente (Mega Evolution: Chaos Rising - CRI)', series: 'Mega Evolution', releaseDate: '2026-05-22' },
-  { id: 'pbl', name: 'Escuridão Total (Mega Evolution: Pitch Black - PBL)', series: 'Mega Evolution', releaseDate: '2026-07-17' },
+  { id: 'ASC', ptcglCode: 'ASC', localId: 'asc', name: 'Heróis Excelsos (Mega Evolution: Ascended Heroes - ASC)', series: 'Mega Evolution', releaseDate: '2026-01-30' },
+  { id: 'PFL', ptcglCode: 'PFL', localId: 'pfl', name: 'Fogo Fantasmagórico (Mega Evolution: Phantasmal Flames - PFL)', series: 'Mega Evolution', releaseDate: '2025-11-14' },
+  { id: 'POR', ptcglCode: 'POR', localId: 'por', name: 'Ordem Perfeita (Mega Evolution: Perfect Order - POR)', series: 'Mega Evolution', releaseDate: '2026-03-27' },
+  { id: 'MEG', ptcglCode: 'MEG', localId: 'meg', name: 'Mega Evolução Base (Mega Evolution - MEG)', series: 'Mega Evolution', releaseDate: '2025-09-26' },
+  { id: 'CRI', ptcglCode: 'CRI', localId: 'cri', name: 'Caos Ascendente (Mega Evolution: Chaos Rising - CRI)', series: 'Mega Evolution', releaseDate: '2026-05-22' },
+  { id: 'PBL', ptcglCode: 'PBL', localId: 'pbl', name: 'Escuridão Total (Mega Evolution: Pitch Black - PBL)', series: 'Mega Evolution', releaseDate: '2026-07-17' },
 
   // 2. Expansões de 2025 de Scarlet & Violet
-  { id: 'pre', name: 'Evoluções Prismáticas (Prismatic Evolutions - PRE)', series: 'Scarlet & Violet', releaseDate: '2025-01-17' },
-  { id: 'jtg', name: 'Jornada em Conjunto (Journey Together - JTG)', series: 'Scarlet & Violet', releaseDate: '2025-03-28' },
-  { id: 'dri', name: 'Rivais Destinados (Destined Rivals - DRI)', series: 'Scarlet & Violet', releaseDate: '2025-05-30' },
-  { id: 'blk', name: 'Raio Negro (Black Bolt - BLK)', series: 'Scarlet & Violet', releaseDate: '2025-07-18' },
-  { id: 'wht', name: 'Chama Branca (White Flare - WHT)', series: 'Scarlet & Violet', releaseDate: '2025-07-18' },
+  { id: 'PRE', ptcglCode: 'PRE', localId: 'pre', name: 'Evoluções Prismáticas (Prismatic Evolutions - PRE)', series: 'Scarlet & Violet', releaseDate: '2025-01-17' },
+  { id: 'JTG', ptcglCode: 'JTG', localId: 'jtg', name: 'Jornada em Conjunto (Journey Together - JTG)', series: 'Scarlet & Violet', releaseDate: '2025-03-28' },
+  { id: 'DRI', ptcglCode: 'DRI', localId: 'dri', name: 'Rivais Destinados (Destined Rivals - DRI)', series: 'Scarlet & Violet', releaseDate: '2025-05-30' },
+  { id: 'BLK', ptcglCode: 'BLK', localId: 'blk', name: 'Raio Negro (Black Bolt - BLK)', series: 'Scarlet & Violet', releaseDate: '2025-07-18' },
+  { id: 'WHT', ptcglCode: 'WHT', localId: 'wht', name: 'Chama Branca (White Flare - WHT)', series: 'Scarlet & Violet', releaseDate: '2025-07-18' },
 
   // 3. Formato Standard Atual (Scarlet & Violet 2023-2024)
-  { id: 'ssp', name: 'Faíscas Impetuosas (Surging Sparks - SSP)', series: 'Scarlet & Violet', releaseDate: '2024-11-08' },
-  { id: 'scr', name: 'Coroa Estelar (Stellar Crown - SCR)', series: 'Scarlet & Violet', releaseDate: '2024-09-13' },
-  { id: 'sfa', name: 'Fábulas Nebulosas (Shrouded Fable - SFA)', series: 'Scarlet & Violet', releaseDate: '2024-08-02' },
-  { id: 'sv6', name: 'Máscaras do Crepúsculo (Twilight Masquerade - TWM)', series: 'Scarlet & Violet', releaseDate: '2024-05-24' },
-  { id: 'sv5', name: 'Forças Temporais (Temporal Forces - TEF)', series: 'Scarlet & Violet', releaseDate: '2024-03-22' },
-  { id: 'sv45', name: 'Destinos de Paldea (Paldean Fates - PAF)', series: 'Scarlet & Violet', releaseDate: '2024-01-26' },
-  { id: 'sv4', name: 'Fenda Paradoxal (Paradox Rift - PAR)', series: 'Scarlet & Violet', releaseDate: '2023-11-03' },
-  { id: 'sv3pt5', name: '151 (MEW)', series: 'Scarlet & Violet', releaseDate: '2023-09-22' },
-  { id: 'sv3', name: 'Obsidiana em Chamas (Obsidian Flames - OBF)', series: 'Scarlet & Violet', releaseDate: '2023-08-11' },
-  { id: 'sv2', name: 'Evoluções em Paldea (Paldea Evolved - PAL)', series: 'Scarlet & Violet', releaseDate: '2023-06-09' },
-  { id: 'sv1', name: 'Escarlate e Violeta Base (SVI)', series: 'Scarlet & Violet', releaseDate: '2023-03-31' }
+  { id: 'SSP', ptcglCode: 'SSP', localId: 'sv8', name: 'Faíscas Impetuosas (Surging Sparks - SSP)', series: 'Scarlet & Violet', releaseDate: '2024-11-08' },
+  { id: 'SCR', ptcglCode: 'SCR', localId: 'sv7', name: 'Coroa Estelar (Stellar Crown - SCR)', series: 'Scarlet & Violet', releaseDate: '2024-09-13' },
+  { id: 'SFA', ptcglCode: 'SFA', localId: 'sv6pt5', name: 'Fábulas Nebulosas (Shrouded Fable - SFA)', series: 'Scarlet & Violet', releaseDate: '2024-08-02' },
+  { id: 'TWM', ptcglCode: 'TWM', localId: 'sv6', name: 'Máscaras do Crepúsculo (Twilight Masquerade - TWM)', series: 'Scarlet & Violet', releaseDate: '2024-05-24' },
+  { id: 'TEF', ptcglCode: 'TEF', localId: 'sv5', name: 'Forças Temporais (Temporal Forces - TEF)', series: 'Scarlet & Violet', releaseDate: '2024-03-22' },
+  { id: 'PAF', ptcglCode: 'PAF', localId: 'sv45', name: 'Destinos de Paldea (Paldean Fates - PAF)', series: 'Scarlet & Violet', releaseDate: '2024-01-26' },
+  { id: 'PAR', ptcglCode: 'PAR', localId: 'sv4', name: 'Fenda Paradoxal (Paradox Rift - PAR)', series: 'Scarlet & Violet', releaseDate: '2023-11-03' },
+  { id: 'MEW', ptcglCode: 'MEW', localId: 'sv3pt5', name: '151 (MEW)', series: 'Scarlet & Violet', releaseDate: '2023-09-22' },
+  { id: 'OBF', ptcglCode: 'OBF', localId: 'sv3', name: 'Obsidiana em Chamas (Obsidian Flames - OBF)', series: 'Scarlet & Violet', releaseDate: '2023-08-11' },
+  { id: 'PAL', ptcglCode: 'PAL', localId: 'sv2', name: 'Evoluções em Paldea (Paldea Evolved - PAL)', series: 'Scarlet & Violet', releaseDate: '2023-06-09' },
+  { id: 'SVI', ptcglCode: 'SVI', localId: 'sv1', name: 'Escarlate e Violeta Base (SVI)', series: 'Scarlet & Violet', releaseDate: '2023-03-31' }
 ];
 
 function normalizeSearchTerm(str: string): string {
@@ -876,7 +961,7 @@ function normalizeSearchTerm(str: string): string {
 }
 
 // Set of all modern Mega Evolution collection IDs (2025+)
-const MODERN_MEGA_SET_IDS = new Set(['asc', 'pfl', 'por', 'meg', 'cri', 'pbl']);
+const MODERN_MEGA_SET_IDS = new Set(['asc', 'pfl', 'por', 'meg', 'cri', 'pbl', 'ASC', 'PFL', 'POR', 'MEG', 'CRI', 'PBL']);
 
 // Search Pokémon cards via modern database & pokemontcg.io with intelligent local and Gemini fallbacks
 app.get('/api/pokemon/search', async (req, res) => {
@@ -940,9 +1025,10 @@ app.get('/api/pokemon/search', async (req, res) => {
       // Set match
       if (resolvedSetId) {
         const setMatches = cardSetCode === resolvedSetId || 
+          cardSetCode === (TPCI_TO_LOCAL_SET_MAP[resolvedSetId.toUpperCase()] || '').toLowerCase() ||
+          (LOCAL_TO_TPCI_SET_MAP[cardSetCode] && LOCAL_TO_TPCI_SET_MAP[cardSetCode].toLowerCase() === resolvedSetId.toLowerCase()) ||
           cardSetCode.includes(normSet) || 
-          cardSetName.includes(normSet) ||
-          (LOCAL_TO_TPCI_SET_MAP[cardSetCode] && LOCAL_TO_TPCI_SET_MAP[cardSetCode].toLowerCase() === resolvedSetId);
+          cardSetName.includes(normSet);
         if (!setMatches) return false;
       }
 
@@ -960,12 +1046,16 @@ app.get('/api/pokemon/search', async (req, res) => {
 
       return true;
     }).map(c => {
-      const setId = (c.setCode || 'meg').toLowerCase();
-      const tpciSet = LOCAL_TO_TPCI_SET_MAP[setId] || setId.toUpperCase();
+      const setCode = (c.setCode || 'ASC').toUpperCase();
+      const localSetId = (c as any).localSetId || TPCI_TO_LOCAL_SET_MAP[setCode] || setCode.toLowerCase();
       return {
         ...c,
-        tpciCode: `${tpciSet} ${c.setNumber || '001'}`,
-        tpciSetCode: tpciSet
+        id: `${setCode}-${c.setNumber || '001'}`,
+        setCode: setCode,
+        localSetId: localSetId,
+        tpciCode: `${setCode} ${c.setNumber || '001'}`,
+        tpciSetCode: setCode,
+        imageUrl: getTCGdexImageUrl(setCode, c.setNumber || '001') || c.imageUrl
       };
     });
 
@@ -1054,7 +1144,7 @@ Retorne um array JSON contendo até 12 cartas com:
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 3500);
       
-      const response = await fetch(`https://api.pokemontcg.io/v2/cards?q=${encodedQuery}&pageSize=36`, {
+      const response = await fetch(`https://api.pokemontcg.io/v2/cards?q=${encodedQuery}&orderBy=-set.releaseDate&pageSize=36`, {
         signal: controller.signal
       });
       clearTimeout(timeoutId);
@@ -1074,6 +1164,10 @@ Retorne um array JSON contendo até 12 cartas com:
             if (name.startsWith('m ') || name.includes('m-ex') || (name.includes('mega') && name.includes('ex') && !name.includes(' ex'))) return false;
 
             return true;
+          }).sort((a: any, b: any) => {
+            const dateA = a.set?.releaseDate || '';
+            const dateB = b.set?.releaseDate || '';
+            return dateB.localeCompare(dateA);
           });
 
           if (filteredData.length > 0) {
@@ -1082,12 +1176,14 @@ Retorne um array JSON contendo até 12 cartas com:
               const tpciSet = LOCAL_TO_TPCI_SET_MAP[setId] || card.set.id.toUpperCase();
               const tpciProductCode = `${tpciSet} ${card.number}`;
               return {
-                id: card.id,
+                id: `${tpciSet}-${card.number}`,
+                localId: card.id,
                 name: card.name,
-                imageUrl: card.images.small || card.images.large,
-                setCode: card.set.id,
+                imageUrl: getTCGdexImageUrl(tpciSet, card.number) || card.images.large || card.images.small,
+                setCode: tpciSet,
                 tpciCode: tpciProductCode,
                 tpciSetCode: tpciSet,
+                localSetId: setId,
                 setName: card.set.name,
                 setNumber: card.number
               };
@@ -1109,9 +1205,10 @@ Retorne um array JSON contendo até 12 cartas com:
 
     if (resolvedSetId) {
       const setMatches = cardSetCode === resolvedSetId || 
+        cardSetCode === (TPCI_TO_LOCAL_SET_MAP[resolvedSetId.toUpperCase()] || '').toLowerCase() ||
+        (LOCAL_TO_TPCI_SET_MAP[cardSetCode] && LOCAL_TO_TPCI_SET_MAP[cardSetCode].toLowerCase() === resolvedSetId.toLowerCase()) ||
         cardSetCode.includes(normSet) || 
-        cardSetName.includes(normSet) ||
-        (LOCAL_TO_TPCI_SET_MAP[cardSetCode] && LOCAL_TO_TPCI_SET_MAP[cardSetCode].toLowerCase() === resolvedSetId);
+        cardSetName.includes(normSet);
       if (!setMatches) return false;
     }
 
@@ -1124,12 +1221,16 @@ Retorne um array JSON contendo até 12 cartas com:
 
     return true;
   }).map(c => {
-    const setId = (c.setCode || 'sv1').toLowerCase();
-    const tpciSet = LOCAL_TO_TPCI_SET_MAP[setId] || setId.toUpperCase();
+    const setCode = (c.setCode || 'SVI').toUpperCase();
+    const localSetId = (c as any).localSetId || TPCI_TO_LOCAL_SET_MAP[setCode] || setCode.toLowerCase();
     return {
       ...c,
-      tpciCode: `${tpciSet} ${c.setNumber || '001'}`,
-      tpciSetCode: tpciSet
+      id: `${setCode}-${c.setNumber || '001'}`,
+      setCode: setCode,
+      localSetId: localSetId,
+      tpciCode: `${setCode} ${c.setNumber || '001'}`,
+      tpciSetCode: setCode,
+      imageUrl: getTCGdexImageUrl(setCode, c.setNumber || '001') || c.imageUrl
     };
   });
 
@@ -1220,29 +1321,37 @@ app.get('/api/pokemon/sets', async (req, res) => {
             }
             return series === 'mega evolution' || series === 'scarlet & violet' || release >= '2023';
           })
-          .map((s: any) => ({
-            id: s.id,
-            name: s.name,
-            series: s.series,
-            releaseDate: s.releaseDate,
-            logo: s.images?.logo,
-            symbol: s.images?.symbol
-          }));
+          .map((s: any) => {
+            const localId = (s.id || '').toLowerCase();
+            const ptcglCode = LOCAL_TO_TPCI_SET_MAP[localId] || s.id.toUpperCase();
+            return {
+              id: ptcglCode,
+              ptcglCode: ptcglCode,
+              localId: localId,
+              name: s.name,
+              series: s.series,
+              releaseDate: s.releaseDate,
+              logo: s.images?.logo,
+              symbol: s.images?.symbol
+            };
+          });
         
         // Merge with COMPREHENSIVE_SETS ensuring requested new collections (Heróis Excelsos, Fogo Fantasmagórico, Perfect Order, Mega Evolução Base) are at the top
         const seen = new Set<string>();
         const combined: any[] = [];
 
         for (const exp of COMPREHENSIVE_SETS) {
-          if (!seen.has(exp.id.toLowerCase())) {
-            seen.add(exp.id.toLowerCase());
+          const key = exp.id.toUpperCase();
+          if (!seen.has(key)) {
+            seen.add(key);
             combined.push(exp);
           }
         }
 
         for (const s of fetchedSets) {
-          if (!seen.has(s.id.toLowerCase())) {
-            seen.add(s.id.toLowerCase());
+          const key = s.id.toUpperCase();
+          if (!seen.has(key)) {
+            seen.add(key);
             combined.push(s);
           }
         }

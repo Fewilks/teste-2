@@ -16,6 +16,314 @@ export interface CardMetadata {
   setNumber?: string;
 }
 
+// Map from pokemontcg.io / local set codes to official TPCi / Pokémon TCG Live codes
+export const SET_LOCAL_TO_TPCI_MAP: Record<string, { tpciCode: string; name: string; localId: string }> = {
+  // Scarlet & Violet era
+  'sv1': { tpciCode: 'SVI', name: 'Scarlet & Violet', localId: 'sv1' },
+  'sv2': { tpciCode: 'PAL', name: 'Paldea Evolved', localId: 'sv2' },
+  'sv3': { tpciCode: 'OBF', name: 'Obsidian Flames', localId: 'sv3' },
+  'sv3pt5': { tpciCode: 'MEW', name: '151', localId: 'sv3pt5' },
+  'mew': { tpciCode: 'MEW', name: '151', localId: 'sv3pt5' },
+  '151': { tpciCode: 'MEW', name: '151', localId: 'sv3pt5' },
+  'sv4': { tpciCode: 'PAR', name: 'Paradox Rift', localId: 'sv4' },
+  'sv45': { tpciCode: 'PAF', name: 'Paldean Fates', localId: 'sv45' },
+  'sv4pt5': { tpciCode: 'PAF', name: 'Paldean Fates', localId: 'sv45' },
+  'paf': { tpciCode: 'PAF', name: 'Paldean Fates', localId: 'sv45' },
+  'sv5': { tpciCode: 'TEF', name: 'Temporal Forces', localId: 'sv5' },
+  'tef': { tpciCode: 'TEF', name: 'Temporal Forces', localId: 'sv5' },
+  'sv6': { tpciCode: 'TWM', name: 'Twilight Masquerade', localId: 'sv6' },
+  'twm': { tpciCode: 'TWM', name: 'Twilight Masquerade', localId: 'sv6' },
+  'sv6pt5': { tpciCode: 'SFA', name: 'Shrouded Fable', localId: 'sv6pt5' },
+  'sv65': { tpciCode: 'SFA', name: 'Shrouded Fable', localId: 'sv6pt5' },
+  'sfa': { tpciCode: 'SFA', name: 'Shrouded Fable', localId: 'sv6pt5' },
+  'sv7': { tpciCode: 'SCR', name: 'Stellar Crown', localId: 'sv7' },
+  'scr': { tpciCode: 'SCR', name: 'Stellar Crown', localId: 'sv7' },
+  'sv8': { tpciCode: 'SSP', name: 'Surging Sparks', localId: 'sv8' },
+  'ssp': { tpciCode: 'SSP', name: 'Surging Sparks', localId: 'sv8' },
+  'sv8pt5': { tpciCode: 'PRE', name: 'Prismatic Evolutions', localId: 'sv8pt5' },
+  'sv85': { tpciCode: 'PRE', name: 'Prismatic Evolutions', localId: 'sv8pt5' },
+  'pre': { tpciCode: 'PRE', name: 'Prismatic Evolutions', localId: 'sv8pt5' },
+  'sve': { tpciCode: 'SVE', name: 'Scarlet & Violet Energies', localId: 'sve' },
+  'svp': { tpciCode: 'SVP', name: 'Scarlet & Violet Promos', localId: 'svp' },
+  'me2': { tpciCode: 'ME2', name: 'Mega Evolution', localId: 'me2' },
+  'me2.5': { tpciCode: 'ME2', name: 'Mega Evolution', localId: 'me2' },
+  'me2-5': { tpciCode: 'ME2', name: 'Mega Evolution', localId: 'me2' },
+  'asc': { tpciCode: 'ASC', name: 'Heróis Excelsos (Ascended Heroes)', localId: 'asc' },
+  'pfl': { tpciCode: 'PFL', name: 'Fogo Fantasmagórico (Phantasmal Flames)', localId: 'pfl' },
+  'por': { tpciCode: 'POR', name: 'Ordem Perfeita (Perfect Order)', localId: 'por' },
+  'meg': { tpciCode: 'MEG', name: 'Mega Evolução (Mega Evolution)', localId: 'meg' },
+  'cri': { tpciCode: 'CRI', name: 'Caos Ascendente (Chaos Rising)', localId: 'cri' },
+  'pbl': { tpciCode: 'PBL', name: 'Escuridão Total (Pitch Black)', localId: 'pbl' },
+  'jtg': { tpciCode: 'JTG', name: 'Jornada em Conjunto (Journey Together)', localId: 'jtg' },
+  'dri': { tpciCode: 'DRI', name: 'Rivais Destinados (Destined Rivals)', localId: 'dri' },
+  'blk': { tpciCode: 'BLK', name: 'Raio Negro (Black Bolt)', localId: 'blk' },
+  'wht': { tpciCode: 'WHT', name: 'Chama Branca (White Flare)', localId: 'wht' },
+
+  // Sword & Shield era
+  'swsh1': { tpciCode: 'SSH', name: 'Sword & Shield', localId: 'swsh1' },
+  'ssh': { tpciCode: 'SSH', name: 'Sword & Shield', localId: 'swsh1' },
+  'swsh2': { tpciCode: 'RCL', name: 'Rebel Clash', localId: 'swsh2' },
+  'rcl': { tpciCode: 'RCL', name: 'Rebel Clash', localId: 'swsh2' },
+  'swsh3': { tpciCode: 'DAA', name: 'Darkness Ablaze', localId: 'swsh3' },
+  'daa': { tpciCode: 'DAA', name: 'Darkness Ablaze', localId: 'swsh3' },
+  'swsh35': { tpciCode: 'CPA', name: "Champion's Path", localId: 'swsh35' },
+  'cpa': { tpciCode: 'CPA', name: "Champion's Path", localId: 'swsh35' },
+  'swsh4': { tpciCode: 'VIV', name: 'Vivid Voltage', localId: 'swsh4' },
+  'viv': { tpciCode: 'VIV', name: 'Vivid Voltage', localId: 'swsh4' },
+  'swsh45': { tpciCode: 'SHF', name: 'Shining Fates', localId: 'swsh45' },
+  'shf': { tpciCode: 'SHF', name: 'Shining Fates', localId: 'swsh45' },
+  'swsh5': { tpciCode: 'BST', name: 'Battle Styles', localId: 'swsh5' },
+  'bst': { tpciCode: 'BST', name: 'Battle Styles', localId: 'swsh5' },
+  'swsh6': { tpciCode: 'CRE', name: 'Chilling Reign', localId: 'swsh6' },
+  'cre': { tpciCode: 'CRE', name: 'Chilling Reign', localId: 'swsh6' },
+  'swsh7': { tpciCode: 'EVS', name: 'Evolving Skies', localId: 'swsh7' },
+  'evs': { tpciCode: 'EVS', name: 'Evolving Skies', localId: 'swsh7' },
+  'swsh8': { tpciCode: 'FST', name: 'Fusion Strike', localId: 'swsh8' },
+  'fst': { tpciCode: 'FST', name: 'Fusion Strike', localId: 'swsh8' },
+  'fsi': { tpciCode: 'FST', name: 'Fusion Strike', localId: 'swsh8' },
+  'swsh9': { tpciCode: 'BRS', name: 'Brilliant Stars', localId: 'swsh9' },
+  'brs': { tpciCode: 'BRS', name: 'Brilliant Stars', localId: 'swsh9' },
+  'swsh10': { tpciCode: 'ASR', name: 'Astral Radiance', localId: 'swsh10' },
+  'asr': { tpciCode: 'ASR', name: 'Astral Radiance', localId: 'swsh10' },
+  'pgo': { tpciCode: 'PGO', name: 'Pokémon GO', localId: 'pgo' },
+  'swsh11': { tpciCode: 'LOR', name: 'Lost Origin', localId: 'swsh11' },
+  'lor': { tpciCode: 'LOR', name: 'Lost Origin', localId: 'swsh11' },
+  'cel': { tpciCode: 'CEL', name: 'Celebrations', localId: 'cel' },
+  'swsh12': { tpciCode: 'SIT', name: 'Silver Tempest', localId: 'swsh12' },
+  'sit': { tpciCode: 'SIT', name: 'Silver Tempest', localId: 'swsh12' },
+  'swsh12pt5': { tpciCode: 'CRZ', name: 'Crown Zenith', localId: 'swsh12pt5' },
+  'crz': { tpciCode: 'CRZ', name: 'Crown Zenith', localId: 'swsh12pt5' },
+
+  // XY Series (Vintage)
+  'xy12': { tpciCode: 'EVO', name: 'XY - Evolutions', localId: 'xy12' },
+  'evo': { tpciCode: 'EVO', name: 'XY - Evolutions', localId: 'xy12' },
+  'xy4': { tpciCode: 'PHF', name: 'XY - Phantom Forces', localId: 'xy4' },
+  'phf': { tpciCode: 'PHF', name: 'XY - Phantom Forces', localId: 'xy4' },
+  'xy2': { tpciCode: 'FLF', name: 'XY - Flashfire', localId: 'xy2' },
+  'flf': { tpciCode: 'FLF', name: 'XY - Flashfire', localId: 'xy2' },
+  'xy6': { tpciCode: 'ROS', name: 'XY - Roaring Skies', localId: 'xy6' },
+  'ros': { tpciCode: 'ROS', name: 'XY - Roaring Skies', localId: 'xy6' },
+  'xy5': { tpciCode: 'PRC', name: 'XY - Primal Clash', localId: 'xy5' },
+  'prc': { tpciCode: 'PRC', name: 'XY - Primal Clash', localId: 'xy5' },
+  'xy3': { tpciCode: 'FFI', name: 'XY - Furious Fists', localId: 'xy3' },
+  'ffi': { tpciCode: 'FFI', name: 'XY - Furious Fists', localId: 'xy3' },
+  'xy7': { tpciCode: 'AOR', name: 'XY - Ancient Origins', localId: 'xy7' },
+  'aor': { tpciCode: 'AOR', name: 'XY - Ancient Origins', localId: 'xy7' },
+  'xy8': { tpciCode: 'BKT', name: 'XY - BREAKthrough', localId: 'xy8' },
+  'bkt': { tpciCode: 'BKT', name: 'XY - BREAKthrough', localId: 'xy8' },
+  'xy9': { tpciCode: 'BKP', name: 'XY - BREAKpoint', localId: 'xy9' },
+  'bkp': { tpciCode: 'BKP', name: 'XY - BREAKpoint', localId: 'xy9' },
+  'xy10': { tpciCode: 'FCO', name: 'XY - Fates Collide', localId: 'xy10' },
+  'fco': { tpciCode: 'FCO', name: 'XY - Fates Collide', localId: 'xy10' },
+  'xy11': { tpciCode: 'STS', name: 'XY - Steam Siege', localId: 'xy11' },
+  'sts': { tpciCode: 'STS', name: 'XY - Steam Siege', localId: 'xy11' },
+  'xy1': { tpciCode: 'XY', name: 'XY Base Set', localId: 'xy1' },
+  'xy': { tpciCode: 'XY', name: 'XY Base Set', localId: 'xy1' }
+};
+
+// Reverse map: TPCi official 3-letter code -> pokemontcg.io local set code
+export const SET_TPCI_TO_LOCAL_MAP: Record<string, string> = {
+  'SVI': 'sv1',
+  'PAL': 'sv2',
+  'OBF': 'sv3',
+  'MEW': 'sv3pt5',
+  'PAR': 'sv4',
+  'PAF': 'sv45',
+  'TEF': 'sv5',
+  'TWM': 'sv6',
+  'SFA': 'sv6pt5',
+  'SCR': 'sv7',
+  'SSP': 'sv8',
+  'PRE': 'sv8pt5',
+  'SVE': 'sve',
+  'SVP': 'svp',
+  'ME1': 'me1',
+  'ME2': 'me2',
+  'ASC': 'asc',
+  'PFL': 'pfl',
+  'POR': 'por',
+  'MEG': 'meg',
+  'CRI': 'cri',
+  'PBL': 'pbl',
+  'JTG': 'jtg',
+  'DRI': 'dri',
+  'BLK': 'blk',
+  'WHT': 'wht',
+  'SSH': 'swsh1',
+  'RCL': 'swsh2',
+  'DAA': 'swsh3',
+  'CPA': 'swsh35',
+  'VIV': 'swsh4',
+  'SHF': 'swsh45',
+  'BST': 'swsh5',
+  'CRE': 'swsh6',
+  'EVS': 'swsh7',
+  'FST': 'swsh8',
+  'BRS': 'swsh9',
+  'ASR': 'swsh10',
+  'PGO': 'pgo',
+  'LOR': 'swsh11',
+  'CEL': 'cel',
+  'SIT': 'swsh12',
+  'CRZ': 'swsh12pt5',
+  'EVO': 'xy12',
+  'PHF': 'xy4',
+  'FLF': 'xy2',
+  'ROS': 'xy6',
+  'PRC': 'xy5',
+  'FFI': 'xy3',
+  'AOR': 'xy7',
+  'BKT': 'xy8',
+  'BKP': 'xy9',
+  'FCO': 'xy10',
+  'STS': 'xy11',
+  'XY': 'xy1'
+};
+
+/**
+ * Normalizes any set identifier (e.g. 'sv6', 'twm', 'sv3', 'obf') into the official TPCi uppercase 3-letter code.
+ */
+export function normalizeTPCiSetCode(setCode: string): string {
+  if (!setCode) return 'SVI';
+  const clean = setCode.toLowerCase().trim().replace(/[^a-z0-9]/g, '');
+  if (SET_LOCAL_TO_TPCI_MAP[clean]) {
+    return SET_LOCAL_TO_TPCI_MAP[clean].tpciCode;
+  }
+  return clean.toUpperCase();
+}
+
+/**
+ * Converts a TPCi official set code (e.g. 'TWM', 'OBF') to its local/pokemontcg.io counterpart ('sv6', 'sv3').
+ */
+export function mapTPCiToLocalSetId(tpciCode: string): string {
+  if (!tpciCode) return 'sv1';
+  const cleanUpper = tpciCode.toUpperCase().trim();
+  return SET_TPCI_TO_LOCAL_MAP[cleanUpper] || tpciCode.toLowerCase().trim();
+}
+
+// Mapping of TPCi and local set codes to TCGdex series and set identifiers
+export const SET_TO_TCGDEX_MAP: Record<string, { series: string; set: string }> = {
+  // Mega Evolution Era (2025+)
+  'ASC': { series: 'me', set: 'me02.5' },
+  'asc': { series: 'me', set: 'me02.5' },
+  'me2.5': { series: 'me', set: 'me02.5' },
+  'me02.5': { series: 'me', set: 'me02.5' },
+  'PFL': { series: 'me', set: 'me02' },
+  'pfl': { series: 'me', set: 'me02' },
+  'me2': { series: 'me', set: 'me02' },
+  'me02': { series: 'me', set: 'me02' },
+  'POR': { series: 'me', set: 'me03' },
+  'por': { series: 'me', set: 'me03' },
+  'me3': { series: 'me', set: 'me03' },
+  'MEG': { series: 'me', set: 'me01' },
+  'meg': { series: 'me', set: 'me01' },
+  'me1': { series: 'me', set: 'me01' },
+  'me01': { series: 'me', set: 'me01' },
+  'CRI': { series: 'me', set: 'me04' },
+  'cri': { series: 'me', set: 'me04' },
+  'PBL': { series: 'me', set: 'me05' },
+  'pbl': { series: 'me', set: 'me05' },
+
+  // Scarlet & Violet 2025
+  'PRE': { series: 'sv', set: 'sv08.5' },
+  'pre': { series: 'sv', set: 'sv08.5' },
+  'sv8pt5': { series: 'sv', set: 'sv08.5' },
+  'sv85': { series: 'sv', set: 'sv08.5' },
+  'JTG': { series: 'sv', set: 'sv09' },
+  'jtg': { series: 'sv', set: 'sv09' },
+  'sv9': { series: 'sv', set: 'sv09' },
+  'DRI': { series: 'sv', set: 'sv09.5' },
+  'dri': { series: 'sv', set: 'sv09.5' },
+  'BLK': { series: 'sv', set: 'sv10' },
+  'blk': { series: 'sv', set: 'sv10' },
+  'WHT': { series: 'sv', set: 'sv10.5' },
+  'wht': { series: 'sv', set: 'sv10.5' },
+
+  // Scarlet & Violet Standard 2023-2024
+  'SSP': { series: 'sv', set: 'sv08' },
+  'ssp': { series: 'sv', set: 'sv08' },
+  'sv8': { series: 'sv', set: 'sv08' },
+  'SCR': { series: 'sv', set: 'sv07' },
+  'scr': { series: 'sv', set: 'sv07' },
+  'sv7': { series: 'sv', set: 'sv07' },
+  'SFA': { series: 'sv', set: 'sv06.5' },
+  'sfa': { series: 'sv', set: 'sv06.5' },
+  'sv6pt5': { series: 'sv', set: 'sv06.5' },
+  'sv65': { series: 'sv', set: 'sv06.5' },
+  'TWM': { series: 'sv', set: 'sv06' },
+  'twm': { series: 'sv', set: 'sv06' },
+  'sv6': { series: 'sv', set: 'sv06' },
+  'TEF': { series: 'sv', set: 'sv05' },
+  'tef': { series: 'sv', set: 'sv05' },
+  'sv5': { series: 'sv', set: 'sv05' },
+  'PAF': { series: 'sv', set: 'sv04.5' },
+  'paf': { series: 'sv', set: 'sv04.5' },
+  'sv45': { series: 'sv', set: 'sv04.5' },
+  'sv4pt5': { series: 'sv', set: 'sv04.5' },
+  'PAR': { series: 'sv', set: 'sv04' },
+  'par': { series: 'sv', set: 'sv04' },
+  'sv4': { series: 'sv', set: 'sv04' },
+  'MEW': { series: 'sv', set: 'sv03.5' },
+  'mew': { series: 'sv', set: 'sv03.5' },
+  'sv3pt5': { series: 'sv', set: 'sv03.5' },
+  'OBF': { series: 'sv', set: 'sv03' },
+  'obf': { series: 'sv', set: 'sv03' },
+  'sv3': { series: 'sv', set: 'sv03' },
+  'PAL': { series: 'sv', set: 'sv02' },
+  'pal': { series: 'sv', set: 'sv02' },
+  'sv2': { series: 'sv', set: 'sv02' },
+  'SVI': { series: 'sv', set: 'sv01' },
+  'svi': { series: 'sv', set: 'sv01' },
+  'sv1': { series: 'sv', set: 'sv01' },
+  'SVE': { series: 'sv', set: 'sve' },
+  'sve': { series: 'sv', set: 'sve' },
+  'SVP': { series: 'sv', set: 'svp' },
+  'svp': { series: 'sv', set: 'svp' },
+
+  // Sword & Shield
+  'CRZ': { series: 'swsh', set: 'swsh12.5' },
+  'crz': { series: 'swsh', set: 'swsh12.5' },
+  'swsh12pt5': { series: 'swsh', set: 'swsh12.5' },
+  'SIT': { series: 'swsh', set: 'swsh12' },
+  'sit': { series: 'swsh', set: 'swsh12' },
+  'LOR': { series: 'swsh', set: 'swsh11' },
+  'lor': { series: 'swsh', set: 'swsh11' },
+  'ASR': { series: 'swsh', set: 'swsh10' },
+  'asr': { series: 'swsh', set: 'swsh10' },
+  'BRS': { series: 'swsh', set: 'swsh09' },
+  'brs': { series: 'swsh', set: 'swsh09' },
+  'FST': { series: 'swsh', set: 'swsh08' },
+  'fst': { series: 'swsh', set: 'swsh08' },
+  'EVS': { series: 'swsh', set: 'swsh07' },
+  'evs': { series: 'swsh', set: 'swsh07' },
+  'CRE': { series: 'swsh', set: 'swsh06' },
+  'cre': { series: 'swsh', set: 'swsh06' },
+  'BST': { series: 'swsh', set: 'swsh05' },
+  'bst': { series: 'swsh', set: 'swsh05' },
+  'SHF': { series: 'swsh', set: 'swsh04.5' },
+  'VIV': { series: 'swsh', set: 'swsh04' },
+  'CPA': { series: 'swsh', set: 'swsh03.5' },
+  'DAA': { series: 'swsh', set: 'swsh03' },
+  'RCL': { series: 'swsh', set: 'swsh02' },
+  'SSH': { series: 'swsh', set: 'swsh01' }
+};
+
+/**
+ * Generates an authentic high-resolution webp card scan URL from TCGdex (guaranteed free open database).
+ */
+export function getTCGdexImageUrl(setCode: string, setNumber: string | number, lang: 'pt' | 'en' = 'en'): string {
+  if (!setCode || !setNumber) return POKEMON_CARD_BACK;
+  const cleanSet = setCode.trim();
+  const mapping = SET_TO_TCGDEX_MAP[cleanSet] || SET_TO_TCGDEX_MAP[cleanSet.toUpperCase()] || SET_TO_TCGDEX_MAP[cleanSet.toLowerCase()];
+  const numStr = String(setNumber).trim();
+  const cleanNum = numStr.replace(/^0+/, '') || '1';
+
+  if (mapping) {
+    return `https://assets.tcgdex.net/${lang}/${mapping.series}/${mapping.set}/${cleanNum}/high.webp`;
+  }
+  return `https://assets.tcgdex.net/${lang}/sv/${cleanSet.toLowerCase()}/${cleanNum}/high.webp`;
+}
+
 // Canonical database of modern standard cards (Scarlet & Violet & Sword & Shield staples)
 export const CARD_IMAGE_DATABASE: Record<string, CardMetadata> = {
   // --- POKEMON ---
@@ -1953,11 +2261,25 @@ function registerCardId(key: string, card: CardMetadata) {
 
 // Auto-register canonical database cards by ID and Set+Number
 Object.values(CARD_IMAGE_DATABASE).forEach(card => {
-  if (card.id) registerCardId(card.id, card);
   if (card.setCode && card.setNumber) {
-    registerCardId(`${card.setCode} ${card.setNumber}`, card);
-    registerCardId(`${card.setCode}-${card.setNumber}`, card);
-    registerCardId(`${card.setCode} #${card.setNumber}`, card);
+    const tpci = normalizeTPCiSetCode(card.setCode);
+    const num = String(card.setNumber).replace(/^#/, '').trim();
+    // Guarantee free authentic TCGdex high-resolution scan
+    card.imageUrl = getTCGdexImageUrl(tpci, num);
+    // Standardize primary PTCGL ID format
+    card.id = `${tpci}-${num}`;
+
+    registerCardId(card.id, card);
+    registerCardId(`${tpci} ${num}`, card);
+    registerCardId(`${tpci} #${num}`, card);
+    registerCardId(`${card.setCode}-${num}`, card);
+    registerCardId(`${card.setCode} ${num}`, card);
+
+    // Also register local pokemontcg.io code for backwards compatibility
+    const local = mapTPCiToLocalSetId(tpci);
+    registerCardId(`${local}-${num}`, card);
+  } else if (card.id) {
+    registerCardId(card.id, card);
   }
 });
 
@@ -2055,191 +2377,6 @@ export interface FormattedPTCGLCard {
   ptcglIdentifier: string; // e.g. "Pidgeot ex OBF 164"
   localSetId?: string;     // e.g. "sv6", "sv3" for pokemontcg.io / API queries
   rawLocalId?: string;     // original input id e.g. "sv6-130"
-}
-
-// Map from pokemontcg.io / local set codes to official TPCi / Pokémon TCG Live codes
-export const SET_LOCAL_TO_TPCI_MAP: Record<string, { tpciCode: string; name: string; localId: string }> = {
-  // Scarlet & Violet era
-  'sv1': { tpciCode: 'SVI', name: 'Scarlet & Violet', localId: 'sv1' },
-  'sv2': { tpciCode: 'PAL', name: 'Paldea Evolved', localId: 'sv2' },
-  'sv3': { tpciCode: 'OBF', name: 'Obsidian Flames', localId: 'sv3' },
-  'sv3pt5': { tpciCode: 'MEW', name: '151', localId: 'sv3pt5' },
-  'mew': { tpciCode: 'MEW', name: '151', localId: 'sv3pt5' },
-  '151': { tpciCode: 'MEW', name: '151', localId: 'sv3pt5' },
-  'sv4': { tpciCode: 'PAR', name: 'Paradox Rift', localId: 'sv4' },
-  'sv45': { tpciCode: 'PAF', name: 'Paldean Fates', localId: 'sv45' },
-  'sv4pt5': { tpciCode: 'PAF', name: 'Paldean Fates', localId: 'sv45' },
-  'paf': { tpciCode: 'PAF', name: 'Paldean Fates', localId: 'sv45' },
-  'sv5': { tpciCode: 'TEF', name: 'Temporal Forces', localId: 'sv5' },
-  'tef': { tpciCode: 'TEF', name: 'Temporal Forces', localId: 'sv5' },
-  'sv6': { tpciCode: 'TWM', name: 'Twilight Masquerade', localId: 'sv6' },
-  'twm': { tpciCode: 'TWM', name: 'Twilight Masquerade', localId: 'sv6' },
-  'sv6pt5': { tpciCode: 'SFA', name: 'Shrouded Fable', localId: 'sv6pt5' },
-  'sv65': { tpciCode: 'SFA', name: 'Shrouded Fable', localId: 'sv6pt5' },
-  'sfa': { tpciCode: 'SFA', name: 'Shrouded Fable', localId: 'sv6pt5' },
-  'sv7': { tpciCode: 'SCR', name: 'Stellar Crown', localId: 'sv7' },
-  'scr': { tpciCode: 'SCR', name: 'Stellar Crown', localId: 'sv7' },
-  'sv8': { tpciCode: 'SSP', name: 'Surging Sparks', localId: 'sv8' },
-  'ssp': { tpciCode: 'SSP', name: 'Surging Sparks', localId: 'sv8' },
-  'sv8pt5': { tpciCode: 'PRE', name: 'Prismatic Evolutions', localId: 'sv8pt5' },
-  'sv85': { tpciCode: 'PRE', name: 'Prismatic Evolutions', localId: 'sv8pt5' },
-  'pre': { tpciCode: 'PRE', name: 'Prismatic Evolutions', localId: 'sv8pt5' },
-  'sve': { tpciCode: 'SVE', name: 'Scarlet & Violet Energies', localId: 'sve' },
-  'svp': { tpciCode: 'SVP', name: 'Scarlet & Violet Promos', localId: 'svp' },
-  'me2': { tpciCode: 'ME2', name: 'Mega Evolution', localId: 'me2' },
-  'me2.5': { tpciCode: 'ME2', name: 'Mega Evolution', localId: 'me2' },
-  'me2-5': { tpciCode: 'ME2', name: 'Mega Evolution', localId: 'me2' },
-  'asc': { tpciCode: 'ASC', name: 'Heróis Excelsos (Ascended Heroes)', localId: 'asc' },
-  'pfl': { tpciCode: 'PFL', name: 'Fogo Fantasmagórico (Phantasmal Flames)', localId: 'pfl' },
-  'por': { tpciCode: 'POR', name: 'Ordem Perfeita (Perfect Order)', localId: 'por' },
-  'meg': { tpciCode: 'MEG', name: 'Mega Evolução (Mega Evolution)', localId: 'meg' },
-  'cri': { tpciCode: 'CRI', name: 'Caos Ascendente (Chaos Rising)', localId: 'cri' },
-  'pbl': { tpciCode: 'PBL', name: 'Escuridão Total (Pitch Black)', localId: 'pbl' },
-  'jtg': { tpciCode: 'JTG', name: 'Jornada em Conjunto (Journey Together)', localId: 'jtg' },
-  'dri': { tpciCode: 'DRI', name: 'Rivais Destinados (Destined Rivals)', localId: 'dri' },
-  'blk': { tpciCode: 'BLK', name: 'Raio Negro (Black Bolt)', localId: 'blk' },
-  'wht': { tpciCode: 'WHT', name: 'Chama Branca (White Flare)', localId: 'wht' },
-
-  // Sword & Shield era
-  'swsh1': { tpciCode: 'SSH', name: 'Sword & Shield', localId: 'swsh1' },
-  'ssh': { tpciCode: 'SSH', name: 'Sword & Shield', localId: 'swsh1' },
-  'swsh2': { tpciCode: 'RCL', name: 'Rebel Clash', localId: 'swsh2' },
-  'rcl': { tpciCode: 'RCL', name: 'Rebel Clash', localId: 'swsh2' },
-  'swsh3': { tpciCode: 'DAA', name: 'Darkness Ablaze', localId: 'swsh3' },
-  'daa': { tpciCode: 'DAA', name: 'Darkness Ablaze', localId: 'swsh3' },
-  'swsh35': { tpciCode: 'CPA', name: "Champion's Path", localId: 'swsh35' },
-  'cpa': { tpciCode: 'CPA', name: "Champion's Path", localId: 'swsh35' },
-  'swsh4': { tpciCode: 'VIV', name: 'Vivid Voltage', localId: 'swsh4' },
-  'viv': { tpciCode: 'VIV', name: 'Vivid Voltage', localId: 'swsh4' },
-  'swsh45': { tpciCode: 'SHF', name: 'Shining Fates', localId: 'swsh45' },
-  'shf': { tpciCode: 'SHF', name: 'Shining Fates', localId: 'swsh45' },
-  'swsh5': { tpciCode: 'BST', name: 'Battle Styles', localId: 'swsh5' },
-  'bst': { tpciCode: 'BST', name: 'Battle Styles', localId: 'swsh5' },
-  'swsh6': { tpciCode: 'CRE', name: 'Chilling Reign', localId: 'swsh6' },
-  'cre': { tpciCode: 'CRE', name: 'Chilling Reign', localId: 'swsh6' },
-  'swsh7': { tpciCode: 'EVS', name: 'Evolving Skies', localId: 'swsh7' },
-  'evs': { tpciCode: 'EVS', name: 'Evolving Skies', localId: 'swsh7' },
-  'swsh8': { tpciCode: 'FST', name: 'Fusion Strike', localId: 'swsh8' },
-  'fst': { tpciCode: 'FST', name: 'Fusion Strike', localId: 'swsh8' },
-  'fsi': { tpciCode: 'FST', name: 'Fusion Strike', localId: 'swsh8' },
-  'swsh9': { tpciCode: 'BRS', name: 'Brilliant Stars', localId: 'swsh9' },
-  'brs': { tpciCode: 'BRS', name: 'Brilliant Stars', localId: 'swsh9' },
-  'swsh10': { tpciCode: 'ASR', name: 'Astral Radiance', localId: 'swsh10' },
-  'asr': { tpciCode: 'ASR', name: 'Astral Radiance', localId: 'swsh10' },
-  'pgo': { tpciCode: 'PGO', name: 'Pokémon GO', localId: 'pgo' },
-  'swsh11': { tpciCode: 'LOR', name: 'Lost Origin', localId: 'swsh11' },
-  'lor': { tpciCode: 'LOR', name: 'Lost Origin', localId: 'swsh11' },
-  'cel': { tpciCode: 'CEL', name: 'Celebrations', localId: 'cel' },
-  'swsh12': { tpciCode: 'SIT', name: 'Silver Tempest', localId: 'swsh12' },
-  'sit': { tpciCode: 'SIT', name: 'Silver Tempest', localId: 'swsh12' },
-  'swsh12pt5': { tpciCode: 'CRZ', name: 'Crown Zenith', localId: 'swsh12pt5' },
-  'crz': { tpciCode: 'CRZ', name: 'Crown Zenith', localId: 'swsh12pt5' },
-
-  // XY Series (Vintage)
-  'xy12': { tpciCode: 'EVO', name: 'XY - Evolutions', localId: 'xy12' },
-  'evo': { tpciCode: 'EVO', name: 'XY - Evolutions', localId: 'xy12' },
-  'xy4': { tpciCode: 'PHF', name: 'XY - Phantom Forces', localId: 'xy4' },
-  'phf': { tpciCode: 'PHF', name: 'XY - Phantom Forces', localId: 'xy4' },
-  'xy2': { tpciCode: 'FLF', name: 'XY - Flashfire', localId: 'xy2' },
-  'flf': { tpciCode: 'FLF', name: 'XY - Flashfire', localId: 'xy2' },
-  'xy6': { tpciCode: 'ROS', name: 'XY - Roaring Skies', localId: 'xy6' },
-  'ros': { tpciCode: 'ROS', name: 'XY - Roaring Skies', localId: 'xy6' },
-  'xy5': { tpciCode: 'PRC', name: 'XY - Primal Clash', localId: 'xy5' },
-  'prc': { tpciCode: 'PRC', name: 'XY - Primal Clash', localId: 'xy5' },
-  'xy3': { tpciCode: 'FFI', name: 'XY - Furious Fists', localId: 'xy3' },
-  'ffi': { tpciCode: 'FFI', name: 'XY - Furious Fists', localId: 'xy3' },
-  'xy7': { tpciCode: 'AOR', name: 'XY - Ancient Origins', localId: 'xy7' },
-  'aor': { tpciCode: 'AOR', name: 'XY - Ancient Origins', localId: 'xy7' },
-  'xy8': { tpciCode: 'BKT', name: 'XY - BREAKthrough', localId: 'xy8' },
-  'bkt': { tpciCode: 'BKT', name: 'XY - BREAKthrough', localId: 'xy8' },
-  'xy9': { tpciCode: 'BKP', name: 'XY - BREAKpoint', localId: 'xy9' },
-  'bkp': { tpciCode: 'BKP', name: 'XY - BREAKpoint', localId: 'xy9' },
-  'xy10': { tpciCode: 'FCO', name: 'XY - Fates Collide', localId: 'xy10' },
-  'fco': { tpciCode: 'FCO', name: 'XY - Fates Collide', localId: 'xy10' },
-  'xy11': { tpciCode: 'STS', name: 'XY - Steam Siege', localId: 'xy11' },
-  'sts': { tpciCode: 'STS', name: 'XY - Steam Siege', localId: 'xy11' },
-  'xy1': { tpciCode: 'XY', name: 'XY Base Set', localId: 'xy1' },
-  'xy': { tpciCode: 'XY', name: 'XY Base Set', localId: 'xy1' }
-};
-
-// Reverse map: TPCi official 3-letter code -> pokemontcg.io local set code
-export const SET_TPCI_TO_LOCAL_MAP: Record<string, string> = {
-  'SVI': 'sv1',
-  'PAL': 'sv2',
-  'OBF': 'sv3',
-  'MEW': 'sv3pt5',
-  'PAR': 'sv4',
-  'PAF': 'sv45',
-  'TEF': 'sv5',
-  'TWM': 'sv6',
-  'SFA': 'sv6pt5',
-  'SCR': 'sv7',
-  'SSP': 'sv8',
-  'PRE': 'sv8pt5',
-  'SVE': 'sve',
-  'SVP': 'svp',
-  'ME1': 'me1',
-  'ME2': 'me2',
-  'ASC': 'asc',
-  'PFL': 'pfl',
-  'POR': 'por',
-  'MEG': 'meg',
-  'CRI': 'cri',
-  'PBL': 'pbl',
-  'JTG': 'jtg',
-  'DRI': 'dri',
-  'BLK': 'blk',
-  'WHT': 'wht',
-  'SSH': 'swsh1',
-  'RCL': 'swsh2',
-  'DAA': 'swsh3',
-  'CPA': 'swsh35',
-  'VIV': 'swsh4',
-  'SHF': 'swsh45',
-  'BST': 'swsh5',
-  'CRE': 'swsh6',
-  'EVS': 'swsh7',
-  'FST': 'swsh8',
-  'BRS': 'swsh9',
-  'ASR': 'swsh10',
-  'PGO': 'pgo',
-  'LOR': 'swsh11',
-  'CEL': 'cel',
-  'SIT': 'swsh12',
-  'CRZ': 'swsh12pt5',
-  'EVO': 'xy12',
-  'PHF': 'xy4',
-  'FLF': 'xy2',
-  'ROS': 'xy6',
-  'PRC': 'xy5',
-  'FFI': 'xy3',
-  'AOR': 'xy7',
-  'BKT': 'xy8',
-  'BKP': 'xy9',
-  'FCO': 'xy10',
-  'STS': 'xy11',
-  'XY': 'xy1'
-};
-
-/**
- * Normalizes any set identifier (e.g. 'sv6', 'twm', 'sv3', 'obf') into the official TPCi uppercase 3-letter code.
- */
-export function normalizeTPCiSetCode(setCode: string): string {
-  if (!setCode) return 'SVI';
-  const clean = setCode.toLowerCase().trim().replace(/[^a-z0-9]/g, '');
-  if (SET_LOCAL_TO_TPCI_MAP[clean]) {
-    return SET_LOCAL_TO_TPCI_MAP[clean].tpciCode;
-  }
-  return clean.toUpperCase();
-}
-
-/**
- * Converts a TPCi official set code (e.g. 'TWM', 'OBF') to its local/pokemontcg.io counterpart ('sv6', 'sv3').
- */
-export function mapTPCiToLocalSetId(tpciCode: string): string {
-  if (!tpciCode) return 'sv1';
-  const cleanUpper = tpciCode.toUpperCase().trim();
-  return SET_TPCI_TO_LOCAL_MAP[cleanUpper] || tpciCode.toLowerCase().trim();
 }
 
 /**
@@ -2639,129 +2776,6 @@ export function isSpriteUrl(url?: string): boolean {
     lower.includes('poffin-case') ||
     lower.includes('master-ball')
   );
-}
-
-// Mapping of TPCi and local set codes to TCGdex series and set identifiers
-export const SET_TO_TCGDEX_MAP: Record<string, { series: string; set: string }> = {
-  // Mega Evolution Era (2025+)
-  'ASC': { series: 'me', set: 'me02.5' },
-  'asc': { series: 'me', set: 'me02.5' },
-  'me2.5': { series: 'me', set: 'me02.5' },
-  'me02.5': { series: 'me', set: 'me02.5' },
-  'PFL': { series: 'me', set: 'me02' },
-  'pfl': { series: 'me', set: 'me02' },
-  'me2': { series: 'me', set: 'me02' },
-  'me02': { series: 'me', set: 'me02' },
-  'POR': { series: 'me', set: 'me03' },
-  'por': { series: 'me', set: 'me03' },
-  'me3': { series: 'me', set: 'me03' },
-  'MEG': { series: 'me', set: 'me01' },
-  'meg': { series: 'me', set: 'me01' },
-  'me1': { series: 'me', set: 'me01' },
-  'me01': { series: 'me', set: 'me01' },
-  'CRI': { series: 'me', set: 'me04' },
-  'cri': { series: 'me', set: 'me04' },
-  'PBL': { series: 'me', set: 'me05' },
-  'pbl': { series: 'me', set: 'me05' },
-
-  // Scarlet & Violet 2025
-  'PRE': { series: 'sv', set: 'sv08.5' },
-  'pre': { series: 'sv', set: 'sv08.5' },
-  'sv8pt5': { series: 'sv', set: 'sv08.5' },
-  'sv85': { series: 'sv', set: 'sv08.5' },
-  'JTG': { series: 'sv', set: 'sv09' },
-  'jtg': { series: 'sv', set: 'sv09' },
-  'sv9': { series: 'sv', set: 'sv09' },
-  'DRI': { series: 'sv', set: 'sv09.5' },
-  'dri': { series: 'sv', set: 'sv09.5' },
-  'BLK': { series: 'sv', set: 'sv10' },
-  'blk': { series: 'sv', set: 'sv10' },
-  'WHT': { series: 'sv', set: 'sv10.5' },
-  'wht': { series: 'sv', set: 'sv10.5' },
-
-  // Scarlet & Violet Standard 2023-2024
-  'SSP': { series: 'sv', set: 'sv08' },
-  'ssp': { series: 'sv', set: 'sv08' },
-  'sv8': { series: 'sv', set: 'sv08' },
-  'SCR': { series: 'sv', set: 'sv07' },
-  'scr': { series: 'sv', set: 'sv07' },
-  'sv7': { series: 'sv', set: 'sv07' },
-  'SFA': { series: 'sv', set: 'sv06.5' },
-  'sfa': { series: 'sv', set: 'sv06.5' },
-  'sv6pt5': { series: 'sv', set: 'sv06.5' },
-  'sv65': { series: 'sv', set: 'sv06.5' },
-  'TWM': { series: 'sv', set: 'sv06' },
-  'twm': { series: 'sv', set: 'sv06' },
-  'sv6': { series: 'sv', set: 'sv06' },
-  'TEF': { series: 'sv', set: 'sv05' },
-  'tef': { series: 'sv', set: 'sv05' },
-  'sv5': { series: 'sv', set: 'sv05' },
-  'PAF': { series: 'sv', set: 'sv04.5' },
-  'paf': { series: 'sv', set: 'sv04.5' },
-  'sv45': { series: 'sv', set: 'sv04.5' },
-  'sv4pt5': { series: 'sv', set: 'sv04.5' },
-  'PAR': { series: 'sv', set: 'sv04' },
-  'par': { series: 'sv', set: 'sv04' },
-  'sv4': { series: 'sv', set: 'sv04' },
-  'MEW': { series: 'sv', set: 'sv03.5' },
-  'mew': { series: 'sv', set: 'sv03.5' },
-  'sv3pt5': { series: 'sv', set: 'sv03.5' },
-  'OBF': { series: 'sv', set: 'sv03' },
-  'obf': { series: 'sv', set: 'sv03' },
-  'sv3': { series: 'sv', set: 'sv03' },
-  'PAL': { series: 'sv', set: 'sv02' },
-  'pal': { series: 'sv', set: 'sv02' },
-  'sv2': { series: 'sv', set: 'sv02' },
-  'SVI': { series: 'sv', set: 'sv01' },
-  'svi': { series: 'sv', set: 'sv01' },
-  'sv1': { series: 'sv', set: 'sv01' },
-  'SVE': { series: 'sv', set: 'sve' },
-  'sve': { series: 'sv', set: 'sve' },
-  'SVP': { series: 'sv', set: 'svp' },
-  'svp': { series: 'sv', set: 'svp' },
-
-  // Sword & Shield
-  'CRZ': { series: 'swsh', set: 'swsh12.5' },
-  'crz': { series: 'swsh', set: 'swsh12.5' },
-  'swsh12pt5': { series: 'swsh', set: 'swsh12.5' },
-  'SIT': { series: 'swsh', set: 'swsh12' },
-  'sit': { series: 'swsh', set: 'swsh12' },
-  'LOR': { series: 'swsh', set: 'swsh11' },
-  'lor': { series: 'swsh', set: 'swsh11' },
-  'ASR': { series: 'swsh', set: 'swsh10' },
-  'asr': { series: 'swsh', set: 'swsh10' },
-  'BRS': { series: 'swsh', set: 'swsh09' },
-  'brs': { series: 'swsh', set: 'swsh09' },
-  'FST': { series: 'swsh', set: 'swsh08' },
-  'fst': { series: 'swsh', set: 'swsh08' },
-  'EVS': { series: 'swsh', set: 'swsh07' },
-  'evs': { series: 'swsh', set: 'swsh07' },
-  'CRE': { series: 'swsh', set: 'swsh06' },
-  'cre': { series: 'swsh', set: 'swsh06' },
-  'BST': { series: 'swsh', set: 'swsh05' },
-  'bst': { series: 'swsh', set: 'swsh05' },
-  'SHF': { series: 'swsh', set: 'swsh04.5' },
-  'VIV': { series: 'swsh', set: 'swsh04' },
-  'CPA': { series: 'swsh', set: 'swsh03.5' },
-  'DAA': { series: 'swsh', set: 'swsh03' },
-  'RCL': { series: 'swsh', set: 'swsh02' },
-  'SSH': { series: 'swsh', set: 'swsh01' }
-};
-
-/**
- * Generates an authentic high-resolution webp card scan URL from TCGdex (guaranteed free open database).
- */
-export function getTCGdexImageUrl(setCode: string, setNumber: string | number, lang: 'pt' | 'en' = 'en'): string {
-  if (!setCode || !setNumber) return POKEMON_CARD_BACK;
-  const cleanSet = setCode.trim();
-  const mapping = SET_TO_TCGDEX_MAP[cleanSet] || SET_TO_TCGDEX_MAP[cleanSet.toUpperCase()] || SET_TO_TCGDEX_MAP[cleanSet.toLowerCase()];
-  const numStr = String(setNumber).trim();
-  const cleanNum = numStr.replace(/^0+/, '') || '1';
-
-  if (mapping) {
-    return `https://assets.tcgdex.net/${lang}/${mapping.series}/${mapping.set}/${cleanNum}/high.webp`;
-  }
-  return `https://assets.tcgdex.net/${lang}/sv/${cleanSet.toLowerCase()}/${cleanNum}/high.webp`;
 }
 
 /**

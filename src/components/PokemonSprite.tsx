@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getPokemonSpriteHierarchy, SpriteSources } from '../utils/cardImages';
+import { getPokemonSpriteHierarchy, SpriteSources, POKEMON_CARD_BACK } from '../utils/cardImages';
 
 interface PokemonSpriteProps {
   name: string;
@@ -8,9 +8,9 @@ interface PokemonSpriteProps {
 }
 
 export const getPokemonSpriteUrl = (pokemonName: string): string => {
-  if (!pokemonName) return 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png';
+  if (!pokemonName) return POKEMON_CARD_BACK;
   const hierarchy: SpriteSources = getPokemonSpriteHierarchy(pokemonName);
-  return hierarchy.artwork || hierarchy.primary;
+  return hierarchy.primary || hierarchy.artwork || POKEMON_CARD_BACK;
 };
 
 export default function PokemonSprite({ name, className = '', size = 'md' }: PokemonSpriteProps) {
@@ -25,13 +25,13 @@ export default function PokemonSprite({ name, className = '', size = 'md' }: Pok
   const getSource = (): string => {
     switch (level) {
       case 0:
-        return hierarchy.artwork || hierarchy.primary;
+        return hierarchy.primary || hierarchy.artwork || POKEMON_CARD_BACK;
       case 1:
-        return hierarchy.battleSprite;
+        return hierarchy.artwork || hierarchy.battleSprite || POKEMON_CARD_BACK;
       case 2:
-        return hierarchy.dexSprite;
+        return hierarchy.battleSprite || hierarchy.dexSprite || POKEMON_CARD_BACK;
       default:
-        return hierarchy.fallback;
+        return hierarchy.fallback || POKEMON_CARD_BACK;
     }
   };
 

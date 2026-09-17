@@ -501,7 +501,7 @@ export default function Dashboard({ currentMember, setActiveTab, onStatsHealed }
         {/* Quick Shortcuts (Bento Section, spans full width at the bottom) */}
         <div className="md:col-span-12 bg-gradient-to-br from-slate-900/40 via-purple-950/5 to-indigo-950/5 border border-purple-900/20 rounded-2xl p-6 backdrop-blur-md">
           <h3 className="text-xs font-bold uppercase tracking-wider text-purple-400 mb-4 font-mono">Atalhos da Arena</h3>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3">
             <button 
               id="shortcut-collection"
               onClick={() => setActiveTab('colecao')}
@@ -523,26 +523,16 @@ export default function Dashboard({ currentMember, setActiveTab, onStatsHealed }
             </button>
 
             <button 
-              id="shortcut-trainerlog"
-              onClick={() => setActiveTab('trainerlog')}
-              className="p-4 bg-gradient-to-b from-purple-950/40 to-slate-950/40 border border-purple-500/40 hover:border-purple-400 rounded-xl text-left transition-all cursor-pointer group hover:shadow-lg shadow-purple-900/10"
-            >
-              <div className="text-lg group-hover:scale-110 transition-transform mb-1.5">⚡</div>
-              <div className="text-xs font-extrabold text-white flex items-center justify-between">
-                <span>TrainerLog</span>
-                <span className="text-[9px] bg-purple-500/20 text-purple-300 px-1.5 py-0.5 rounded uppercase font-bold">Novo</span>
-              </div>
-              <div className="text-[10px] text-slate-400 mt-1">Replay interativo de logs PTCGL</div>
-            </button>
-
-            <button 
               id="shortcut-matches"
               onClick={() => setActiveTab('partidas')}
-              className="p-4 bg-slate-950/40 border border-slate-850 hover:border-purple-500/40 rounded-xl text-left transition-all cursor-pointer group hover:shadow-lg"
+              className="p-4 bg-gradient-to-b from-purple-950/40 to-slate-950/40 border border-purple-500/40 hover:border-purple-400 rounded-xl text-left transition-all cursor-pointer group hover:shadow-lg shadow-purple-900/10"
             >
               <div className="text-lg group-hover:scale-110 transition-transform mb-1.5">⚔️</div>
-              <div className="text-xs font-extrabold text-white">Registrar Partida</div>
-              <div className="text-[10px] text-slate-400 mt-1">Insira treinos MD1/MD3 e torneios</div>
+              <div className="text-xs font-extrabold text-white flex items-center justify-between">
+                <span>Partidas & Replay</span>
+                <span className="text-[9px] bg-purple-500/20 text-purple-300 px-1.5 py-0.5 rounded uppercase font-bold">PTCGL</span>
+              </div>
+              <div className="text-[10px] text-slate-400 mt-1">Treinos, torneios e replay de logs PTCGL</div>
             </button>
 
             <button 

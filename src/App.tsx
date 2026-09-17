@@ -9,7 +9,6 @@ import Collection from './components/Collection';
 import Loans from './components/Loans';
 import Matches from './components/Matches';
 import Decks from './components/Decks';
-import TrainerLog from './components/TrainerLog/TrainerLog';
 import TeamMembers from './components/TeamMembers';
 import MyProfile from './components/MyProfile';
 import RoleLock from './components/RoleLock';
@@ -206,7 +205,6 @@ export default function App() {
     { id: 'colecao', label: 'Minha Coleção', icon: Layers, minRank: 2 },
     { id: 'emprestimos', label: 'Empréstimos', icon: ArrowLeftRight, minRank: 3 },
     { id: 'partidas', label: 'Partidas', icon: Swords, minRank: 3 },
-    { id: 'trainerlog', label: 'TrainerLog', icon: FileText, minRank: 1 },
     { id: 'decks', label: 'Meus Decks', icon: Trophy, minRank: 1 },
     { id: 'perfil', label: 'Meu Perfil', icon: User, minRank: 1 },
     { id: 'time', label: 'Time Spirits', icon: Users, minRank: 1 },
@@ -328,13 +326,11 @@ export default function App() {
             
             {activeTab === 'emprestimos' && <Loans currentMember={currentMember} />}
             
-            {activeTab === 'partidas' && (
-              <Matches currentMember={currentMember} setActiveTab={setActiveTab} />
-            )}
-            
-            {activeTab === 'trainerlog' && (
-              <TrainerLog 
+            {(activeTab === 'partidas' || activeTab === 'trainerlog') && (
+              <Matches 
                 currentMember={currentMember} 
+                setActiveTab={setActiveTab} 
+                initialSubTab={activeTab === 'trainerlog' ? 'replay' : 'history'}
                 onSyncMatch={() => loadPortalData(currentUser?.uid)} 
               />
             )}
