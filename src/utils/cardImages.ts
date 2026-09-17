@@ -1,14 +1,9 @@
 // ============================================================================
 // cardImages.ts — Resolver de cartas Pokémon TCG (PTCGL-first)
 //
-// Fonte canônica: TPCi (SVI, OBF, TWM, JTG, MEG, ...) — é o que o log do
-// Pokémon TCG Live traz.
-//
-// Imagens em cascata (via setSync.buildImageHierarchy):
-//   1. TCGdex PT (assets.tcgdex.net)     ← CDN livre, alta resolução
-//   2. TCGdex EN
-//   3. pokemontcg.io (images.pokemontcg.io)
-//   4. Card back
+// FIX: recursão infinita entre resolvePTCGLCard e parsePTCGLLogLine.
+//      Agora resolvePTCGLCard NUNCA chama parsePTCGLLogLine, e
+//      parsePTCGLLogLine usa resolveCardByNameOnly (sem recursão).
 // ============================================================================
 
 import {
@@ -23,7 +18,6 @@ import {
 export const POKEMON_CARD_BACK = 'https://images.pokemontcg.io/card-back.png';
 export const POKEMON_CARD_BACK_FALLBACK = 'https://archives.bulbagarden.net/media/upload/1/17/Cardback.jpg';
 
-// Re-exporta para quem importa daqui
 export { findSet, buildImageHierarchy, tcgdexUrl, ptcgIoUrl } from './setSync';
 
 export interface CardMetadata {
@@ -40,12 +34,9 @@ export interface CardMetadata {
 }
 
 // ============================================================================
-// COMPATIBILIDADE — exports que existiam na versão anterior e que outros
-// arquivos (ex.: cardNormalizationService.ts) ainda importam.
-// Todos derivam do SET_SYNC_TABLE — fonte única de verdade.
+// COMPATIBILIDADE
 // ============================================================================
 
-/** Formato antigo: { [chave]: { tpciCode, name, localId } } */
 export const SET_LOCAL_TO_TPCI_MAP: Record<string, { tpciCode: string; name: string; localId: string }> = (() => {
   const map: Record<string, { tpciCode: string; name: string; localId: string }> = {};
   for (const e of _SET_SYNC_TABLE) {
@@ -57,7 +48,6 @@ export const SET_LOCAL_TO_TPCI_MAP: Record<string, { tpciCode: string; name: str
   return map;
 })();
 
-/** Formato antigo: { [TPCI]: localId } */
 export const SET_TPCI_TO_LOCAL_MAP: Record<string, string> = (() => {
   const map: Record<string, string> = {};
   for (const e of _SET_SYNC_TABLE) {
@@ -66,7 +56,6 @@ export const SET_TPCI_TO_LOCAL_MAP: Record<string, string> = (() => {
   return map;
 })();
 
-/** Formato antigo: { [chave]: { series, set } } — usado para montar URLs TCGdex */
 export const SET_TO_TCGDEX_MAP: Record<string, { series: string; set: string }> = (() => {
   const map: Record<string, { series: string; set: string }> = {};
   for (const e of _SET_SYNC_TABLE) {
@@ -122,11 +111,10 @@ export function getPokemonTcgIoImageUrl(
 }
 
 // ============================================================================
-// CANONICAL CARD DATABASE (setCode sempre TPCi)
+// CANONICAL CARD DATABASE
 // ============================================================================
 
 export const CARD_IMAGE_DATABASE: Record<string, CardMetadata> = {
-  // ---------- POKEMON ----------
   'charizard ex':      { id: 'OBF-125', name: 'Charizard ex', category: 'pokemon', energyType: 'darkness', stage: 'ESTÁGIO 2', hp: 330, imageUrl: '', setCode: 'OBF', setNumber: '125', localSetId: 'sv3' },
   'charmander':        { id: 'OBF-26',  name: 'Charmander',   category: 'pokemon', energyType: 'fire',     stage: 'BÁSICO',    hp: 70,  imageUrl: '', setCode: 'OBF', setNumber: '26',  localSetId: 'sv3' },
   'charmeleon':        { id: 'OBF-27',  name: 'Charmeleon',   category: 'pokemon', energyType: 'fire',     stage: 'ESTÁGIO 1', hp: 90,  imageUrl: '', setCode: 'OBF', setNumber: '27',  localSetId: 'sv3' },
@@ -198,7 +186,6 @@ export const CARD_IMAGE_DATABASE: Record<string, CardMetadata> = {
   'lumineon v':        { id: 'BRS-40',  name: 'Lumineon V',   category: 'pokemon', energyType: 'water',     stage: 'BÁSICO',    hp: 170, imageUrl: '', setCode: 'BRS', setNumber: '40', localSetId: 'swsh9' },
   'crobat v':          { id: 'DAA-104', name: 'Crobat V',     category: 'pokemon', energyType: 'darkness',  stage: 'BÁSICO',    hp: 180, imageUrl: '', setCode: 'DAA', setNumber: '104', localSetId: 'swsh3' },
 
-  // --- XY Mega Evolutions ---
   'mega lucario ex':       { id: 'FFI-55',  name: 'Mega Lucario ex',      category: 'pokemon', energyType: 'fighting', stage: 'EX', hp: 220, imageUrl: '', setCode: 'FFI', setNumber: '55',  localSetId: 'xy3' },
   'mega lucario ex (ilustracao especial rara)': { id: 'FFI-113', name: 'Mega Lucario ex (Ilustração Especial Rara)', category: 'pokemon', energyType: 'fighting', stage: 'EX', hp: 220, imageUrl: '', setCode: 'FFI', setNumber: '113', localSetId: 'xy3' },
   'mega gardevoir ex':     { id: 'STS-112', name: 'Mega Gardevoir ex',    category: 'pokemon', energyType: 'psychic',  stage: 'EX', hp: 210, imageUrl: '', setCode: 'STS', setNumber: '112', localSetId: 'xy11' },
@@ -222,7 +209,6 @@ export const CARD_IMAGE_DATABASE: Record<string, CardMetadata> = {
   'xerneas ex':            { id: 'XY-96',   name: 'Xerneas ex',           category: 'pokemon', energyType: 'psychic',  stage: 'EX', hp: 170, imageUrl: '', setCode: 'XY',  setNumber: '96',  localSetId: 'xy1' },
   'yveltal ex':            { id: 'XY-78',   name: 'Yveltal ex',           category: 'pokemon', energyType: 'darkness', stage: 'EX', hp: 170, imageUrl: '', setCode: 'XY',  setNumber: '78',  localSetId: 'xy1' },
 
-  // ---------- TRAINERS ----------
   'buddy-buddy poffin':      { id: 'TEF-144', name: 'Buddy-Buddy Poffin', category: 'item',      stage: 'TREINADOR', imageUrl: '', setCode: 'TEF', setNumber: '144', localSetId: 'sv5' },
   'poffin de companheiro':   { id: 'TEF-144', name: 'Buddy-Buddy Poffin', category: 'item',      stage: 'TREINADOR', imageUrl: '', setCode: 'TEF', setNumber: '144', localSetId: 'sv5' },
   'pedaco de poffin de companheiro': { id: 'TEF-144', name: 'Buddy-Buddy Poffin', category: 'item', stage: 'TREINADOR', imageUrl: '', setCode: 'TEF', setNumber: '144', localSetId: 'sv5' },
@@ -261,7 +247,6 @@ export const CARD_IMAGE_DATABASE: Record<string, CardMetadata> = {
   'path to the peak':        { id: 'CRE-148', name: 'Path to the Peak', category: 'stadium', stage: 'TREINADOR', imageUrl: '', setCode: 'CRE', setNumber: '148', localSetId: 'swsh6' },
   'lost city':               { id: 'LOR-161', name: 'Lost City', category: 'stadium', stage: 'TREINADOR', imageUrl: '', setCode: 'LOR', setNumber: '161', localSetId: 'swsh11' },
 
-  // ---------- ENERGIES ----------
   'basic fire energy':      { id: 'SVE-2', name: 'Basic Fire Energy',      category: 'energy', energyType: 'fire',      stage: 'ENERGIA', imageUrl: '', setCode: 'SVE', setNumber: '2', localSetId: 'sve' },
   'energia de fogo basica': { id: 'SVE-2', name: 'Basic Fire Energy',      category: 'energy', energyType: 'fire',      stage: 'ENERGIA', imageUrl: '', setCode: 'SVE', setNumber: '2', localSetId: 'sve' },
   'energia de fogo':        { id: 'SVE-2', name: 'Basic Fire Energy',      category: 'energy', energyType: 'fire',      stage: 'ENERGIA', imageUrl: '', setCode: 'SVE', setNumber: '2', localSetId: 'sve' },
@@ -282,7 +267,6 @@ export const CARD_IMAGE_DATABASE: Record<string, CardMetadata> = {
   'double turbo energy':    { id: 'BRS-151', name: 'Double Turbo Energy',  category: 'energy', energyType: 'colorless', stage: 'ENERGIA', imageUrl: '', setCode: 'BRS', setNumber: '151', localSetId: 'swsh9' },
 };
 
-// Popula imageUrl de todas as cartas via TCGdex
 Object.values(CARD_IMAGE_DATABASE).forEach(card => {
   if (card.setCode && card.setNumber) {
     const url = tcgdexUrl(card.setCode, card.setNumber, 'en') || ptcgIoUrl(card.setCode, card.setNumber);
@@ -455,7 +439,7 @@ export function convertLocalIdToPTCGL(
     };
   }
 
-  const resolved = resolvePTCGLCard(rawStr);
+  const resolved = resolveCardByNameOnly(rawStr);
   const tpciSetCode = normalizeTPCiSetCode(resolved.setCode || 'SVI');
   const localSetId = resolved.localSetId || mapTPCiToLocalSetId(tpciSetCode);
   const setNumber = resolved.setNumber || '1';
@@ -473,88 +457,10 @@ export function formatPTCGLCardCode(cardOrName: CardMetadata | string): Formatte
 }
 
 // ============================================================================
-// PTCGL LOG LINE PARSER
+// NAME-ONLY RESOLVER (sem parse de log — quebra o ciclo de recursão)
 // ============================================================================
 
-export function parsePTCGLLogLine(line: string): FormattedPTCGLCard | null {
-  if (!line) return null;
-  let text = line.trim();
-
-  text = text.replace(
-    /^(?:o\s+)?(?:jogador\s+\S+\s+)?(?:jogou|colocou|comprou|ligou|anexou|evoluiu|descarte|procurou|embaralhou|usou|jogador|jogadora|player)\s+/i,
-    ''
-  );
-  text = text.replace(
-    /^(?:played|put|attached|drew|evolved|discarded|searched|shuffled|used)\s+/i,
-    ''
-  );
-  text = text.replace(
-    /\s+(?:no campo ativo|no banco|para o campo ativo|para o banco|to the active spot|to the bench|in the active spot|to the bench).*$/i,
-    ''
-  );
-  text = text.replace(/\s+(?:a|ao|à|para)\s+[A-Za-zÀ-ÿ0-9 .'-]{2,}$/i, '');
-  text = text.replace(/\s+(?:de|do|da|of)\s+[A-Za-zÀ-ÿ0-9 .'-]{2,}$/i, '');
-  text = text.trim();
-
-  const compound = text.match(/^(?:(.+?)\s+)?([A-Za-z]{2,5})[-\s#]+(\d{1,4})$/);
-  if (compound) {
-    const maybeSet = compound[2];
-    if (isKnownTPCiCode(maybeSet)) {
-      const tpciSetCode = normalizeTPCiSetCode(maybeSet);
-      const setNumber = compound[3];
-      const detectedName = compound[1]?.trim();
-      const mapped = PTCGL_CARD_ID_MAP[`${tpciSetCode.toLowerCase()} ${setNumber}`]
-        || PTCGL_CARD_ID_MAP[`${maybeSet.toLowerCase()} ${setNumber}`];
-      const displayName = detectedName || mapped?.name || 'Pokémon';
-      const canonicalCode = `${tpciSetCode} ${setNumber}`;
-      return {
-        canonicalCode, setCode: tpciSetCode, tpciSetCode, setNumber,
-        displayName, ptcglIdentifier: `${displayName} ${canonicalCode}`,
-        localSetId: mapped?.localSetId || mapTPCiToLocalSetId(tpciSetCode),
-        rawLocalId: line
-      };
-    }
-  }
-
-  const hyphen = text.match(/([a-z0-9.]+)[-_](\d{1,4})$/i);
-  if (hyphen) {
-    const rawSet = hyphen[1];
-    const rawNum = hyphen[2];
-    const entry = findSet(rawSet);
-    if (entry) {
-      const tpciSetCode = entry.tpci;
-      const mapped = PTCGL_CARD_ID_MAP[`${rawSet.toLowerCase()}-${rawNum}`]
-        || PTCGL_CARD_ID_MAP[`${tpciSetCode.toLowerCase()} ${rawNum}`];
-      const displayName = mapped?.name || 'Pokémon';
-      const canonicalCode = `${tpciSetCode} ${rawNum}`;
-      return {
-        canonicalCode, setCode: tpciSetCode, tpciSetCode, setNumber: rawNum,
-        displayName, ptcglIdentifier: `${displayName} ${canonicalCode}`,
-        localSetId: mapped?.localSetId || mapTPCiToLocalSetId(tpciSetCode),
-        rawLocalId: line
-      };
-    }
-  }
-
-  const resolved = resolvePTCGLCard(text);
-  if (resolved.setCode && resolved.setNumber) {
-    const tpci = normalizeTPCiSetCode(resolved.setCode);
-    const canonicalCode = `${tpci} ${resolved.setNumber}`;
-    return {
-      canonicalCode, setCode: tpci, tpciSetCode: tpci, setNumber: resolved.setNumber,
-      displayName: resolved.name, ptcglIdentifier: `${resolved.name} ${canonicalCode}`,
-      localSetId: resolved.localSetId || mapTPCiToLocalSetId(tpci),
-      rawLocalId: line
-    };
-  }
-  return null;
-}
-
-// ============================================================================
-// MAIN RESOLVER (PTCGL-first)
-// ============================================================================
-
-export function resolvePTCGLCard(name: string): CardMetadata {
+export function resolveCardByNameOnly(name: string): CardMetadata {
   if (!name) {
     return {
       id: 'SVI-1', name: 'Pokémon', category: 'pokemon',
@@ -563,18 +469,13 @@ export function resolvePTCGLCard(name: string): CardMetadata {
     };
   }
 
+  // Registry primeiro
   const cleanId = name.toLowerCase().trim().replace(/[^a-z0-9.-]/g, '');
   if (PTCGL_CARD_ID_MAP[cleanId]) return PTCGL_CARD_ID_MAP[cleanId];
   const cleanSpaced = name.toLowerCase().trim();
   if (PTCGL_CARD_ID_MAP[cleanSpaced]) return PTCGL_CARD_ID_MAP[cleanSpaced];
 
-  const parsed = parsePTCGLLogLine(name);
-  if (parsed) {
-    const key = `${parsed.tpciSetCode.toLowerCase()} ${parsed.setNumber}`;
-    const direct = PTCGL_CARD_ID_MAP[key] || PTCGL_CARD_ID_MAP[parsed.canonicalCode.toLowerCase()];
-    if (direct) return direct;
-  }
-
+  // Compound "Nome OBF 125"
   const compound = name.match(/^(.+?)\s+(?:\[|\()?([a-z0-9.]+)[-# ]+(\d+)(?:\]|\))?$/i);
   if (compound && isKnownTPCiCode(compound[2])) {
     const rawSet = compound[2].toLowerCase();
@@ -589,6 +490,7 @@ export function resolvePTCGLCard(name: string): CardMetadata {
   const norm = normalizeCardName(name);
   if (CARD_IMAGE_DATABASE[norm]) return CARD_IMAGE_DATABASE[norm];
 
+  // Fuzzy archetype
   if (norm.includes('pidgeotto')) return CARD_IMAGE_DATABASE['pidgeotto'];
   if (norm.includes('pidgeot')) return CARD_IMAGE_DATABASE['pidgeot ex'];
   if (norm.includes('pidgey')) return CARD_IMAGE_DATABASE['pidgey'];
@@ -655,6 +557,143 @@ export function resolvePTCGLCard(name: string): CardMetadata {
   };
 }
 
+// ============================================================================
+// PTCGL LOG LINE PARSER — não chama mais resolvePTCGLCard
+// ============================================================================
+
+export function parsePTCGLLogLine(line: string): FormattedPTCGLCard | null {
+  if (!line) return null;
+  let text = line.trim();
+
+  text = text.replace(
+    /^(?:o\s+)?(?:jogador\s+\S+\s+)?(?:jogou|colocou|comprou|ligou|anexou|evoluiu|descarte|procurou|embaralhou|usou|jogador|jogadora|player)\s+/i,
+    ''
+  );
+  text = text.replace(
+    /^(?:played|put|attached|drew|evolved|discarded|searched|shuffled|used)\s+/i,
+    ''
+  );
+  text = text.replace(
+    /\s+(?:no campo ativo|no banco|para o campo ativo|para o banco|to the active spot|to the bench|in the active spot|to the bench).*$/i,
+    ''
+  );
+  text = text.replace(/\s+(?:a|ao|à|para)\s+[A-Za-zÀ-ÿ0-9 .'-]{2,}$/i, '');
+  text = text.replace(/\s+(?:de|do|da|of)\s+[A-Za-zÀ-ÿ0-9 .'-]{2,}$/i, '');
+  text = text.trim();
+
+  const compound = text.match(/^(?:(.+?)\s+)?([A-Za-z]{2,5})[-\s#]+(\d{1,4})$/);
+  if (compound) {
+    const maybeSet = compound[2];
+    if (isKnownTPCiCode(maybeSet)) {
+      const tpciSetCode = normalizeTPCiSetCode(maybeSet);
+      const setNumber = compound[3];
+      const detectedName = compound[1]?.trim();
+      const mapped = PTCGL_CARD_ID_MAP[`${tpciSetCode.toLowerCase()} ${setNumber}`]
+        || PTCGL_CARD_ID_MAP[`${maybeSet.toLowerCase()} ${setNumber}`];
+      const displayName = detectedName || mapped?.name || 'Pokémon';
+      const canonicalCode = `${tpciSetCode} ${setNumber}`;
+      return {
+        canonicalCode, setCode: tpciSetCode, tpciSetCode, setNumber,
+        displayName, ptcglIdentifier: `${displayName} ${canonicalCode}`,
+        localSetId: mapped?.localSetId || mapTPCiToLocalSetId(tpciSetCode),
+        rawLocalId: line
+      };
+    }
+  }
+
+  const hyphen = text.match(/([a-z0-9.]+)[-_](\d{1,4})$/i);
+  if (hyphen) {
+    const rawSet = hyphen[1];
+    const rawNum = hyphen[2];
+    const entry = findSet(rawSet);
+    if (entry) {
+      const tpciSetCode = entry.tpci;
+      const mapped = PTCGL_CARD_ID_MAP[`${rawSet.toLowerCase()}-${rawNum}`]
+        || PTCGL_CARD_ID_MAP[`${tpciSetCode.toLowerCase()} ${rawNum}`];
+      const displayName = mapped?.name || 'Pokémon';
+      const canonicalCode = `${tpciSetCode} ${rawNum}`;
+      return {
+        canonicalCode, setCode: tpciSetCode, tpciSetCode, setNumber: rawNum,
+        displayName, ptcglIdentifier: `${displayName} ${canonicalCode}`,
+        localSetId: mapped?.localSetId || mapTPCiToLocalSetId(tpciSetCode),
+        rawLocalId: line
+      };
+    }
+  }
+
+  // Fallback: usa resolveCardByNameOnly (NÃO chama resolvePTCGLCard → sem recursão)
+  const resolved = resolveCardByNameOnly(text);
+  if (resolved.setCode && resolved.setNumber && resolved.id !== 'SVI-1') {
+    const tpci = normalizeTPCiSetCode(resolved.setCode);
+    const canonicalCode = `${tpci} ${resolved.setNumber}`;
+    return {
+      canonicalCode, setCode: tpci, tpciSetCode: tpci, setNumber: resolved.setNumber,
+      displayName: resolved.name, ptcglIdentifier: `${resolved.name} ${canonicalCode}`,
+      localSetId: resolved.localSetId || mapTPCiToLocalSetId(tpci),
+      rawLocalId: line
+    };
+  }
+  return null;
+}
+
+// ============================================================================
+// MAIN RESOLVER — não chama mais parsePTCGLLogLine (quebra o ciclo)
+// ============================================================================
+
+export function resolvePTCGLCard(name: string): CardMetadata {
+  if (!name) {
+    return {
+      id: 'SVI-1', name: 'Pokémon', category: 'pokemon',
+      stage: 'BÁSICO', hp: 70, imageUrl: POKEMON_CARD_BACK,
+      setCode: 'SVI', setNumber: '1', localSetId: 'sv1'
+    };
+  }
+
+  // 1) Registry — caminho rápido
+  const cleanId = name.toLowerCase().trim().replace(/[^a-z0-9.-]/g, '');
+  if (PTCGL_CARD_ID_MAP[cleanId]) return PTCGL_CARD_ID_MAP[cleanId];
+  const cleanSpaced = name.toLowerCase().trim();
+  if (PTCGL_CARD_ID_MAP[cleanSpaced]) return PTCGL_CARD_ID_MAP[cleanSpaced];
+
+  // 2) Tentativa estrutural: "Nome TWM 130" / "TWM 130"
+  //    (regex inline — SEM chamar parsePTCGLLogLine)
+  const structMatch = name.match(/^(?:(.+?)\s+)?([A-Za-z]{2,5})[-\s#]+(\d{1,4})$/);
+  if (structMatch && isKnownTPCiCode(structMatch[2])) {
+    const tpciSetCode = normalizeTPCiSetCode(structMatch[2]);
+    const setNumber = structMatch[3];
+    const key = `${tpciSetCode.toLowerCase()} ${setNumber}`;
+    const direct = PTCGL_CARD_ID_MAP[key]
+      || PTCGL_CARD_ID_MAP[`${structMatch[2].toLowerCase()} ${setNumber}`];
+    if (direct) return direct;
+  }
+
+  // 3) Compound "Pidgeot ex OBF 164" / "sv6-130"
+  const compound = name.match(/^(.+?)\s+(?:\[|\()?([a-z0-9.]+)[-# ]+(\d+)(?:\]|\))?$/i);
+  if (compound && isKnownTPCiCode(compound[2])) {
+    const rawSet = compound[2].toLowerCase();
+    const num = compound[3];
+    const tpci = normalizeTPCiSetCode(compound[2]);
+    if (PTCGL_CARD_ID_MAP[`${rawSet}-${num}`]) return PTCGL_CARD_ID_MAP[`${rawSet}-${num}`];
+    if (PTCGL_CARD_ID_MAP[`${tpci.toLowerCase()} ${num}`]) return PTCGL_CARD_ID_MAP[`${tpci.toLowerCase()} ${num}`];
+  }
+
+  const hyphen = name.match(/^([a-z0-9.]+)[-_](\d+)$/i);
+  if (hyphen) {
+    const rawSet = hyphen[1].toLowerCase();
+    const num = hyphen[2];
+    const entry = findSet(rawSet);
+    if (entry) {
+      const tpci = entry.tpci;
+      const direct = PTCGL_CARD_ID_MAP[`${rawSet}-${num}`]
+        || PTCGL_CARD_ID_MAP[`${tpci.toLowerCase()} ${num}`];
+      if (direct) return direct;
+    }
+  }
+
+  // 4) Lookup fuzzy — DELEGA pra resolveCardByNameOnly (sem recursão)
+  return resolveCardByNameOnly(name);
+}
+
 export const resolveCard = resolvePTCGLCard;
 
 // ============================================================================
@@ -715,7 +754,7 @@ export function getAuthenticCardImageUrl(cardOrName: any): string {
     const norm = normalizeCardName(cardOrName.name);
     const db = CARD_IMAGE_DATABASE[norm];
     if (db?.imageUrl && !isSpriteUrl(db.imageUrl)) return db.imageUrl;
-    const resolved = resolvePTCGLCard(cardOrName.name);
+    const resolved = resolveCardByNameOnly(cardOrName.name);
     if (resolved?.imageUrl && !isSpriteUrl(resolved.imageUrl)) return resolved.imageUrl;
   }
   return POKEMON_CARD_BACK;
