@@ -21,27 +21,40 @@ export const KNOWN_ARCHETYPES: ArchetypeDefinition[] = [
   { name: 'Terapagos ex', keywords: ['terapagos ex', 'noctowl', 'hoothoot', 'bouffalant', 'fan rotom', 'area zero'], sprites: ['terapagos', 'noctowl'] },
   { name: 'Iron Thorns ex', keywords: ['iron thorns ex', 'espinho ferroso ex', 'crushing hammer'], sprites: ['iron-thorns', 'substitute'] },
   { name: 'Gholdengo ex', keywords: ['gholdengo ex', 'gimmighoul', 'scizor', 'scyther'], sprites: ['gholdengo', 'scizor'] },
-  { name: 'Ancient Box', keywords: ['flutter mane', 'koraidon', 'ancient booster', 'cápsula de energia do passado'], sprites: ['flutter-mane', 'koraidon'] },
+  { name: 'Ancient Box', keywords: ['flutter mane', 'koraidon', 'ancient booster'], sprites: ['flutter-mane', 'koraidon'] },
   { name: 'Lost Zone Box', keywords: ['comfey', 'sableye', 'cramorant', 'colress', 'mirage gate'], sprites: ['comfey', 'sableye'] },
-  { name: 'Origin Forme Palkia VSTAR', keywords: ['palkia vstar', 'palkia v', 'origin forme palkia', 'forma origem'], sprites: ['palkia-origin', 'greninja'] },
-  { name: 'Snorlax Stall', keywords: ['snorlax', 'rotom v', 'penny', 'miss fortune sisters'], sprites: ['snorlax', 'rotom'] }
+  { name: 'Origin Forme Palkia VSTAR', keywords: ['palkia vstar', 'palkia v', 'origin forme palkia'], sprites: ['palkia-origin', 'greninja'] },
+  { name: 'Snorlax Stall', keywords: ['snorlax', 'rotom v', 'penny', 'miss fortune sisters'], sprites: ['snorlax', 'rotom'] },
+  { name: 'Mega Lopunny ex', keywords: ['mega lopunny ex', 'mega lopunny'], sprites: ['lopunny', 'buneary'] },
 ];
+
+/**
+ * Verifica se uma keyword aparece no texto como PALAVRA INTEIRA (word boundary).
+ * Isso impede que "rotom v" case com "rotom ventilador".
+ */
+function matchesArchetypeKeyword(text: string, keyword: string): boolean {
+  const escaped = keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const re = new RegExp(`\\b${escaped}\\b`, 'i');
+  return re.test(text);
+}
 
 export function detectArchetypeFromCards(cardNames: string[]): { name: string; sprites: [string, string] } {
   const normalizedText = cardNames.join(' ').toLowerCase();
   for (const arch of KNOWN_ARCHETYPES) {
-    if (arch.keywords.some(kw => normalizedText.includes(kw))) {
+    if (arch.keywords.some(kw => matchesArchetypeKeyword(normalizedText, kw))) {
       return { name: arch.name, sprites: arch.sprites };
     }
   }
-  if (normalizedText.includes('charizard')) return { name: 'Charizard ex', sprites: ['charizard', 'pidgeot'] };
-  if (normalizedText.includes('dragapult')) return { name: 'Dragapult ex', sprites: ['dragapult', 'pidgeot'] };
-  if (normalizedText.includes('gardevoir')) return { name: 'Gardevoir ex', sprites: ['gardevoir', 'scream-tail'] };
-  if (normalizedText.includes('lugia')) return { name: 'Lugia VSTAR', sprites: ['lugia', 'archeops'] };
-  if (normalizedText.includes('bolt')) return { name: 'Raging Bolt ex', sprites: ['raging-bolt', 'ogerpon'] };
-  if (normalizedText.includes('miraidon')) return { name: 'Miraidon ex', sprites: ['miraidon', 'iron-hands'] };
-  if (normalizedText.includes('moon')) return { name: 'Roaring Moon', sprites: ['roaring-moon', 'darkrai'] };
-  if (normalizedText.includes('terapagos')) return { name: 'Terapagos ex', sprites: ['terapagos', 'noctowl'] };
+  if (matchesArchetypeKeyword(normalizedText, 'charizard')) return { name: 'Charizard ex', sprites: ['charizard', 'pidgeot'] };
+  if (matchesArchetypeKeyword(normalizedText, 'dragapult')) return { name: 'Dragapult ex', sprites: ['dragapult', 'pidgeot'] };
+  if (matchesArchetypeKeyword(normalizedText, 'gardevoir')) return { name: 'Gardevoir ex', sprites: ['gardevoir', 'scream-tail'] };
+  if (matchesArchetypeKeyword(normalizedText, 'lugia')) return { name: 'Lugia VSTAR', sprites: ['lugia', 'archeops'] };
+  if (matchesArchetypeKeyword(normalizedText, 'bolt')) return { name: 'Raging Bolt ex', sprites: ['raging-bolt', 'ogerpon'] };
+  if (matchesArchetypeKeyword(normalizedText, 'miraidon')) return { name: 'Miraidon ex', sprites: ['miraidon', 'iron-hands'] };
+  if (matchesArchetypeKeyword(normalizedText, 'moon')) return { name: 'Roaring Moon', sprites: ['roaring-moon', 'darkrai'] };
+  if (matchesArchetypeKeyword(normalizedText, 'terapagos')) return { name: 'Terapagos ex', sprites: ['terapagos', 'noctowl'] };
+  if (matchesArchetypeKeyword(normalizedText, 'lopunny')) return { name: 'Mega Lopunny ex', sprites: ['lopunny', 'buneary'] };
+
   const firstMon = cardNames.find(c => !c.toLowerCase().includes('ball') && !c.toLowerCase().includes('energy') && !c.toLowerCase().includes('research') && !c.toLowerCase().includes('iono'));
   if (firstMon) {
     const cleanMon = firstMon.split(' ')[0].toLowerCase().replace(/[^a-z0-9]/g, '');
@@ -337,9 +350,7 @@ export function parsePTCGLLog(rawLog: string, loggedInUserName?: string): Traine
       const actorName = actor === 'player1' ? p1Name : p2Name;
       const side = getSide(actor);
 
-      // ----------------------------------------------------------------
-      // NOVO: DANO PREVENIDO ("O dano em X foi prevenido")
-      // ----------------------------------------------------------------
+      // DANO PREVENIDO
       const damagePreventedMatch = line.match(/^o\s+dano\s+(?:em|de|no|na)\s+(.+?)\s+(?:foi|foram)\s+prevenid[ao]s?/i);
       if (damagePreventedMatch) {
         const protectedCard = damagePreventedMatch[1].trim();
@@ -351,9 +362,7 @@ export function parsePTCGLLog(rawLog: string, loggedInUserName?: string): Traine
         continue;
       }
 
-      // ----------------------------------------------------------------
-      // NOVO: ATIVAÇÃO PASSIVA ("X foi ativada" / "X foi ativado")
-      // ----------------------------------------------------------------
+      // ATIVAÇÃO PASSIVA
       const passiveActivationMatch = line.match(/^(.+?)\s+foi\s+ativad[ao](?:\s|\.|$|!)/i);
       if (passiveActivationMatch) {
         const activatedCard = passiveActivationMatch[1].trim();
@@ -365,9 +374,7 @@ export function parsePTCGLLog(rawLog: string, loggedInUserName?: string): Traine
         continue;
       }
 
-      // ----------------------------------------------------------------
-      // BULLET DE LISTA
-      // ----------------------------------------------------------------
+      // BULLET
       if (isBullet && lastMainAction === 'benchDraw' && !ACTION_VERB_RE.test(line)) {
         const parts = line.split(/,\s*/);
         for (const p of parts) {
@@ -383,9 +390,7 @@ export function parsePTCGLLog(rawLog: string, loggedInUserName?: string): Traine
         continue;
       }
 
-      // ----------------------------------------------------------------
-      // DESCARTA DE ENERGIA
-      // ----------------------------------------------------------------
+      // DESCARTA
       const discardedFromMatch = line.match(/^(.+?)\s+foi\s+descartad[ao]\s+de\s+(.+?)(?:\s+de\s+(.+))?\.?$/i);
       if (discardedFromMatch && lower.includes('descartad')) {
         const energyName = discardedFromMatch[1].trim();
@@ -422,9 +427,7 @@ export function parsePTCGLLog(rawLog: string, loggedInUserName?: string): Traine
         continue;
       }
 
-      // ----------------------------------------------------------------
       // DRAW
-      // ----------------------------------------------------------------
       if (lower.includes('drew') || lower.includes('comprou')) {
         if ((lower.includes('jogou') || lower.includes('played')) && (lower.includes('banco') || lower.includes('bench'))) {
           lastMainAction = 'benchDraw';
@@ -435,9 +438,7 @@ export function parsePTCGLLog(rawLog: string, loggedInUserName?: string): Traine
         continue;
       }
 
-      // ----------------------------------------------------------------
       // PRÊMIO
-      // ----------------------------------------------------------------
       if (lower.includes('prize card') || lower.includes('carta de prêmio') || lower.includes('cartas de prêmio') ||
           lower.includes('pegou um prêmio') || lower.includes('took a prize') || lower.includes('todas as cartas de prêmio')) {
         let count = 1;
@@ -459,9 +460,7 @@ export function parsePTCGLLog(rawLog: string, loggedInUserName?: string): Traine
         continue;
       }
 
-      // ----------------------------------------------------------------
       // NOCAUTE
-      // ----------------------------------------------------------------
       if (lower.includes('knocked out') || lower.includes('nocauteado')) {
         let victimActor: 'player1' | 'player2' = actor === 'player1' ? 'player2' : 'player1';
         const victimP2 = new RegExp(`de\\s+${escapeReg(p2Name)}\\b`, 'i').test(line);
@@ -487,9 +486,7 @@ export function parsePTCGLLog(rawLog: string, loggedInUserName?: string): Traine
         continue;
       }
 
-      // ----------------------------------------------------------------
       // ATAQUE
-      // ----------------------------------------------------------------
       if (lower.includes('usou') || (lower.includes('used') && (lower.includes('damage') || lower.includes('dealt')))) {
         let dmg = 0;
         const baseMatch = line.match(/dano\s+base[:\s]+(\d+)/i);
@@ -514,9 +511,7 @@ export function parsePTCGLLog(rawLog: string, loggedInUserName?: string): Traine
         continue;
       }
 
-      // ----------------------------------------------------------------
       // EVOLUÇÃO
-      // ----------------------------------------------------------------
       if (lower.includes('evoluiu') || lower.includes('evolved') || lower.includes('evolveu')) {
         const evoPt = line.match(/evoluiu\s+(?:o\s+)?(.+?)\s+para\s+([^.\n!]+?)(?:\s+no\s+(Campo Ativo|Banco)|\.|\!|$)/i);
         const evoEn = line.match(/evolv(?:ed|e)\s+(?:Active\s+)?(.+?)\s+(?:in)?to\s+([^.\n!]+?)(?:\s+(?:in the Active Spot|on the Bench|onto the Bench)|\.|\!|$)/i);
@@ -583,9 +578,7 @@ export function parsePTCGLLog(rawLog: string, loggedInUserName?: string): Traine
         continue;
       }
 
-      // ----------------------------------------------------------------
       // PROMOÇÃO EXPLÍCITA
-      // ----------------------------------------------------------------
       if (lower.includes('promoveu') || lower.includes('promoted')) {
         let promotedCard = extractCardName(line);
         const promoPt = line.match(/promoveu\s+(.+?)\s+para\s+o\s+campo\s+ativo/i);
@@ -606,9 +599,7 @@ export function parsePTCGLLog(rawLog: string, loggedInUserName?: string): Traine
         continue;
       }
 
-      // ----------------------------------------------------------------
       // "agora está no Campo Ativo"
-      // ----------------------------------------------------------------
       const nowActiveMatch = line.match(/^([^.\n]+?)\s+de\s+[^.\n]+?\s+agora\s+está\s+no\s+Campo\s+Ativo/i);
       if (nowActiveMatch) {
         const promotedCard = nowActiveMatch[1].trim();
@@ -633,9 +624,7 @@ export function parsePTCGLLog(rawLog: string, loggedInUserName?: string): Traine
         continue;
       }
 
-      // ----------------------------------------------------------------
       // ENERGIA
-      // ----------------------------------------------------------------
       if (lower.includes('ligou') || lower.includes('attached') || lower.includes('anexou')) {
         const energyCard = extractCardName(line);
         const targetPt = line.match(/\s+(?:a|ao)\s+(.+?)\s+(?:no\s+Campo\s+Ativo|no\s+Banco|do\s+baralho)/i);
@@ -661,9 +650,7 @@ export function parsePTCGLLog(rawLog: string, loggedInUserName?: string): Traine
         continue;
       }
 
-      // ----------------------------------------------------------------
       // HABILIDADE
-      // ----------------------------------------------------------------
       if (lower.includes('habilidade') || lower.includes('ability') || lower.includes('ativou') || lower.includes('activated')) {
         actions.push({
           id: actionId, type: 'ability', player: actor, playerName: actorName,
@@ -673,9 +660,7 @@ export function parsePTCGLLog(rawLog: string, loggedInUserName?: string): Traine
         continue;
       }
 
-      // ----------------------------------------------------------------
       // RECUO
-      // ----------------------------------------------------------------
       if (lower.includes('recuou') || lower.includes('retreated')) {
         const retreatPt = line.match(/recuou\s+(.+?)\s+para\s+o\s+Banco/i);
         const retreatEn = line.match(/retreated\s+(.+?)\s+(?:to|onto)\s+the\s+Bench/i);
@@ -692,9 +677,7 @@ export function parsePTCGLLog(rawLog: string, loggedInUserName?: string): Traine
         continue;
       }
 
-      // ----------------------------------------------------------------
       // ESTÁDIO
-      // ----------------------------------------------------------------
       if (lower.includes('estádio') || lower.includes('stadium')) {
         stadiumInPlay = extractCardName(line);
         actions.push({ id: actionId, type: 'stadium', player: actor, playerName: actorName, cardName: stadiumInPlay, description: line });
@@ -702,9 +685,7 @@ export function parsePTCGLLog(rawLog: string, loggedInUserName?: string): Traine
         continue;
       }
 
-      // ----------------------------------------------------------------
       // PLAY NORMAL
-      // ----------------------------------------------------------------
       if (lower.includes('jogou') || lower.includes('played') || lower.includes('colocou') || lower.includes('put')) {
         const placedCard = extractCardName(line);
         if (actor === 'player1') p1Cards.push(placedCard); else p2Cards.push(placedCard);
@@ -733,16 +714,12 @@ export function parsePTCGLLog(rawLog: string, loggedInUserName?: string): Traine
         continue;
       }
 
-      // ----------------------------------------------------------------
       // FALLBACK
-      // ----------------------------------------------------------------
       actions.push({ id: actionId, type: 'other', player: actor, playerName: actorName, description: line });
       lastMainAction = 'other';
     }
 
-    // ------------------------------------------------------------------
     // FIM DE JOGO
-    // ------------------------------------------------------------------
     for (const line of block.rawLines) {
       const lower = line.toLowerCase();
 
@@ -818,9 +795,7 @@ export function parsePTCGLLog(rawLog: string, loggedInUserName?: string): Traine
     });
   }
 
-  // ------------------------------------------------------------------
-  // 6) CONCLUSÃO
-  // ------------------------------------------------------------------
+  // CONCLUSÃO
   if (!isGameOver) {
     if (p1PrizesTaken >= 6 || p2PrizesRemaining <= 0) {
       matchResult = 'win'; gameOverWinner = 'player1';
@@ -854,10 +829,7 @@ export function parsePTCGLLog(rawLog: string, loggedInUserName?: string): Traine
   };
 }
 
-// ============================================================================
-// SAMPLE LOGS
-// ============================================================================
-
+// SAMPLE LOGS (não mudou — mantém igual)
 export const SAMPLE_PT_LOG = `Preparação
 Felipe Wilks jogou 1 moeda(s), com resultado de 1 cara(s) e 0 coroa(s).
 Felipe Wilks comprou 7 cartas para a mão inicial.
