@@ -4,6 +4,12 @@
 // Regulation Marks (Standard 2026):
 //   D, E, F  → ROTACIONADAS
 //   G, H, I  → VÁLIDAS
+//
+// CASCATA DE IMAGEM (v3 — ORB-safe):
+//   1. pokemontcg.io     (CDN estável, sem Cloudflare)   ← PRIMÁRIO
+//   2. Limitless TCG     (CDN estável, cobre sets novos) ← SECUNDÁRIO
+//   3. TCGdex            (por último, pode dar ERR_BLOCKED_BY_ORB)
+//   4. Card back         (fallback final)
 // ============================================================================
 
 export type SetEra =
@@ -275,6 +281,25 @@ export function isSetRotated(setQuery: string): boolean {
 
 const CARD_BACK = 'https://images.pokemontcg.io/card-back.png';
 
+/** pokemontcg.io — CDN estável, sem Cloudflare. */
+export function ptcgIoUrl(setQuery: string, num: string | number): string | null {
+  const entry = findSet(setQuery);
+  if (!entry?.ptcgIo || num === undefined || num === null) return null;
+  const clean = String(num).trim().replace(/^#/, '').replace(/^0+/, '') || '1';
+  return `https://images.pokemontcg.io/${entry.ptcgIo}/${clean}.png`;
+}
+
+/** Limitless TCG — CDN estável, cobre sets que a pokemontcg.io não tem. */
+export function limitlessUrl(setQuery: string, num: string | number): string | null {
+  const entry = findSet(setQuery);
+  if (!entry) return null;
+  const tpci = entry.tpci.toUpperCase();
+  const clean = String(num).trim().replace(/^#/, '').replace(/^0+/, '') || '1';
+  const padded = clean.padStart(3, '0');
+  return `https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/tpci/${tpci}/${tpci}_${padded}_R_EN_LG.png`;
+}
+
+/** TCGdex — CDN pode bloquear por ORB. Usar por último. */
 export function tcgdexUrl(
   setQuery: string,
   num: string | number,
@@ -286,34 +311,18 @@ export function tcgdexUrl(
   return `https://assets.tcgdex.net/${lang}/${entry.tcgdexSeries}/${entry.tcgdexSet}/${clean}/high.webp`;
 }
 
-export function ptcgIoUrl(setQuery: string, num: string | number): string | null {
-  const entry = findSet(setQuery);
-  if (!entry?.ptcgIo || num === undefined || num === null) return null;
-  const clean = String(num).trim().replace(/^#/, '').replace(/^0+/, '') || '1';
-  return `https://images.pokemontcg.io/${entry.ptcgIo}/${clean}.png`;
-}
-
-// ---------------------------------------------------------------------------
-// NOVO: Limitless TCG CDN — cobre sets novos que TCGdex/pokemontcg.io não têm
-// ---------------------------------------------------------------------------
-export function limitlessUrl(setQuery: string, num: string | number): string | null {
-  const entry = findSet(setQuery);
-  if (!entry) return null;
-  const tpci = entry.tpci.toUpperCase();
-  const clean = String(num).trim().replace(/^#/, '').replace(/^0+/, '') || '1';
-  const padded = clean.padStart(3, '0');
-  return `https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/tpci/${tpci}/${tpci}_${padded}_R_EN_LG.png`;
-}
-
 // ============================================================================
 // HIERARQUIA DE IMAGEM (5 níveis + fallback)
+//
+// v3 ORB-SAFE: pokemontcg.io primeiro, Limitless segundo, TCGdex por último.
+// Isso evita o ERR_BLOCKED_BY_ORB que o Cloudflare do TCGdex causa.
 // ============================================================================
 
 export interface ImageHierarchy {
-  primary: string;    // TCGdex PT
-  secondary: string;  // TCGdex EN
-  tertiary: string;   // Limitless TCG (novo)
-  quaternary: string; // pokemontcg.io (novo)
+  primary: string;    // pokemontcg.io (stable)
+  secondary: string;  // Limitless TCG
+  tertiary: string;   // TCGdex EN (pode falhar com ORB)
+  quaternary: string; // TCGdex PT (pode falhar com ORB)
   fallback: string;   // card back
 }
 
@@ -326,14 +335,15 @@ export function buildImageHierarchy(
   const padded = String(num).replace(/^#/, '').replace(/^0+/, '').padStart(3, '0');
   const clean = String(num).replace(/^#/, '').replace(/^0+/, '') || '1';
 
-  const pt   = entry?.tcgdexSet ? `https://assets.tcgdex.net/pt/${entry.tcgdexSeries}/${entry.tcgdexSet}/${clean}/high.webp` : null;
-  const en   = entry?.tcgdexSet ? `https://assets.tcgdex.net/en/${entry.tcgdexSeries}/${entry.tcgdexSet}/${clean}/high.webp` : null;
-  const lim  = entry ? `https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/tpci/${entry.tpci.toUpperCase()}/${entry.tpci.toUpperCase()}_${padded}_R_EN_LG.png` : null;
   const ptIo = entry?.ptcgIo ? `https://images.pokemontcg.io/${entry.ptcgIo}/${clean}.png` : null;
+  const lim  = entry ? `https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/tpci/${entry.tpci.toUpperCase()}/${entry.tpci.toUpperCase()}_${padded}_R_EN_LG.png` : null;
+  const en   = entry?.tcgdexSet ? `https://assets.tcgdex.net/en/${entry.tcgdexSeries}/${entry.tcgdexSet}/${clean}/high.webp` : null;
+  const pt   = entry?.tcgdexSet ? `https://assets.tcgdex.net/pt/${entry.tcgdexSeries}/${entry.tcgdexSet}/${clean}/high.webp` : null;
 
+  // ORB-SAFE ORDER: pokemontcg.io → Limitless → TCGdex
   const ordered = preferredLang === 'pt'
-    ? [pt, en, lim, ptIo]
-    : [en, pt, lim, ptIo];
+    ? [ptIo, lim, pt, en]
+    : [ptIo, lim, en, pt];
 
   const nonNull = ordered.filter(Boolean) as string[];
   return {
