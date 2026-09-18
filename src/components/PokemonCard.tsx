@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   resolveCard, 
   POKEMON_CARD_BACK, 
@@ -72,7 +72,15 @@ export default function PokemonCard({
   const ptcglCard = formatPTCGLCardCode(cardData);
   const spriteHierarchy = getPokemonSpriteHierarchy(cardData);
 
-  // Size specifications matching standard Pokémon card 2.5 x 3.5 ratio
+  // ============================================================================
+  // FIX CRÍTICO: reset do imgLevel quando a carta muda.
+  // Sem isso, o React reutiliza o estado entre cartas diferentes
+  // (ex: um Dunsparce que falhou no nível 3 contamina o próximo Mew ex).
+  // ============================================================================
+  useEffect(() => {
+    setImgLevel(0);
+  }, [name, imageUrl, setCode, setNumber, card?.id]);
+
   const sizeClasses = {
     xs: 'w-9 h-12 rounded-sm',
     sm: 'w-14 h-20 md:w-16 md:h-22 rounded-md',
@@ -113,7 +121,6 @@ export default function PokemonCard({
 
   return (
     <div className={`flex flex-col items-center select-none ${className}`}>
-      {/* Card Outer Container */}
       <div
         onClick={onClick ? onClick : () => setIsInspecting(true)}
         onMouseEnter={() => setIsHovered(true)}
@@ -127,7 +134,6 @@ export default function PokemonCard({
         } group`}
         title={`${cardData.name}${hasEvolvedInTurn ? ` (Evoluiu neste turno a partir de ${evolvedFrom || 'básico'}!)` : ''} (Clique para ampliar)`}
       >
-        {/* Floating Evolution Sparkle Badge */}
         {hasEvolvedInTurn && !isBack && (
           <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-400 text-slate-950 font-black text-[9px] px-2 py-0.5 rounded-full shadow-lg border border-yellow-100 flex items-center gap-1 z-30 animate-bounce tracking-wide uppercase whitespace-nowrap">
             <Sparkles className="w-2.5 h-2.5 fill-slate-950 text-slate-950" />
@@ -135,7 +141,6 @@ export default function PokemonCard({
           </div>
         )}
 
-        {/* Card Border & Artwork */}
         <div className={`w-full h-full rounded-inherit overflow-hidden bg-slate-950 border relative flex items-center justify-center ${
           hasEvolvedInTurn ? 'border-amber-300' : 'border-slate-700/60'
         }`}>
@@ -148,15 +153,12 @@ export default function PokemonCard({
             className="w-full h-full object-cover object-center transition-transform duration-300"
           />
 
-          {/* Shimmer Evolution Light Sweep Overlay */}
           {hasEvolvedInTurn && (
             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent -translate-x-full animate-shimmer pointer-events-none z-20" />
           )}
 
-          {/* Holographic Glossy Overlay effect on hover */}
           <div className="absolute inset-0 bg-gradient-to-tr from-white/0 via-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
 
-          {/* Damage Counters Badge */}
           {damage > 0 && !isBack && (
             <div className="absolute top-1 right-1 bg-rose-600/95 text-white font-black text-[9px] px-1.5 py-0.5 rounded shadow-md border border-rose-400 flex items-center gap-0.5 animate-pulse z-20">
               <ShieldAlert className="w-2.5 h-2.5" />
@@ -164,7 +166,6 @@ export default function PokemonCard({
             </div>
           )}
 
-          {/* Attached Energies Badge */}
           {energiesCount > 0 && !isBack && (
             <div className="absolute bottom-1 left-1 bg-amber-500/95 text-slate-950 font-black text-[9px] px-1.5 py-0.5 rounded shadow-md border border-amber-300 flex items-center gap-0.5 z-20">
               <Flame className="w-2.5 h-2.5 text-slate-950" />
@@ -172,7 +173,6 @@ export default function PokemonCard({
             </div>
           )}
 
-          {/* Active Spot Indicator Pill */}
           {isActiveSpot && !isBack && (
             <div className={`absolute top-1 left-1 px-1.5 py-0.5 rounded text-[8px] font-black uppercase tracking-wider text-white shadow-md z-20 ${
               activeColor === 'rose' ? 'bg-rose-600' : 'bg-purple-600'
@@ -181,7 +181,6 @@ export default function PokemonCard({
             </div>
           )}
 
-          {/* Quick Inspect Icon on Hover */}
           {showInspectButton && (
             <div className="absolute inset-0 bg-slate-950/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center z-20">
               <span className="p-1.5 rounded-full bg-purple-600 text-white shadow-lg">
@@ -192,7 +191,6 @@ export default function PokemonCard({
         </div>
       </div>
 
-      {/* Optional Card Label below */}
       {showNameLabel && !isBack && (
         <div className="mt-1.5 text-center max-w-[125px]">
           <div className="text-xs font-bold text-slate-100 capitalize truncate" title={cardData.name}>
@@ -214,7 +212,6 @@ export default function PokemonCard({
         </div>
       )}
 
-      {/* Card Inspection Modal */}
       {isInspecting && (
         <div 
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md animate-in fade-in duration-200"
@@ -227,7 +224,6 @@ export default function PokemonCard({
             className="bg-slate-900 border border-purple-500/40 rounded-3xl p-6 max-w-sm w-full shadow-2xl space-y-4 text-center relative"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Close button */}
             <button
               onClick={() => setIsInspecting(false)}
               className="absolute top-4 right-4 p-1.5 rounded-xl bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700 transition-colors"
@@ -253,7 +249,6 @@ export default function PokemonCard({
               )}
             </div>
 
-            {/* High Res Card Display */}
             <div className="w-56 h-78 sm:w-64 sm:h-90 mx-auto rounded-2xl overflow-hidden shadow-2xl border border-slate-700 bg-slate-950 flex items-center justify-center relative">
               <img
                 src={cardSrc}
@@ -263,7 +258,6 @@ export default function PokemonCard({
               />
             </div>
 
-            {/* Turn Evolution Highlight */}
             {hasEvolvedInTurn && (
               <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-400/40 text-xs text-amber-200 flex items-center justify-center gap-2">
                 <Sparkles className="w-4 h-4 text-amber-400 shrink-0" />
