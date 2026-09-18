@@ -10,8 +10,9 @@
 //
 // FIX (última revisão):
 //  1. registerCollectionCards SEMPRE recalcula URL via TCGdex (ignora stale)
-//  2. getRegisteredCollectionCard verifica se o NOME bate antes de retornar
-//     (evita "Fezandipiti ex" virar "Earthen Vessel")
+//  2. getRegisteredCollectionCard VALIDA o par (set, number) contra o registry
+//     canônico. Se a coleção tem "SFA 096" e o DB canônico diz que SFA 096 é
+//     outra carta, rejeita a entrada stale e cai no DB.
 //  3. resolvePTCGLCard e resolveCardByNameOnly têm a MESMA ordem de prioridade
 // ============================================================================
 
@@ -765,24 +766,47 @@ export function getRegisteredCollectionCardsCount(): number {
 /**
  * Busca uma carta no acervo.
  *
- * FIX: Só retorna a carta se o NOME dela bater com o input (via normalizeCardName).
- * Isso impede que um lookup por "Fezandipiti ex" retorne "Earthen Vessel" por
- * colisão de chave no registry.
+ * FIX v2: Valida 3 coisas antes de aceitar:
+ *   1. Nome da carta bate com o input (evita "Fezandipiti" → "Earthen Vessel")
+ *   2. Se (set, number) aponta para OUTRA carta no registry canônico → rejeita
+ *      (evita "SFA 096" que na verdade é outra carta)
+ *   3. Se o DB canônico tem essa carta num set diferente e rotacionado → rejeita
  */
 export function getRegisteredCollectionCard(nameOrCode: string): CardMetadata | undefined {
   if (!nameOrCode) return undefined;
   const raw = nameOrCode.trim();
   const norm = normalizeCardName(raw);
 
-  const nameMatches = (card: CardMetadata | undefined): boolean => {
-    if (!card) return false;
-    return normalizeCardName(card.name) === norm;
+  const validate = (card: CardMetadata | undefined): CardMetadata | undefined => {
+    if (!card) return undefined;
+    // 1. Nome bate?
+    if (normalizeCardName(card.name) !== norm) return undefined;
+
+    // 2. (set, number) da coleção aponta para outra carta?
+    if (card.setCode && card.setNumber) {
+      const num = String(card.setNumber).replace(/^#/, '').replace(/^0+/, '') || '1';
+      const key1 = `${card.setCode.toLowerCase()} ${num}`;
+      const key2 = `${card.setCode.toLowerCase()}-${num}`;
+      const canonical = PTCGL_CARD_ID_MAP[key1] || PTCGL_CARD_ID_MAP[key2];
+      if (canonical && normalizeCardName(canonical.name) !== norm) {
+        return undefined;
+      }
+    }
+
+    // 3. DB canônico tem essa carta em set diferente rotacionado?
+    const dbEntry = CARD_IMAGE_DATABASE[norm];
+    if (dbEntry?.setCode && card.setCode) {
+      const dbNum = String(dbEntry.setNumber || '').replace(/^0+/, '');
+      const cardNum = String(card.setNumber || '').replace(/^0+/, '');
+      if (dbNum && cardNum && dbNum !== cardNum && !isSetStandardLegal(card.setCode)) {
+        return undefined;
+      }
+    }
+
+    return card;
   };
 
-  const tryGet = (key: string): CardMetadata | undefined => {
-    const card = COLLECTION_CARDS_REGISTRY.get(key);
-    return nameMatches(card) ? card : undefined;
-  };
+  const tryGet = (key: string) => validate(COLLECTION_CARDS_REGISTRY.get(key));
 
   const direct = tryGet(norm);
   if (direct) return direct;
@@ -801,8 +825,9 @@ export function getRegisteredCollectionCard(nameOrCode: string): CardMetadata | 
   if (viaId) return viaId;
 
   for (const [k, v] of COLLECTION_CARDS_REGISTRY.entries()) {
-    if (k.length >= 4 && matchesAsWholeWords(norm, k) && nameMatches(v)) {
-      return v;
+    if (k.length >= 4 && matchesAsWholeWords(norm, k)) {
+      const valid = validate(v);
+      if (valid) return valid;
     }
   }
 
@@ -816,13 +841,11 @@ export function getRegisteredCollectionCard(nameOrCode: string): CardMetadata | 
 export function resolveCardByNameOnly(name: string): CardMetadata {
   if (!name) return makeFallbackCard(name, '');
 
-  // 1. Acervo do usuário (prioridade máxima — é o que ele TEM)
   const fromCollection = getRegisteredCollectionCard(name);
   if (fromCollection && fromCollection.imageUrl && !isSpriteUrl(fromCollection.imageUrl)) {
     return fromCollection;
   }
 
-  // 2. Preferir set legal do DB
   const preferred = resolveCardStandardPreferred(name);
   if (preferred && preferred.id !== 'SVI-1') return preferred;
 
@@ -948,13 +971,11 @@ export function parsePTCGLLogLine(line: string): FormattedPTCGLCard | null {
 export function resolvePTCGLCard(name: string): CardMetadata {
   if (!name) return makeFallbackCard(name, '');
 
-  // 1. Acervo do usuário (prioridade máxima)
   const fromCollection = getRegisteredCollectionCard(name);
   if (fromCollection && fromCollection.imageUrl && !isSpriteUrl(fromCollection.imageUrl)) {
     return fromCollection;
   }
 
-  // 2. Preferir set legal (H/I) do DB
   const preferred = resolveCardStandardPreferred(name);
   if (preferred && preferred.id !== 'SVI-1') return preferred;
 
