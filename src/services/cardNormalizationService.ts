@@ -805,3 +805,82 @@ export function getOfficialSetInfo(setCodeOrId: string): SetDefinition | null {
   const { tpciCode } = normalizeSetToPTCGLCode(setCodeOrId);
   return OFFICIAL_SETS_REGISTRY[tpciCode] || null;
 }
+
+/**
+ * Analisa uma lista de deck completa (formato PTCGL com seções Pokémon/Treinador/Energia).
+ */
+export function parsePTCGLDeckList(deckText: string): Array<{
+  name: string;
+  count: number;
+  set?: string;
+  number?: string;
+  type: 'Pokémon' | 'Treinador' | 'Energia';
+  imageUrl?: string;
+}> {
+  if (!deckText) return [];
+  const lines = deckText.split(/\r?\n/);
+  const results: Array<{
+    name: string;
+    count: number;
+    set?: string;
+    number?: string;
+    type: 'Pokémon' | 'Treinador' | 'Energia';
+    imageUrl?: string;
+  }> = [];
+
+  let currentCategory: 'Pokémon' | 'Treinador' | 'Energia' = 'Pokémon';
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (!trimmed) continue;
+
+    const lower = trimmed.toLowerCase();
+    if (lower.startsWith('pokémon:') || lower.startsWith('pokemon:')) {
+      currentCategory = 'Pokémon';
+      continue;
+    }
+    if (lower.startsWith('treinador:') || lower.startsWith('trainer:') || lower.startsWith('treinadores:')) {
+      currentCategory = 'Treinador';
+      continue;
+    }
+    if (lower.startsWith('energia:') || lower.startsWith('energy:')) {
+      currentCategory = 'Energia';
+      continue;
+    }
+
+    const parsed = parsePTCGLString(trimmed);
+    if (parsed) {
+      const normalized = normalizePokemonCard({
+        name: parsed.name,
+        setCode: parsed.setCode,
+        setNumber: parsed.setNumber
+      });
+      results.push({
+        name: normalized.name,
+        count: parsed.count || 1,
+        set: normalized.setCode,
+        number: normalized.setNumber,
+        type: currentCategory,
+        imageUrl: normalized.imageUrl
+      });
+    }
+  }
+  return results;
+}
+
+const cardNormalizationService = {
+  normalizePokemonCard,
+  normalizeCollectionCards,
+  retroactiveNormalizeCardItem,
+  getPTCGLId,
+  getNormalizedCardId,
+  toCanonicalPTCGLCode,
+  normalizeSetToPTCGLCode,
+  normalizeCardNumber,
+  parsePTCGLString,
+  parsePTCGLDeckList,
+  getOfficialSetInfo,
+  OFFICIAL_SETS_REGISTRY
+};
+
+export default cardNormalizationService;

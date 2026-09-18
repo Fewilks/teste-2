@@ -19,7 +19,7 @@ import {
 } from 'lucide-react';
 import PokemonSprite from './PokemonSprite';
 import { fallbackMetaDecks } from '../data/fallbackDecks';
-import { normalizePokemonCard, parsePTCGLString, getPTCGLId } from '../services/cardNormalizationService';
+import { normalizePokemonCard, parsePTCGLDeckList, getPTCGLId } from '../services/cardNormalizationService';
 
 interface DecksProps {
   currentMember: Member;
@@ -159,7 +159,7 @@ export default function Decks({ currentMember }: DecksProps) {
 
       // Fallback to client-side PTCGL First parser if backend was unavailable or empty
       if (!parsedCards || parsedCards.length === 0) {
-        parsedCards = parsePTCGLString(metaDeck.rawList);
+        parsedCards = parsePTCGLDeckList(metaDeck.rawList);
       }
 
       // Normaliza todas as cartas garantindo ID canônico do PTCGL
@@ -226,7 +226,7 @@ export default function Decks({ currentMember }: DecksProps) {
 
       // Client-side PTCGL First parser fallback
       if (!parsedCards || parsedCards.length === 0) {
-        parsedCards = parsePTCGLString(rawText);
+        parsedCards = parsePTCGLDeckList(rawText);
       }
       
       if (parsedCards.length === 0) {

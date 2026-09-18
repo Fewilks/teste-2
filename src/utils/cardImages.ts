@@ -776,21 +776,34 @@ export function getAuthenticCardImageUrl(cardOrName: any): string {
 
   if (typeof cardOrName === 'string') {
     const card = resolvePTCGLCard(cardOrName);
-    if (card?.imageUrl && !isSpriteUrl(card.imageUrl)) return card.imageUrl;
+    if (card?.imageUrl && !isSpriteUrl(card.imageUrl)) {
+      let img = card.imageUrl;
+      if (img.startsWith('https://assets.tcgdex.net/') && !img.endsWith('.webp') && !img.endsWith('.png')) {
+        img = `${img}/high.webp`;
+      }
+      return img;
+    }
     return POKEMON_CARD_BACK;
   }
 
-  const setCode = String(cardOrName.setCode || cardOrName.set || '').trim();
-  const setNumber = cardOrName.setNumber ?? cardOrName.number;
-
-  if (setCode && setNumber !== undefined && setNumber !== null) {
-    const tcgdex = tcgdexUrl(setCode, setNumber, 'en');
-    if (tcgdex) return tcgdex;
-    const tcgIo = ptcgIoUrl(setCode, setNumber);
-    if (tcgIo) return tcgIo;
+  // If the object already contains a concrete scan image URL (e.g. from TCGdex runtime search)
+  if (cardOrName.imageUrl && !isSpriteUrl(cardOrName.imageUrl) && cardOrName.imageUrl !== POKEMON_CARD_BACK) {
+    let img = cardOrName.imageUrl;
+    if (img.startsWith('https://assets.tcgdex.net/') && !img.endsWith('.webp') && !img.endsWith('.png')) {
+      img = `${img}/high.webp`;
+    }
+    return img;
   }
 
-  if (cardOrName.imageUrl && !isSpriteUrl(cardOrName.imageUrl)) return cardOrName.imageUrl;
+  const setCode = String(cardOrName.setCode || cardOrName.set || cardOrName.ptcglCode || '').trim();
+  const setNumber = cardOrName.setNumber ?? cardOrName.number ?? cardOrName.localId;
+
+  if (setCode && setNumber !== undefined && setNumber !== null) {
+    const hierarchy = buildImageHierarchy(setCode, setNumber, 'pt');
+    if (hierarchy.primary && hierarchy.primary !== POKEMON_CARD_BACK) {
+      return hierarchy.primary;
+    }
+  }
 
   if (cardOrName.name) {
     const norm = normalizeCardName(cardOrName.name);
@@ -806,10 +819,25 @@ export function getCardScanHierarchy(cardOrName: any): {
   primary: string; secondary: string; tertiary: string; quaternary: string; fallback: string;
 } {
   if (typeof cardOrName === 'object' && cardOrName !== null) {
-    const set = String(cardOrName.setCode || cardOrName.set || '').trim();
-    const num = cardOrName.setNumber ?? cardOrName.number;
+    const set = String(cardOrName.setCode || cardOrName.set || cardOrName.ptcglCode || '').trim();
+    const num = cardOrName.setNumber ?? cardOrName.number ?? cardOrName.localId;
     if (set && num !== undefined && num !== null) {
-      return buildImageHierarchy(set, num, 'pt');
+      const h = buildImageHierarchy(set, num, 'pt');
+      // If card already had an authentic scan URL, prioritize it
+      if (cardOrName.imageUrl && !isSpriteUrl(cardOrName.imageUrl) && cardOrName.imageUrl !== POKEMON_CARD_BACK) {
+        let directUrl = cardOrName.imageUrl;
+        if (directUrl.startsWith('https://assets.tcgdex.net/') && !directUrl.endsWith('.webp') && !directUrl.endsWith('.png')) {
+          directUrl = `${directUrl}/high.webp`;
+        }
+        return {
+          primary: directUrl,
+          secondary: h.primary !== directUrl ? h.primary : h.secondary,
+          tertiary: h.secondary !== directUrl ? h.secondary : h.tertiary,
+          quaternary: h.quaternary,
+          fallback: POKEMON_CARD_BACK
+        };
+      }
+      return h;
     }
   }
   const url = getAuthenticCardImageUrl(cardOrName);

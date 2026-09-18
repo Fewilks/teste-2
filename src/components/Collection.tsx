@@ -533,7 +533,12 @@ export default function Collection({ currentMember }: CollectionProps) {
                       referrerPolicy="no-referrer"
                       onError={(e) => {
                         e.currentTarget.onerror = null;
-                        e.currentTarget.src = POKEMON_CARD_BACK;
+                        const hierarchy = getCardScanHierarchy(selectedCard);
+                        if (e.currentTarget.src !== hierarchy.secondary && hierarchy.secondary !== POKEMON_CARD_BACK) {
+                          e.currentTarget.src = hierarchy.secondary;
+                        } else {
+                          e.currentTarget.src = POKEMON_CARD_BACK;
+                        }
                       }}
                     />
                   </div>
@@ -637,7 +642,12 @@ export default function Collection({ currentMember }: CollectionProps) {
                               referrerPolicy="no-referrer"
                               onError={(e) => {
                                 e.currentTarget.onerror = null;
-                                e.currentTarget.src = POKEMON_CARD_BACK;
+                                const hierarchy = getCardScanHierarchy(card);
+                                if (e.currentTarget.src !== hierarchy.secondary && hierarchy.secondary !== POKEMON_CARD_BACK) {
+                                  e.currentTarget.src = hierarchy.secondary;
+                                } else {
+                                  e.currentTarget.src = POKEMON_CARD_BACK;
+                                }
                               }}
                             />
                           </div>

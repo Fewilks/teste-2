@@ -258,25 +258,51 @@ export function getTpciCode(query: string): string | null {
 // ============================================================================
 // URL BUILDERS
 // ============================================================================
+// URL BUILDERS
+// ============================================================================
 
 const CARD_BACK = 'https://images.pokemontcg.io/card-back.png';
+
+export function formatCardNumberForTcgdex(
+  entry: SetSyncEntry | null, 
+  num: string | number
+): { primaryNum: string; secondaryNum: string; cleanNum: string } {
+  const raw = String(num ?? '').trim().replace(/^#/, '');
+  if (!raw) return { primaryNum: '1', secondaryNum: '001', cleanNum: '1' };
+
+  // If number has alphanumeric prefix/suffix (e.g. TG01, GG05, SV01, 1a, etc.), keep exactly as-is
+  if (!/^\d+$/.test(raw)) {
+    return { primaryNum: raw, secondaryNum: raw, cleanNum: raw };
+  }
+
+  const cleanNum = raw.replace(/^0+/, '') || '1';
+  const paddedNum = cleanNum.padStart(3, '0');
+
+  // Scarlet & Violet (sv) and Mega Evolution (me) sets on TCGdex CDN strictly use 3-digit zero-padded numbers (001..252)
+  if (entry?.era === 'sv' || entry?.era === 'me') {
+    return { primaryNum: paddedNum, secondaryNum: cleanNum, cleanNum };
+  }
+
+  // Older eras (SWSH, SM, XY, BW, DP, EX, Base) use unpadded numbers (1..200)
+  return { primaryNum: cleanNum, secondaryNum: paddedNum, cleanNum };
+}
 
 export function tcgdexUrl(
   setQuery: string,
   num: string | number,
-  lang: 'pt' | 'en' = 'en'
+  lang: 'pt' | 'en' = 'pt'
 ): string | null {
   const entry = findSet(setQuery);
   if (!entry?.tcgdexSeries || !entry.tcgdexSet || num === undefined || num === null) return null;
-  const clean = String(num).trim().replace(/^#/, '').replace(/^0+/, '') || '1';
-  return `https://assets.tcgdex.net/${lang}/${entry.tcgdexSeries}/${entry.tcgdexSet}/${clean}/high.webp`;
+  const { primaryNum } = formatCardNumberForTcgdex(entry, num);
+  return `https://assets.tcgdex.net/${lang}/${entry.tcgdexSeries}/${entry.tcgdexSet}/${primaryNum}/high.webp`;
 }
 
 export function ptcgIoUrl(setQuery: string, num: string | number): string | null {
   const entry = findSet(setQuery);
   if (!entry?.ptcgIo || num === undefined || num === null) return null;
-  const clean = String(num).trim().replace(/^#/, '').replace(/^0+/, '') || '1';
-  return `https://images.pokemontcg.io/${entry.ptcgIo}/${clean}.png`;
+  const { cleanNum } = formatCardNumberForTcgdex(entry, num);
+  return `https://images.pokemontcg.io/${entry.ptcgIo}/${cleanNum}.png`;
 }
 
 // ============================================================================
@@ -297,24 +323,28 @@ export function buildImageHierarchy(
   preferredLang: 'pt' | 'en' = 'pt'
 ): ImageHierarchy {
   const entry = findSet(setQuery);
-  const padded = String(num).replace(/^#/, '').replace(/^0+/, '').padStart(3, '0');
-  const clean = String(num).replace(/^#/, '').replace(/^0+/, '') || '1';
+  const otherLang: 'pt' | 'en' = preferredLang === 'pt' ? 'en' : 'pt';
+  const { primaryNum, secondaryNum, cleanNum } = formatCardNumberForTcgdex(entry, num);
 
-  const pt   = entry?.tcgdexSet ? `https://assets.tcgdex.net/pt/${entry.tcgdexSeries}/${entry.tcgdexSet}/${clean}/high.webp` : null;
-  const en   = entry?.tcgdexSet ? `https://assets.tcgdex.net/en/${entry.tcgdexSeries}/${entry.tcgdexSet}/${clean}/high.webp` : null;
-  const ptIo = entry?.ptcgIo ? `https://images.pokemontcg.io/${entry.ptcgIo}/${clean}.png` : null;
-  const pad  = entry?.tcgdexSet ? `https://assets.tcgdex.net/${preferredLang}/${entry.tcgdexSeries}/${entry.tcgdexSet}/${padded}/high.webp` : null;
+  const primaryLangMain = entry?.tcgdexSet ? `https://assets.tcgdex.net/${preferredLang}/${entry.tcgdexSeries}/${entry.tcgdexSet}/${primaryNum}/high.webp` : null;
+  const secondaryLangMain = entry?.tcgdexSet ? `https://assets.tcgdex.net/${otherLang}/${entry.tcgdexSeries}/${entry.tcgdexSet}/${primaryNum}/high.webp` : null;
+  const primaryLangAlt = (entry?.tcgdexSet && secondaryNum !== primaryNum) ? `https://assets.tcgdex.net/${preferredLang}/${entry.tcgdexSeries}/${entry.tcgdexSet}/${secondaryNum}/high.webp` : null;
+  const secondaryLangAlt = (entry?.tcgdexSet && secondaryNum !== primaryNum) ? `https://assets.tcgdex.net/${otherLang}/${entry.tcgdexSeries}/${entry.tcgdexSet}/${secondaryNum}/high.webp` : null;
+  const ptIo = entry?.ptcgIo ? `https://images.pokemontcg.io/${entry.ptcgIo}/${cleanNum}.png` : null;
 
-  const ordered = preferredLang === 'pt'
-    ? [pt, en, ptIo, pad]
-    : [en, pt, ptIo, pad];
+  const candidates = [
+    primaryLangMain,
+    secondaryLangMain,
+    primaryLangAlt,
+    secondaryLangAlt,
+    ptIo
+  ].filter(Boolean) as string[];
 
-  const nonNull = ordered.filter(Boolean) as string[];
   return {
-    primary:    nonNull[0] || CARD_BACK,
-    secondary:  nonNull[1] || CARD_BACK,
-    tertiary:   nonNull[2] || CARD_BACK,
-    quaternary: nonNull[3] || CARD_BACK,
+    primary:    candidates[0] || CARD_BACK,
+    secondary:  candidates[1] || candidates[0] || CARD_BACK,
+    tertiary:   candidates[2] || candidates[1] || CARD_BACK,
+    quaternary: candidates[3] || candidates[2] || CARD_BACK,
     fallback:   CARD_BACK,
   };
 }

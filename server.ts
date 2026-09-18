@@ -365,16 +365,102 @@ const SET_TO_TCGDEX_MAP: Record<string, { series: string; set: string }> = {
   'BST': { series: 'swsh', set: 'swsh05' }
 };
 
-function getTCGdexImageUrl(setCode: string, setNumber: string | number, lang: 'pt' | 'en' = 'en'): string {
+function getTCGdexImageUrl(setCode: string, setNumber: string | number, lang: 'pt' | 'en' = 'pt'): string {
   if (!setCode || !setNumber) return 'https://images.pokemontcg.io/sv1/1.png';
   const cleanSet = setCode.trim();
   const mapping = SET_TO_TCGDEX_MAP[cleanSet] || SET_TO_TCGDEX_MAP[cleanSet.toUpperCase()] || SET_TO_TCGDEX_MAP[cleanSet.toLowerCase()];
-  const cleanNum = String(setNumber).trim().replace(/^0+/, '') || '1';
+  
+  const rawNum = String(setNumber).trim().replace(/^#/, '');
+  const cleanNum = rawNum.replace(/^0+/, '') || '1';
+  const paddedNum = cleanNum.padStart(3, '0');
+
+  // Scarlet & Violet (sv) and Mega Evolution (me) sets strictly use 3-digit padded numbers on TCGdex
+  const isSvOrMe = mapping ? (mapping.series === 'sv' || mapping.series === 'me') : /^(sv|me)/i.test(cleanSet);
+  const finalNum = isSvOrMe ? paddedNum : cleanNum;
 
   if (mapping) {
-    return `https://assets.tcgdex.net/${lang}/${mapping.series}/${mapping.set}/${cleanNum}/high.webp`;
+    return `https://assets.tcgdex.net/${lang}/${mapping.series}/${mapping.set}/${finalNum}/high.webp`;
   }
-  return `https://assets.tcgdex.net/${lang}/sv/${cleanSet.toLowerCase()}/${cleanNum}/high.webp`;
+  return `https://assets.tcgdex.net/${lang}/sv/${cleanSet.toLowerCase()}/${finalNum}/high.webp`;
+}
+
+// In-memory cache for TCGdex complete sets
+const TCGDEX_SET_CACHE = new Map<string, any[]>();
+
+async function fetchTcgdexCompleteSet(tcgdexSetId: string, series: string, tpciSetCode: string, setNameFallback: string): Promise<any[]> {
+  const cacheKey = `${series}-${tcgdexSetId}`;
+  if (TCGDEX_SET_CACHE.has(cacheKey)) {
+    return TCGDEX_SET_CACHE.get(cacheKey)!;
+  }
+
+  let cardsData: any[] = [];
+  try {
+    const controllerPt = new AbortController();
+    const timeoutPt = setTimeout(() => controllerPt.abort(), 4500);
+    const resPt = await fetch(`https://api.tcgdex.net/v2/pt/sets/${tcgdexSetId}`, { signal: controllerPt.signal });
+    clearTimeout(timeoutPt);
+
+    if (resPt.ok) {
+      const dataPt = await resPt.json();
+      if (dataPt.cards && Array.isArray(dataPt.cards) && dataPt.cards.length > 0) {
+        cardsData = dataPt.cards;
+      }
+    }
+  } catch {
+    // fallback to English
+  }
+
+  if (cardsData.length === 0) {
+    try {
+      const controllerEn = new AbortController();
+      const timeoutEn = setTimeout(() => controllerEn.abort(), 4500);
+      const resEn = await fetch(`https://api.tcgdex.net/v2/en/sets/${tcgdexSetId}`, { signal: controllerEn.signal });
+      clearTimeout(timeoutEn);
+
+      if (resEn.ok) {
+        const dataEn = await resEn.json();
+        if (dataEn.cards && Array.isArray(dataEn.cards) && dataEn.cards.length > 0) {
+          cardsData = dataEn.cards;
+        }
+      }
+    } catch {
+      // offline
+    }
+  }
+
+  if (cardsData.length === 0) {
+    return [];
+  }
+
+  const isSvOrMe = series === 'sv' || series === 'me';
+  const mapped = cardsData.map((c: any) => {
+    const rawLocalId = String(c.localId || c.id?.split('-')[1] || '').trim();
+    const cleanNum = rawLocalId.replace(/^0+/, '') || '1';
+    const formattedNum = isSvOrMe && /^\d+$/.test(rawLocalId) ? cleanNum.padStart(3, '0') : rawLocalId;
+
+    let imageUrl = '';
+    if (c.image) {
+      imageUrl = `${c.image}/high.webp`;
+    } else {
+      imageUrl = `https://assets.tcgdex.net/pt/${series}/${tcgdexSetId}/${formattedNum}/high.webp`;
+    }
+
+    return {
+      id: `${tpciSetCode}-${formattedNum}`,
+      localId: c.id || `${tcgdexSetId}-${formattedNum}`,
+      name: c.name,
+      imageUrl,
+      setCode: tpciSetCode,
+      setName: setNameFallback,
+      setNumber: formattedNum,
+      tpciCode: `${tpciSetCode} ${formattedNum}`,
+      tpciSetCode: tpciSetCode,
+      localSetId: tcgdexSetId
+    };
+  });
+
+  TCGDEX_SET_CACHE.set(cacheKey, mapped);
+  return mapped;
 }
 
 // 2. Default iconic cards database to fallback on when external APIs fail
@@ -626,6 +712,10 @@ function formatLimitlessDecklist(decklist: any): string {
   
   return listStr.trim();
 }
+
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok' });
+});
 
 app.get('/api/pokemon/meta', async (req, res) => {
   try {
@@ -1001,6 +1091,47 @@ app.get('/api/pokemon/search', async (req, res) => {
       const setToken = ptcglNameMatch[2].toUpperCase();
       resolvedSetId = TPCI_TO_LOCAL_SET_MAP[setToken] || setToken.toLowerCase();
       resolvedNumber = ptcglNameMatch[3];
+    }
+  }
+
+  // 1. PRIMARY SOURCE OF TRUTH: If a specific set is requested, fetch ALL cards from TCGdex
+  const tcgdexMapping = (rawSet && SET_TO_TCGDEX_MAP[rawSet]) ||
+    (rawSet && SET_TO_TCGDEX_MAP[rawSet.toUpperCase()]) ||
+    (rawSet && SET_TO_TCGDEX_MAP[rawSet.toLowerCase()]) ||
+    (resolvedSetId && SET_TO_TCGDEX_MAP[resolvedSetId.toUpperCase()]) ||
+    (resolvedSetId && SET_TO_TCGDEX_MAP[resolvedSetId.toLowerCase()]);
+
+  if (tcgdexMapping) {
+    const rawSetCode = rawSet ? (LOCAL_TO_TPCI_SET_MAP[rawSet.toLowerCase()] || rawSet.toUpperCase()) : (LOCAL_TO_TPCI_SET_MAP[resolvedSetId.toLowerCase()] || resolvedSetId.toUpperCase());
+    const matchedExp = COMPREHENSIVE_SETS.find(s => s.id.toUpperCase() === rawSetCode || (s.localId && s.localId.toLowerCase() === rawSetCode.toLowerCase()));
+    const setName = matchedExp?.name || rawSet || resolvedSetId;
+
+    try {
+      const allCards = await fetchTcgdexCompleteSet(tcgdexMapping.set, tcgdexMapping.series, rawSetCode, setName);
+      if (allCards.length > 0) {
+        let results = allCards;
+
+        if (resolvedNumber) {
+          const targetClean = resolvedNumber.replace(/^0+/, '');
+          results = results.filter(c => c.setNumber === resolvedNumber || c.setNumber.replace(/^0+/, '') === targetClean);
+        }
+
+        if (nameQuery) {
+          const nq = normalizeSearchTerm(nameQuery);
+          results = results.filter(c => {
+            const cardName = normalizeSearchTerm(c.name);
+            const cardNum = String(c.setNumber || '');
+            return cardName.includes(nq) || cardNum.includes(nq);
+          });
+        }
+
+        if (results.length > 0) {
+          console.log(`TCGdex returned ${results.length} cards for set "${rawSetCode}" (query: "${nameQuery}")`);
+          return res.json(results);
+        }
+      }
+    } catch (tcgdexErr) {
+      console.warn('TCGdex set fetch error, falling back:', (tcgdexErr as Error).message);
     }
   }
 
