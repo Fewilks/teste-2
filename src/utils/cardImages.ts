@@ -9,11 +9,10 @@
 // - Cartas do deck do usuário pré-cadastradas
 //
 // FIX (última revisão):
-//  1. registerCollectionCards SEMPRE recalcula URL via TCGdex (ignora stale)
-//  2. getRegisteredCollectionCard VALIDA o par (set, number) contra o registry
-//     canônico. Se a coleção tem "SFA 096" e o DB canônico diz que SFA 096 é
-//     outra carta, rejeita a entrada stale e cai no DB.
-//  3. resolvePTCGLCard e resolveCardByNameOnly têm a MESMA ordem de prioridade
+//  1. registerCollectionCards SEMPRE recalcula URL (ignora stale)
+//  2. getRegisteredCollectionCard VALIDA o par (set, number)
+//  3. resolvePTCGLCard e resolveCardByNameOnly têm a MESMA ordem
+//  4. ORB-SAFE: ordem de URL é ptcgIo → Limitless → TCGdex
 // ============================================================================
 
 import {
@@ -21,6 +20,7 @@ import {
   buildImageHierarchy,
   tcgdexUrl,
   ptcgIoUrl,
+  limitlessUrl,
   CARD_BACK_URL,
   SET_SYNC_TABLE as _SET_SYNC_TABLE,
   isSetStandardLegal,
@@ -30,7 +30,7 @@ import {
 export const POKEMON_CARD_BACK = 'https://images.pokemontcg.io/card-back.png';
 export const POKEMON_CARD_BACK_FALLBACK = 'https://archives.bulbagarden.net/media/upload/1/17/Cardback.jpg';
 
-export { findSet, buildImageHierarchy, tcgdexUrl, ptcgIoUrl } from './setSync';
+export { findSet, buildImageHierarchy, tcgdexUrl, ptcgIoUrl, limitlessUrl } from './setSync';
 
 export interface CardMetadata {
   id: string;
@@ -122,6 +122,19 @@ export function getPokemonTcgIoImageUrl(
   setNumber: string | number
 ): string | null {
   return ptcgIoUrl(setCode, setNumber);
+}
+
+/**
+ * Retorna a MELHOR URL de imagem para uma carta, usando a ordem ORB-safe:
+ *   pokemontcg.io → Limitless → TCGdex
+ */
+function getBestImageUrl(setCode: string, setNumber: string | number): string {
+  return (
+    ptcgIoUrl(setCode, setNumber) ||
+    limitlessUrl(setCode, setNumber) ||
+    tcgdexUrl(setCode, setNumber, 'en') ||
+    ''
+  );
 }
 
 // ============================================================================
@@ -353,7 +366,8 @@ export const CARD_IMAGE_DATABASE: Record<string, CardMetadata> = {
 
 Object.values(CARD_IMAGE_DATABASE).forEach(card => {
   if (card.setCode && card.setNumber) {
-    const url = tcgdexUrl(card.setCode, card.setNumber, 'en') || ptcgIoUrl(card.setCode, card.setNumber);
+    // ORB-SAFE: ptcgIo → Limitless → TCGdex
+    const url = getBestImageUrl(card.setCode, card.setNumber);
     if (url) card.imageUrl = url;
   }
 });
@@ -679,18 +693,11 @@ export function resolveCardStandardPreferred(name: string): CardMetadata {
 }
 
 // ============================================================================
-// GLOBAL COLLECTION REGISTRY (VINCULAÇÃO DIRETA ACERVO <-> TRAINERLOG)
+// GLOBAL COLLECTION REGISTRY
 // ============================================================================
 
 const COLLECTION_CARDS_REGISTRY: Map<string, CardMetadata> = new Map();
 
-/**
- * Registra cartas do acervo do usuário.
- *
- * FIX: SEMPRE recalcula a URL a partir de setCode+setNumber (via TCGdex).
- * Isso ignora qualquer imageUrl stale que esteja salvo no Firestore (que
- * poderia ter sido computado com bugs antigos, apontando para a carta errada).
- */
 export function registerCollectionCards(cards: Array<any>): void {
   if (!cards || !Array.isArray(cards)) return;
 
@@ -705,17 +712,12 @@ export function registerCollectionCards(cards: Array<any>): void {
     const cleanNum = rawNum.replace(/^0+/, '') || '1';
     const localSet = c.localSetId || (cleanSet ? mapTPCiToLocalSetId(cleanSet) : '');
 
-    // IMPORTANTE: recalcular URL SEMPRE que temos set+number.
-    // NÃO confiar em c.imageUrl (pode estar stale/errado).
+    // ORB-SAFE: ptcgIo → Limitless → TCGdex (NÃO confia em c.imageUrl)
     let finalImageUrl = '';
     if (cleanSet && cleanNum && cleanSet !== 'SVI' && cleanNum !== '1') {
-      finalImageUrl =
-        tcgdexUrl(cleanSet, cleanNum, 'pt') ||
-        tcgdexUrl(cleanSet, cleanNum, 'en') ||
-        ptcgIoUrl(cleanSet, cleanNum) ||
-        '';
+      finalImageUrl = getBestImageUrl(cleanSet, cleanNum);
     }
-    // Se não conseguimos recalcular, usa o stored URL como fallback
+    // Fallback: usa o stored URL apenas se não conseguimos recalcular
     if (!finalImageUrl && c.imageUrl && !isSpriteUrl(c.imageUrl)) {
       finalImageUrl = c.imageUrl;
     }
@@ -763,15 +765,6 @@ export function getRegisteredCollectionCardsCount(): number {
   return COLLECTION_CARDS_REGISTRY.size;
 }
 
-/**
- * Busca uma carta no acervo.
- *
- * FIX v2: Valida 3 coisas antes de aceitar:
- *   1. Nome da carta bate com o input (evita "Fezandipiti" → "Earthen Vessel")
- *   2. Se (set, number) aponta para OUTRA carta no registry canônico → rejeita
- *      (evita "SFA 096" que na verdade é outra carta)
- *   3. Se o DB canônico tem essa carta num set diferente e rotacionado → rejeita
- */
 export function getRegisteredCollectionCard(nameOrCode: string): CardMetadata | undefined {
   if (!nameOrCode) return undefined;
   const raw = nameOrCode.trim();
@@ -779,10 +772,8 @@ export function getRegisteredCollectionCard(nameOrCode: string): CardMetadata | 
 
   const validate = (card: CardMetadata | undefined): CardMetadata | undefined => {
     if (!card) return undefined;
-    // 1. Nome bate?
     if (normalizeCardName(card.name) !== norm) return undefined;
 
-    // 2. (set, number) da coleção aponta para outra carta?
     if (card.setCode && card.setNumber) {
       const num = String(card.setNumber).replace(/^#/, '').replace(/^0+/, '') || '1';
       const key1 = `${card.setCode.toLowerCase()} ${num}`;
@@ -793,7 +784,6 @@ export function getRegisteredCollectionCard(nameOrCode: string): CardMetadata | 
       }
     }
 
-    // 3. DB canônico tem essa carta em set diferente rotacionado?
     const dbEntry = CARD_IMAGE_DATABASE[norm];
     if (dbEntry?.setCode && card.setCode) {
       const dbNum = String(dbEntry.setNumber || '').replace(/^0+/, '');
@@ -892,10 +882,6 @@ export function resolveCardByNameOnly(name: string): CardMetadata {
   return makeFallbackCard(name, norm);
 }
 
-// ============================================================================
-// PTCGL LOG LINE PARSER
-// ============================================================================
-
 export function parsePTCGLLogLine(line: string): FormattedPTCGLCard | null {
   if (!line) return null;
   let text = line.trim();
@@ -964,10 +950,6 @@ export function parsePTCGLLogLine(line: string): FormattedPTCGLCard | null {
   return null;
 }
 
-// ============================================================================
-// MAIN RESOLVER
-// ============================================================================
-
 export function resolvePTCGLCard(name: string): CardMetadata {
   if (!name) return makeFallbackCard(name, '');
 
@@ -1021,10 +1003,6 @@ export function resolvePTCGLCard(name: string): CardMetadata {
 
 export const resolveCard = resolvePTCGLCard;
 
-// ============================================================================
-// SPRITE DETECTION
-// ============================================================================
-
 export function isSpriteUrl(url?: string): boolean {
   if (!url) return true;
   const lower = url.toLowerCase();
@@ -1041,10 +1019,6 @@ export function isSpriteUrl(url?: string): boolean {
     (lower.includes('/items/') && lower.includes('pokeapi'))
   );
 }
-
-// ============================================================================
-// AUTHENTIC CARD IMAGE
-// ============================================================================
 
 export interface SpriteSources {
   primary: string;
@@ -1140,10 +1114,6 @@ export function getPokemonSpriteHierarchy(cardOrName: CardMetadata | string): Sp
   };
 }
 
-// ============================================================================
-// VERIFICATION
-// ============================================================================
-
 export interface PTCGLCardVerification {
   input: string;
   isValid: boolean;
@@ -1235,7 +1205,8 @@ export function registerPlayerDeck(playerId: string, decklistText: string): void
         setNumber: num,
         localSetId: mapTPCiToLocalSetId(set),
       };
-      const url = tcgdexUrl(set, num, 'en') || ptcgIoUrl(set, num);
+      // ORB-SAFE
+      const url = getBestImageUrl(set, num);
       if (url) fallback.imageUrl = url;
       map[normalizeCardName(name)] = fallback;
     }
@@ -1336,9 +1307,8 @@ export function getCardVersionForPlayer(
   if (card) return card;
 
   const localSetId = mapTPCiToLocalSetId(ov.setCode);
-  const imageUrl = tcgdexUrl(ov.setCode, ov.setNumber, 'en')
-    || ptcgIoUrl(ov.setCode, ov.setNumber)
-    || POKEMON_CARD_BACK;
+  // ORB-SAFE
+  const imageUrl = getBestImageUrl(ov.setCode, ov.setNumber) || POKEMON_CARD_BACK;
 
   return {
     id: `${ov.setCode}-${ov.setNumber}`,
