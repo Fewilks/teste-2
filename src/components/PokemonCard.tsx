@@ -96,13 +96,21 @@ export default function PokemonCard({
   };
 
   const handleImageError = () => {
-    setImgLevel(prev => prev + 1);
+    // Limita o nível máximo de erro para não entrar em loop infinito
+    if (imgLevel < 4) {
+      setImgLevel(prev => prev + 1);
+    }
   };
 
   const getCardSource = (): string => {
     if (isBack) {
       return imgLevel > 0 ? POKEMON_CARD_BACK_FALLBACK : POKEMON_CARD_BACK;
     }
+    
+    // Se o usuário passou uma URL específica (ex: do acervo), prioriza ela
+    if (imageUrl && imgLevel === 0) return imageUrl;
+    if (card?.imageUrl && imgLevel === 0) return card.imageUrl;
+
     switch (imgLevel) {
       case 0:
         return spriteHierarchy.primary;
@@ -113,7 +121,8 @@ export default function PokemonCard({
       case 3:
         return spriteHierarchy.dexSprite;
       default:
-        return spriteHierarchy.fallback;
+        // Fallback final: se tudo falhar, usa a imagem de fallback do sistema
+        return spriteHierarchy.fallback || POKEMON_CARD_BACK_FALLBACK;
     }
   };
 
@@ -144,7 +153,9 @@ export default function PokemonCard({
         <div className={`w-full h-full rounded-inherit overflow-hidden bg-slate-950 border relative flex items-center justify-center ${
           hasEvolvedInTurn ? 'border-amber-300' : 'border-slate-700/60'
         }`}>
+          {/* Adicionado key={imgLevel} para forçar o React a recarregar a tag img quando a imagem falha */}
           <img
+            key={`${cardData.id}-${imgLevel}`}
             src={cardSrc}
             alt={isBack ? 'Carta de Prêmio' : cardData.name}
             onError={handleImageError}
@@ -251,6 +262,7 @@ export default function PokemonCard({
 
             <div className="w-56 h-78 sm:w-64 sm:h-90 mx-auto rounded-2xl overflow-hidden shadow-2xl border border-slate-700 bg-slate-950 flex items-center justify-center relative">
               <img
+                key={`inspect-${cardData.id}-${imgLevel}`}
                 src={cardSrc}
                 alt={cardData.name}
                 referrerPolicy="no-referrer"
