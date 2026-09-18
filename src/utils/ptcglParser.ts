@@ -101,7 +101,7 @@ function isCardMatch(cardA?: string, cardB?: string): boolean {
   if (!cardA || !cardB) return false;
   const a = cardA.toLowerCase().trim();
   const b = cardB.toLowerCase().trim();
-  return a === b || a.includes(b) || b.includes(a);
+  return a === b;
 }
 
 function isEnergyCard(name: string): boolean {
@@ -298,8 +298,6 @@ export function parsePTCGLLog(rawLog: string, loggedInUserName?: string): Traine
 
   const processedTurns: BattleTurnSnapshot[] = [];
 
-  // Regex de "verbo de ação" — se uma linha bullet contém um desses, ela NÃO é
-  // tratada como lista de cartas; ela segue o fluxo normal.
   const ACTION_VERB_RE = /\b(usou|jogou|ligou|anexou|evoluiu|promoveu|recuou|comprou|drew|played|attached|evolved|promoted|retreated|used|ativou|activated|foi|was|pegou|took|descartad|discarded|embaralhou|shuffled|colocou|put|rendeu|concedeu|conceded|surrender)\b/i;
 
   // ------------------------------------------------------------------
@@ -327,7 +325,6 @@ export function parsePTCGLLog(rawLog: string, loggedInUserName?: string): Traine
       const lower = line.toLowerCase();
       const actionId = `turn-${block.turnNumber}-act-${i}`;
 
-      // Ator
       const hasP1 = lower.includes(p1Name.toLowerCase());
       const hasP2 = lower.includes(p2Name.toLowerCase());
       const hasYou = /\b(você|voce|you)\b/i.test(lower);
@@ -341,7 +338,35 @@ export function parsePTCGLLog(rawLog: string, loggedInUserName?: string): Traine
       const side = getSide(actor);
 
       // ----------------------------------------------------------------
-      // BULLET DE LISTA (só quando continua um "comprou N e jogou no Banco")
+      // NOVO: DANO PREVENIDO ("O dano em X foi prevenido")
+      // ----------------------------------------------------------------
+      const damagePreventedMatch = line.match(/^o\s+dano\s+(?:em|de|no|na)\s+(.+?)\s+(?:foi|foram)\s+prevenid[ao]s?/i);
+      if (damagePreventedMatch) {
+        const protectedCard = damagePreventedMatch[1].trim();
+        actions.push({
+          id: actionId, type: 'ability', player: actor, playerName: actorName,
+          cardName: protectedCard, description: line
+        });
+        lastMainAction = 'other';
+        continue;
+      }
+
+      // ----------------------------------------------------------------
+      // NOVO: ATIVAÇÃO PASSIVA ("X foi ativada" / "X foi ativado")
+      // ----------------------------------------------------------------
+      const passiveActivationMatch = line.match(/^(.+?)\s+foi\s+ativad[ao](?:\s|\.|$|!)/i);
+      if (passiveActivationMatch) {
+        const activatedCard = passiveActivationMatch[1].trim();
+        actions.push({
+          id: actionId, type: 'ability', player: actor, playerName: actorName,
+          cardName: activatedCard, description: line
+        });
+        lastMainAction = 'other';
+        continue;
+      }
+
+      // ----------------------------------------------------------------
+      // BULLET DE LISTA
       // ----------------------------------------------------------------
       if (isBullet && lastMainAction === 'benchDraw' && !ACTION_VERB_RE.test(line)) {
         const parts = line.split(/,\s*/);
@@ -359,7 +384,7 @@ export function parsePTCGLLog(rawLog: string, loggedInUserName?: string): Traine
       }
 
       // ----------------------------------------------------------------
-      // DESCARTA DE ENERGIA ("X foi descartada de Y")
+      // DESCARTA DE ENERGIA
       // ----------------------------------------------------------------
       const discardedFromMatch = line.match(/^(.+?)\s+foi\s+descartad[ao]\s+de\s+(.+?)(?:\s+de\s+(.+))?\.?$/i);
       if (discardedFromMatch && lower.includes('descartad')) {
@@ -455,7 +480,6 @@ export function parsePTCGLLog(rawLog: string, loggedInUserName?: string): Traine
           const before = victimSide.bench().length;
           const filtered = victimSide.bench().filter(b => !isCardMatch(b.name, koCard));
           if (filtered.length < before) victimSide.setBench(filtered);
-          // se não achou, NÃO remove nada
         }
 
         actions.push({ id: actionId, type: 'knockout', player: actor, playerName: actorName, cardName: koCard, description: line });
@@ -589,13 +613,21 @@ export function parsePTCGLLog(rawLog: string, loggedInUserName?: string): Traine
       if (nowActiveMatch) {
         const promotedCard = nowActiveMatch[1].trim();
         const bench = side.bench();
+        const previousActive = side.active();
         const idx = bench.findIndex(b => isCardMatch(b.name, promotedCard));
+
+        let promotedMon: PokemonInPlay;
         if (idx !== -1) {
-          const [mon] = bench.splice(idx, 1);
-          side.setActive(mon);
+          [promotedMon] = bench.splice(idx, 1);
         } else {
-          side.setActive(makePokemon(promotedCard));
+          promotedMon = makePokemon(promotedCard);
         }
+        side.setActive(promotedMon);
+
+        if (previousActive && previousActive !== promotedMon && bench.length < 5) {
+          bench.push(previousActive);
+        }
+
         actions.push({ id: actionId, type: 'play', player: actor, playerName: actorName, cardName: promotedCard, description: line });
         lastMainAction = 'other';
         continue;
@@ -642,7 +674,7 @@ export function parsePTCGLLog(rawLog: string, loggedInUserName?: string): Traine
       }
 
       // ----------------------------------------------------------------
-      // RECUO — preserva dano e energias
+      // RECUO
       // ----------------------------------------------------------------
       if (lower.includes('recuou') || lower.includes('retreated')) {
         const retreatPt = line.match(/recuou\s+(.+?)\s+para\s+o\s+Banco/i);
@@ -671,7 +703,7 @@ export function parsePTCGLLog(rawLog: string, loggedInUserName?: string): Traine
       }
 
       // ----------------------------------------------------------------
-      // PLAY NORMAL ("jogou X no Campo Ativo/Banco")
+      // PLAY NORMAL
       // ----------------------------------------------------------------
       if (lower.includes('jogou') || lower.includes('played') || lower.includes('colocou') || lower.includes('put')) {
         const placedCard = extractCardName(line);
@@ -709,7 +741,7 @@ export function parsePTCGLLog(rawLog: string, loggedInUserName?: string): Traine
     }
 
     // ------------------------------------------------------------------
-    // FIM DE JOGO (varredura por bloco)
+    // FIM DE JOGO
     // ------------------------------------------------------------------
     for (const line of block.rawLines) {
       const lower = line.toLowerCase();
@@ -754,7 +786,6 @@ export function parsePTCGLLog(rawLog: string, loggedInUserName?: string): Traine
       }
     }
 
-    // Setup: define ativos se não foram setados
     if (block.turnNumber === 0) {
       if (!p1Active && p1Bench.length > 0) p1Active = p1Bench.shift()!;
       if (!p2Active && p2Bench.length > 0) p2Active = p2Bench.shift()!;
