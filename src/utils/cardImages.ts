@@ -11,10 +11,7 @@
 // FIX (última revisão):
 //  1. registerCollectionCards SEMPRE recalcula URL (ignora stale)
 //  2. getRegisteredCollectionCard REJEITA se (set, number) da coleção
-//     divergir do DB canônico. Isso força o uso da versão correta:
-//     - SFA 096 (coleção stale) → rejeitado → usa SFA 038 (DB)
-//     - POR 862 (coleção stale) → rejeitado → usa JTG 106 (DB)
-//     - MEW 151 (coleção stale) → rejeitado → usa 30TH 66 (DB)
+//     divergir do DB canônico. Isso força o uso da versão correta.
 //  3. resolvePTCGLCard e resolveCardByNameOnly têm a MESMA ordem
 //  4. ORB-SAFE: ordem de URL é ptcgIo → Limitless → TCGdex
 //  5. OVERRIDE DE IMAGENS: Força URLs corretas para sets que o setSync não conhece.
@@ -39,12 +36,22 @@ export const POKEMON_CARD_BACK_FALLBACK = 'https://archives.bulbagarden.net/medi
 // OVERRIDE DE IMAGENS (Correção para sets que o setSync.ts não conhece)
 // ============================================================================
 const CARD_IMAGE_OVERRIDES: Record<string, string> = {
-  // Mew ex (30TH 66) - Força a imagem correta do TCGdex
-  '30TH-66': 'https://assets.tcgdex.net/en/tcgp/30th/66/high.webp',
-  // Meowth ex (JTG 106) - Força a imagem correta do TCGdex
-  'JTG-106': 'https://assets.tcgdex.net/en/sv/sv9/106/high.webp',
-  // Battle Cage (PFL 116) - Força a imagem correta do TCGdex
-  'PFL-116': 'https://assets.tcgdex.net/en/sv/me2/116/high.webp',
+  // Budew (SVI 9)
+  'SVI-9': 'https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/tpci/SVI/SVI_009_R_EN.png',
+  // Fan Rotom (ASC 250)
+  'ASC-250': 'https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/tpci/ASC/ASC_250_R_EN.png',
+  // Mew ex (30TH 66)
+  '30TH-66': 'https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/tpci/30TH/30TH_066_R_EN.png',
+  // Stunfisk (ASC 62)
+  'ASC-62': 'https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/tpci/ASC/ASC_062_R_EN.png',
+  // Meowth ex (JTG 106)
+  'JTG-106': 'https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/tpci/JTG/JTG_106_R_EN.png',
+  // Lillie's Clefairy ex (ASC 280)
+  'ASC-280': 'https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/tpci/ASC/ASC_280_R_EN.png',
+  // Risky Ruins (TWM 168)
+  'TWM-168': 'https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/tpci/TWM/TWM_168_R_EN.png',
+  // Mega Lopunny ex (PFL 128)
+  'PFL-128': 'https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/tpci/PFL/PFL_128_R_EN.png',
 };
 
 export { findSet, buildImageHierarchy, tcgdexUrl, ptcgIoUrl, limitlessUrl } from './setSync';
