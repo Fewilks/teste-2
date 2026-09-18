@@ -1,27 +1,23 @@
 // ============================================================================
-// setSync.ts — Fonte única de verdade para TODOS os sets entre as 3 plataformas
+// setSync.ts — Fonte única de verdade para sets TCG
 //
 //   PTCGL (TPCi)  ──┐
-//                   ├──  SET_SYNC_TABLE  ──►  { tcgdex, ptcgIo, names, era }
+//                   ├──  SET_SYNC_TABLE  ──►  { tcgdex, ptcgIo, marks, ... }
 //   TCGdex       ───┤
 //                   │
 //   pokemontcg.io ──┘
 //
-// Estratégia de imagem:
-//   1. TCGdex   (CDN livre, PT+EN, alta resolução)   ← PRIMÁRIA
-//   2. pokemontcg.io (CDN livre)                     ← SECUNDÁRIA
-//   3. Card back                                     ← FALLBACK
-//
-// Rate limits:
-//   assets.tcgdex.net     → sem limite
-//   images.pokemontcg.io  → sem limite
-//   api.tcgdex.net        → livre (cacheie)
-//   api.pokemontcg.io     → 1000/dia sem key | 20k/dia com key | 30 req/min
+// Regulation Marks (Standard 2026):
+//   D, E, F  → ROTACIONADAS
+//   G, H, I  → VÁLIDAS
+//   J        → próxima era (ainda não usada)
 // ============================================================================
 
 export type SetEra =
   | 'base' | 'ex' | 'dp' | 'hgss' | 'col' | 'bw' | 'xy'
   | 'sm' | 'swsh' | 'sv' | 'me' | 'tcgp' | 'anniv';
+
+export type RegulationMark = 'D' | 'E' | 'F' | 'G' | 'H' | 'I' | 'J';
 
 export interface SetSyncEntry {
   tpci: string;
@@ -32,200 +28,184 @@ export interface SetSyncEntry {
   namePt?: string;
   era: SetEra;
   isSubset?: boolean;
+  regulationMark?: RegulationMark;
 }
 
-type Row = [
-  tpci: string,
-  tcgdexSeries: string | null,
-  tcgdexSet: string | null,
-  ptcgIo: string | null,
-  name: string,
-  era: SetEra,
-  namePt?: string,
-  isSubset?: boolean,
-];
+// ============================================================================
+// TABELA COMPLETA — sincronizada com TCGdex + pokemontcg.io
+// ============================================================================
 
-const SET_SYNC_RAW: Row[] = [
-  // ===== BASE =====
-  ['BS',  'base', 'base1', 'base1', 'Base Set', 'base', 'Coleção Básica'],
-  ['JU',  'base', 'base2', 'base2', 'Jungle',   'base', 'Selva'],
-  ['FO',  'base', 'base3', 'base3', 'Fossil',   'base', 'Fóssil'],
+export const SET_SYNC_TABLE: SetSyncEntry[] = [
+  // ---------- BASE ----------
+  { tpci: 'BS', tcgdexSeries: 'base', tcgdexSet: 'base1', ptcgIo: 'base1', name: 'Base Set', namePt: 'Coleção Básica', era: 'base' },
+  { tpci: 'JU', tcgdexSeries: 'base', tcgdexSet: 'base2', ptcgIo: 'base2', name: 'Jungle', namePt: 'Selva', era: 'base' },
+  { tpci: 'FO', tcgdexSeries: 'base', tcgdexSet: 'base3', ptcgIo: 'base3', name: 'Fossil', namePt: 'Fóssil', era: 'base' },
 
-  // ===== EX =====
-  ['RS',  'ex', 'ex1',  'ex1',  'EX Ruby & Sapphire',        'ex', 'EX Rubi e Safira'],
-  ['SS',  'ex', 'ex2',  'ex2',  'EX Sandstorm',              'ex'],
-  ['DR',  'ex', 'ex3',  'ex3',  'EX Dragon',                 'ex'],
-  ['MA',  'ex', 'ex4',  'ex4',  'EX Team Magma vs Team Aqua','ex'],
-  ['HL',  'ex', 'ex5',  'ex5',  'EX Hidden Legends',         'ex'],
-  ['RG',  'ex', 'ex6',  'ex6',  'EX FireRed & LeafGreen',    'ex'],
-  ['TRR', 'ex', 'ex7',  'ex7',  'EX Team Rocket Returns',    'ex', 'EX O Retorno da Equipe Rocket'],
-  ['DX',  'ex', 'ex8',  'ex8',  'EX Deoxys',                 'ex', 'EX Deoxys'],
-  ['EM',  'ex', 'ex9',  'ex9',  'EX Emerald',                'ex', 'EX Esmeralda'],
-  ['UF',  'ex', 'ex10', 'ex10', 'EX Unseen Forces',          'ex', 'EX Forças Ocultas'],
-  ['DS',  'ex', 'ex11', 'ex11', 'EX Delta Species',          'ex'],
-  ['LM',  'ex', 'ex12', 'ex12', 'EX Legend Maker',           'ex'],
-  ['HP',  'ex', 'ex13', 'ex13', 'EX Holon Phantoms',         'ex'],
-  ['CG',  'ex', 'ex14', 'ex14', 'EX Crystal Guardians',      'ex'],
-  ['DF',  'ex', 'ex15', 'ex15', 'EX Dragon Frontiers',       'ex'],
-  ['PK',  'ex', 'ex16', 'ex16', 'EX Power Keepers',          'ex'],
+  // ---------- EX ----------
+  { tpci: 'RS',  tcgdexSeries: 'ex', tcgdexSet: 'ex1',  ptcgIo: 'ex1',  name: 'EX Ruby & Sapphire',         namePt: 'EX Rubi e Safira',       era: 'ex' },
+  { tpci: 'SS',  tcgdexSeries: 'ex', tcgdexSet: 'ex2',  ptcgIo: 'ex2',  name: 'EX Sandstorm',               era: 'ex' },
+  { tpci: 'DR',  tcgdexSeries: 'ex', tcgdexSet: 'ex3',  ptcgIo: 'ex3',  name: 'EX Dragon',                  era: 'ex' },
+  { tpci: 'MA',  tcgdexSeries: 'ex', tcgdexSet: 'ex4',  ptcgIo: 'ex4',  name: 'EX Team Magma vs Team Aqua', era: 'ex' },
+  { tpci: 'HL',  tcgdexSeries: 'ex', tcgdexSet: 'ex5',  ptcgIo: 'ex5',  name: 'EX Hidden Legends',          era: 'ex' },
+  { tpci: 'RG',  tcgdexSeries: 'ex', tcgdexSet: 'ex6',  ptcgIo: 'ex6',  name: 'EX FireRed & LeafGreen',     era: 'ex' },
+  { tpci: 'TRR', tcgdexSeries: 'ex', tcgdexSet: 'ex7',  ptcgIo: 'ex7',  name: 'EX Team Rocket Returns',     namePt: 'EX O Retorno da Equipe Rocket', era: 'ex' },
+  { tpci: 'DX',  tcgdexSeries: 'ex', tcgdexSet: 'ex8',  ptcgIo: 'ex8',  name: 'EX Deoxys',                  namePt: 'EX Deoxys',              era: 'ex' },
+  { tpci: 'EM',  tcgdexSeries: 'ex', tcgdexSet: 'ex9',  ptcgIo: 'ex9',  name: 'EX Emerald',                 namePt: 'EX Esmeralda',           era: 'ex' },
+  { tpci: 'UF',  tcgdexSeries: 'ex', tcgdexSet: 'ex10', ptcgIo: 'ex10', name: 'EX Unseen Forces',           namePt: 'EX Forças Ocultas',      era: 'ex' },
+  { tpci: 'DS',  tcgdexSeries: 'ex', tcgdexSet: 'ex11', ptcgIo: 'ex11', name: 'EX Delta Species',           era: 'ex' },
+  { tpci: 'LM',  tcgdexSeries: 'ex', tcgdexSet: 'ex12', ptcgIo: 'ex12', name: 'EX Legend Maker',            era: 'ex' },
+  { tpci: 'HP',  tcgdexSeries: 'ex', tcgdexSet: 'ex13', ptcgIo: 'ex13', name: 'EX Holon Phantoms',          era: 'ex' },
+  { tpci: 'CG',  tcgdexSeries: 'ex', tcgdexSet: 'ex14', ptcgIo: 'ex14', name: 'EX Crystal Guardians',       era: 'ex' },
+  { tpci: 'DF',  tcgdexSeries: 'ex', tcgdexSet: 'ex15', ptcgIo: 'ex15', name: 'EX Dragon Frontiers',        era: 'ex' },
+  { tpci: 'PK',  tcgdexSeries: 'ex', tcgdexSet: 'ex16', ptcgIo: 'ex16', name: 'EX Power Keepers',           era: 'ex' },
 
-  // ===== DP =====
-  ['DP', 'dp', 'dp1', 'dp1', 'Diamond & Pearl',      'dp', 'Diamante & Pérola'],
-  ['MT', 'dp', 'dp2', 'dp2', 'Mysterious Treasures', 'dp', 'Tesouros Misteriosos'],
-  ['SW', 'dp', 'dp3', 'dp3', 'Secret Wonders',       'dp', 'Maravilhas Secretas'],
-  ['GE', 'dp', 'dp4', 'dp4', 'Great Encounters',     'dp'],
-  ['MD', 'dp', 'dp5', 'dp5', 'Majestic Dawn',        'dp'],
-  ['LA', 'dp', 'dp6', 'dp6', 'Legends Awakened',     'dp'],
-  ['SF', 'dp', 'dp7', 'dp7', 'Stormfront',           'dp'],
+  // ---------- DP ----------
+  { tpci: 'DP', tcgdexSeries: 'dp', tcgdexSet: 'dp1', ptcgIo: 'dp1', name: 'Diamond & Pearl',      namePt: 'Diamante & Pérola',   era: 'dp' },
+  { tpci: 'MT', tcgdexSeries: 'dp', tcgdexSet: 'dp2', ptcgIo: 'dp2', name: 'Mysterious Treasures', namePt: 'Tesouros Misteriosos', era: 'dp' },
+  { tpci: 'SW', tcgdexSeries: 'dp', tcgdexSet: 'dp3', ptcgIo: 'dp3', name: 'Secret Wonders',       namePt: 'Maravilhas Secretas', era: 'dp' },
+  { tpci: 'GE', tcgdexSeries: 'dp', tcgdexSet: 'dp4', ptcgIo: 'dp4', name: 'Great Encounters',     era: 'dp' },
+  { tpci: 'MD', tcgdexSeries: 'dp', tcgdexSet: 'dp5', ptcgIo: 'dp5', name: 'Majestic Dawn',        era: 'dp' },
+  { tpci: 'LA', tcgdexSeries: 'dp', tcgdexSet: 'dp6', ptcgIo: 'dp6', name: 'Legends Awakened',     era: 'dp' },
+  { tpci: 'SF', tcgdexSeries: 'dp', tcgdexSet: 'dp7', ptcgIo: 'dp7', name: 'Stormfront',           era: 'dp' },
 
-  // ===== HGSS =====
-  ['HS', 'hgss', 'hgss1', 'hgss1', 'HeartGold SoulSilver', 'hgss', 'HeartGold SoulSilver'],
-  ['UL', 'hgss', 'hgss2', 'hgss2', 'Unleashed',            'hgss', 'Revelado'],
-  ['UD', 'hgss', 'hgss3', 'hgss3', 'Undaunted',            'hgss', 'Destemido'],
-  ['TM', 'hgss', 'hgss4', 'hgss4', 'Triumphant',           'hgss', 'Triunfante'],
+  // ---------- HGSS ----------
+  { tpci: 'HS', tcgdexSeries: 'hgss', tcgdexSet: 'hgss1', ptcgIo: 'hgss1', name: 'HeartGold SoulSilver', namePt: 'HeartGold SoulSilver', era: 'hgss' },
+  { tpci: 'UL', tcgdexSeries: 'hgss', tcgdexSet: 'hgss2', ptcgIo: 'hgss2', name: 'Unleashed',            namePt: 'Revelado',             era: 'hgss' },
+  { tpci: 'UD', tcgdexSeries: 'hgss', tcgdexSet: 'hgss3', ptcgIo: 'hgss3', name: 'Undaunted',            namePt: 'Destemido',            era: 'hgss' },
+  { tpci: 'TM', tcgdexSeries: 'hgss', tcgdexSet: 'hgss4', ptcgIo: 'hgss4', name: 'Triumphant',           namePt: 'Triunfante',           era: 'hgss' },
 
-  // ===== COL =====
-  ['CL', 'col', 'col1', 'col1', 'Call of Legends', 'col', 'Chamado das Lendas'],
+  // ---------- CoL ----------
+  { tpci: 'CL', tcgdexSeries: 'col', tcgdexSet: 'col1', ptcgIo: 'col1', name: 'Call of Legends', namePt: 'Chamado das Lendas', era: 'col' },
 
-  // ===== BW =====
-  ['BLW', 'bw', 'bw1',  'bw1',  'Black & White',         'bw', 'Black & White'],
-  ['EPO', 'bw', 'bw2',  'bw2',  'Emerging Powers',       'bw', 'Poderes Emergentes'],
-  ['NVI', 'bw', 'bw3',  'bw3',  'Noble Victories',       'bw', 'Vitórias Nobres'],
-  ['NXD', 'bw', 'bw4',  'bw4',  'Next Destinies',        'bw', 'Próximos Destinos'],
-  ['DEX', 'bw', 'bw5',  'bw5',  'Dark Explorers',        'bw', 'Exploradores da Escuridão'],
-  ['DRX', 'bw', 'bw6',  'bw6',  'Dragons Exalted',       'bw', 'Dragões Enaltecidos'],
-  ['DRV', 'bw', 'dv1',  'dv1',  'Dragon Vault',          'bw', 'Cofre do Dragão'],
-  ['BCR', 'bw', 'bw7',  'bw7',  'Boundaries Crossed',    'bw', 'Fronteiras Cruzadas'],
-  ['PLS', 'bw', 'bw8',  'bw8',  'Plasma Storm',          'bw', 'Tempestade de Plasma'],
-  ['PLF', 'bw', 'bw9',  'bw9',  'Plasma Freeze',         'bw', 'Congelamento de Plasma'],
-  ['PLB', 'bw', 'bw10', 'bw10', 'Plasma Blast',          'bw', 'Explosão de Plasma'],
-  ['LTR', 'bw', 'bw11', 'bw11', 'Legendary Treasures',   'bw', 'Tesouros Lendários'],
+  // ---------- BW ----------
+  { tpci: 'BLW', tcgdexSeries: 'bw', tcgdexSet: 'bw1',  ptcgIo: 'bw1',  name: 'Black & White',       namePt: 'Black & White',              era: 'bw' },
+  { tpci: 'EPO', tcgdexSeries: 'bw', tcgdexSet: 'bw2',  ptcgIo: 'bw2',  name: 'Emerging Powers',     namePt: 'Poderes Emergentes',         era: 'bw' },
+  { tpci: 'NVI', tcgdexSeries: 'bw', tcgdexSet: 'bw3',  ptcgIo: 'bw3',  name: 'Noble Victories',     namePt: 'Vitórias Nobres',            era: 'bw' },
+  { tpci: 'NXD', tcgdexSeries: 'bw', tcgdexSet: 'bw4',  ptcgIo: 'bw4',  name: 'Next Destinies',      namePt: 'Próximos Destinos',          era: 'bw' },
+  { tpci: 'DEX', tcgdexSeries: 'bw', tcgdexSet: 'bw5',  ptcgIo: 'bw5',  name: 'Dark Explorers',      namePt: 'Exploradores da Escuridão',  era: 'bw' },
+  { tpci: 'DRX', tcgdexSeries: 'bw', tcgdexSet: 'bw6',  ptcgIo: 'bw6',  name: 'Dragons Exalted',     namePt: 'Dragões Enaltecidos',        era: 'bw' },
+  { tpci: 'DRV', tcgdexSeries: 'bw', tcgdexSet: 'dv1',  ptcgIo: 'dv1',  name: 'Dragon Vault',        namePt: 'Cofre do Dragão',            era: 'bw' },
+  { tpci: 'BCR', tcgdexSeries: 'bw', tcgdexSet: 'bw7',  ptcgIo: 'bw7',  name: 'Boundaries Crossed',  namePt: 'Fronteiras Cruzadas',        era: 'bw' },
+  { tpci: 'PLS', tcgdexSeries: 'bw', tcgdexSet: 'bw8',  ptcgIo: 'bw8',  name: 'Plasma Storm',        namePt: 'Tempestade de Plasma',       era: 'bw' },
+  { tpci: 'PLF', tcgdexSeries: 'bw', tcgdexSet: 'bw9',  ptcgIo: 'bw9',  name: 'Plasma Freeze',       namePt: 'Congelamento de Plasma',     era: 'bw' },
+  { tpci: 'PLB', tcgdexSeries: 'bw', tcgdexSet: 'bw10', ptcgIo: 'bw10', name: 'Plasma Blast',        namePt: 'Explosão de Plasma',         era: 'bw' },
+  { tpci: 'LTR', tcgdexSeries: 'bw', tcgdexSet: 'bw11', ptcgIo: 'bw11', name: 'Legendary Treasures', namePt: 'Tesouros Lendários',         era: 'bw' },
 
-  // ===== XY =====
-  ['KSS', 'xy', 'xy0',  'xy0',  'Kalos Starter Set', 'xy', 'Conjunto para Iniciantes Kalos'],
-  ['XY',  'xy', 'xy1',  'xy1',  'XY',                'xy', 'XY'],
-  ['FLF', 'xy', 'xy2',  'xy2',  'Flashfire',         'xy', 'Flash de Fogo'],
-  ['FFI', 'xy', 'xy3',  'xy3',  'Furious Fists',     'xy', 'Punhos Furiosos'],
-  ['PHF', 'xy', 'xy4',  'xy4',  'Phantom Forces',    'xy', 'Força Fantasma'],
-  ['PRC', 'xy', 'xy5',  'xy5',  'Primal Clash',      'xy', 'Conflito Primitivo'],
-  ['DCR', 'xy', 'dc1',  'dc1',  'Double Crisis',     'xy', 'Crise Dupla'],
-  ['ROS', 'xy', 'xy6',  'xy6',  'Roaring Skies',     'xy', 'Céus Estrondosos'],
-  ['AOR', 'xy', 'xy7',  'xy7',  'Ancient Origins',   'xy', 'Origens Ancestrais'],
-  ['BKT', 'xy', 'xy8',  'xy8',  'BREAKthrough',      'xy', 'Turbo Revolução'],
-  ['BKP', 'xy', 'xy9',  'xy9',  'BREAKpoint',        'xy', 'Turbo Colisão'],
-  ['GEN', 'xy', 'g1',   'g1',   'Generations',       'xy', 'Gerações'],
-  ['FCO', 'xy', 'xy10', 'xy10', 'Fates Collide',     'xy', 'Fusão de Destinos'],
-  ['STS', 'xy', 'xy11', 'xy11', 'Steam Siege',       'xy', 'Cerco de Vapor'],
-  ['EVO', 'xy', 'xy12', 'xy12', 'Evolutions',        'xy', 'Evoluções'],
+  // ---------- XY ----------
+  { tpci: 'KSS', tcgdexSeries: 'xy', tcgdexSet: 'xy0',  ptcgIo: 'xy0',  name: 'Kalos Starter Set', namePt: 'Conjunto para Iniciantes Kalos', era: 'xy' },
+  { tpci: 'XY',  tcgdexSeries: 'xy', tcgdexSet: 'xy1',  ptcgIo: 'xy1',  name: 'XY',                namePt: 'XY',                             era: 'xy' },
+  { tpci: 'FLF', tcgdexSeries: 'xy', tcgdexSet: 'xy2',  ptcgIo: 'xy2',  name: 'Flashfire',         namePt: 'Flash de Fogo',                  era: 'xy' },
+  { tpci: 'FFI', tcgdexSeries: 'xy', tcgdexSet: 'xy3',  ptcgIo: 'xy3',  name: 'Furious Fists',     namePt: 'Punhos Furiosos',                era: 'xy' },
+  { tpci: 'PHF', tcgdexSeries: 'xy', tcgdexSet: 'xy4',  ptcgIo: 'xy4',  name: 'Phantom Forces',    namePt: 'Força Fantasma',                 era: 'xy' },
+  { tpci: 'PRC', tcgdexSeries: 'xy', tcgdexSet: 'xy5',  ptcgIo: 'xy5',  name: 'Primal Clash',      namePt: 'Conflito Primitivo',             era: 'xy' },
+  { tpci: 'DCR', tcgdexSeries: 'xy', tcgdexSet: 'dc1',  ptcgIo: 'dc1',  name: 'Double Crisis',     namePt: 'Crise Dupla',                    era: 'xy' },
+  { tpci: 'ROS', tcgdexSeries: 'xy', tcgdexSet: 'xy6',  ptcgIo: 'xy6',  name: 'Roaring Skies',     namePt: 'Céus Estrondosos',               era: 'xy' },
+  { tpci: 'AOR', tcgdexSeries: 'xy', tcgdexSet: 'xy7',  ptcgIo: 'xy7',  name: 'Ancient Origins',   namePt: 'Origens Ancestrais',             era: 'xy' },
+  { tpci: 'BKT', tcgdexSeries: 'xy', tcgdexSet: 'xy8',  ptcgIo: 'xy8',  name: 'BREAKthrough',      namePt: 'Turbo Revolução',                era: 'xy' },
+  { tpci: 'BKP', tcgdexSeries: 'xy', tcgdexSet: 'xy9',  ptcgIo: 'xy9',  name: 'BREAKpoint',        namePt: 'Turbo Colisão',                  era: 'xy' },
+  { tpci: 'GEN', tcgdexSeries: 'xy', tcgdexSet: 'g1',   ptcgIo: 'g1',   name: 'Generations',       namePt: 'Gerações',                       era: 'xy' },
+  { tpci: 'FCO', tcgdexSeries: 'xy', tcgdexSet: 'xy10', ptcgIo: 'xy10', name: 'Fates Collide',     namePt: 'Fusão de Destinos',              era: 'xy' },
+  { tpci: 'STS', tcgdexSeries: 'xy', tcgdexSet: 'xy11', ptcgIo: 'xy11', name: 'Steam Siege',       namePt: 'Cerco de Vapor',                 era: 'xy' },
+  { tpci: 'EVO', tcgdexSeries: 'xy', tcgdexSet: 'xy12', ptcgIo: 'xy12', name: 'Evolutions',        namePt: 'Evoluções',                      era: 'xy' },
 
-  // ===== SM =====
-  ['SUM',    'sm', 'sm1',   'sm1',   'Sun & Moon',            'sm', 'Sol e Lua'],
-  ['PR-SM',  'sm', 'smp',   'smp',   'Sun & Moon Promos',     'sm', 'Sol e Lua Promos'],
-  ['GRI',    'sm', 'sm2',   'sm2',   'Guardians Rising',      'sm', 'Guardiões Ascendentes'],
-  ['BUS',    'sm', 'sm3',   'sm3',   'Burning Shadows',       'sm', 'Sombras Ardentes'],
-  ['SLG',    'sm', 'sm3.5', 'sm35',  'Shining Legends',       'sm', 'Lendas Luminescentes'],
-  ['CIN',    'sm', 'sm4',   'sm4',   'Crimson Invasion',      'sm', 'Invasão Carmim'],
-  ['UPR',    'sm', 'sm5',   'sm5',   'Ultra Prism',           'sm', 'Ultra Prisma'],
-  ['FLI',    'sm', 'sm6',   'sm6',   'Forbidden Light',       'sm', 'Luz Proibida'],
-  ['CES',    'sm', 'sm7',   'sm7',   'Celestial Storm',       'sm', 'Tempestade Celestial'],
-  ['DRM',    'sm', 'sm7.5', 'sm75',  'Dragon Majesty',        'sm', 'Dragões Soberanos'],
-  ['LOT',    'sm', 'sm8',   'sm8',   'Lost Thunder',          'sm', 'Trovões Perdidos'],
-  ['TEU',    'sm', 'sm9',   'sm9',   'Team Up',               'sm', 'União de Aliados'],
-  ['DET',    'sm', 'det1',  'det1',  'Detective Pikachu',     'sm', 'Detetive Pikachu'],
-  ['UNB',    'sm', 'sm10',  'sm10',  'Unbroken Bonds',        'sm', 'Elos Inquebráveis'],
-  ['UNM',    'sm', 'sm11',  'sm11',  'Unified Minds',         'sm', 'Sintonia Mental'],
-  ['HIF-SV', 'sm', 'sma',   'sma',   'Hidden Fates Shiny Vault','sm','Destinos Ocultos Cofre Brilhante'],
-  ['HIF',    'sm', 'sm115', 'sm115', 'Hidden Fates',          'sm', 'Destinos Ocultos'],
-  ['CEC',    'sm', 'sm12',  'sm12',  'Cosmic Eclipse',        'sm', 'Eclipse Cósmico'],
+  // ---------- SM ----------
+  { tpci: 'SUM',    tcgdexSeries: 'sm', tcgdexSet: 'sm1',   ptcgIo: 'sm1',   name: 'Sun & Moon',            namePt: 'Sol e Lua',                           era: 'sm', regulationMark: 'D' },
+  { tpci: 'PR-SM',  tcgdexSeries: 'sm', tcgdexSet: 'smp',   ptcgIo: 'smp',   name: 'Sun & Moon Promos',     namePt: 'Sol e Lua Promos',                    era: 'sm', regulationMark: 'D' },
+  { tpci: 'GRI',    tcgdexSeries: 'sm', tcgdexSet: 'sm2',   ptcgIo: 'sm2',   name: 'Guardians Rising',      namePt: 'Guardiões Ascendentes',               era: 'sm', regulationMark: 'D' },
+  { tpci: 'BUS',    tcgdexSeries: 'sm', tcgdexSet: 'sm3',   ptcgIo: 'sm3',   name: 'Burning Shadows',       namePt: 'Sombras Ardentes',                    era: 'sm', regulationMark: 'D' },
+  { tpci: 'SLG',    tcgdexSeries: 'sm', tcgdexSet: 'sm3.5', ptcgIo: 'sm35',  name: 'Shining Legends',       namePt: 'Lendas Luminescentes',                era: 'sm', regulationMark: 'D' },
+  { tpci: 'CIN',    tcgdexSeries: 'sm', tcgdexSet: 'sm4',   ptcgIo: 'sm4',   name: 'Crimson Invasion',      namePt: 'Invasão Carmim',                      era: 'sm', regulationMark: 'D' },
+  { tpci: 'UPR',    tcgdexSeries: 'sm', tcgdexSet: 'sm5',   ptcgIo: 'sm5',   name: 'Ultra Prism',           namePt: 'Ultra Prisma',                        era: 'sm', regulationMark: 'E' },
+  { tpci: 'FLI',    tcgdexSeries: 'sm', tcgdexSet: 'sm6',   ptcgIo: 'sm6',   name: 'Forbidden Light',       namePt: 'Luz Proibida',                        era: 'sm', regulationMark: 'E' },
+  { tpci: 'CES',    tcgdexSeries: 'sm', tcgdexSet: 'sm7',   ptcgIo: 'sm7',   name: 'Celestial Storm',       namePt: 'Tempestade Celestial',                era: 'sm', regulationMark: 'E' },
+  { tpci: 'DRM',    tcgdexSeries: 'sm', tcgdexSet: 'sm7.5', ptcgIo: 'sm75',  name: 'Dragon Majesty',        namePt: 'Dragões Soberanos',                   era: 'sm', regulationMark: 'E' },
+  { tpci: 'LOT',    tcgdexSeries: 'sm', tcgdexSet: 'sm8',   ptcgIo: 'sm8',   name: 'Lost Thunder',          namePt: 'Trovões Perdidos',                    era: 'sm', regulationMark: 'E' },
+  { tpci: 'TEU',    tcgdexSeries: 'sm', tcgdexSet: 'sm9',   ptcgIo: 'sm9',   name: 'Team Up',               namePt: 'União de Aliados',                    era: 'sm', regulationMark: 'E' },
+  { tpci: 'DET',    tcgdexSeries: 'sm', tcgdexSet: 'det1',  ptcgIo: 'det1',  name: 'Detective Pikachu',     namePt: 'Detetive Pikachu',                    era: 'sm', regulationMark: 'E' },
+  { tpci: 'UNB',    tcgdexSeries: 'sm', tcgdexSet: 'sm10',  ptcgIo: 'sm10',  name: 'Unbroken Bonds',        namePt: 'Elos Inquebráveis',                   era: 'sm', regulationMark: 'E' },
+  { tpci: 'UNM',    tcgdexSeries: 'sm', tcgdexSet: 'sm11',  ptcgIo: 'sm11',  name: 'Unified Minds',         namePt: 'Sintonia Mental',                     era: 'sm', regulationMark: 'E' },
+  { tpci: 'HIF-SV', tcgdexSeries: 'sm', tcgdexSet: 'sma',   ptcgIo: 'sma',   name: 'Hidden Fates Shiny Vault', namePt: 'Destinos Ocultos Cofre Brilhante', era: 'sm', regulationMark: 'E', isSubset: true },
+  { tpci: 'HIF',    tcgdexSeries: 'sm', tcgdexSet: 'sm115', ptcgIo: 'sm115', name: 'Hidden Fates',          namePt: 'Destinos Ocultos',                    era: 'sm', regulationMark: 'E' },
+  { tpci: 'CEC',    tcgdexSeries: 'sm', tcgdexSet: 'sm12',  ptcgIo: 'sm12',  name: 'Cosmic Eclipse',        namePt: 'Eclipse Cósmico',                     era: 'sm', regulationMark: 'E' },
 
-  // ===== SWSH =====
-  ['PR-SW',  'swsh', 'swshp',      'swshp',      'SWSH Black Star Promos',           'swsh', 'ESES Promos'],
-  ['SSH',    'swsh', 'swsh1',      'swsh1',      'Sword & Shield',                   'swsh', 'Espada e Escudo'],
-  ['RCL',    'swsh', 'swsh2',      'swsh2',      'Rebel Clash',                      'swsh', 'Rixa Rebelde'],
-  ['DAA',    'swsh', 'swsh3',      'swsh3',      'Darkness Ablaze',                  'swsh', 'Escuridão Incandescente'],
-  ['CPA',    'swsh', 'swsh3.5',    'swsh35',     "Champion's Path",                  'swsh', 'Caminho do Campeão'],
-  ['VIV',    'swsh', 'swsh4',      'swsh4',      'Vivid Voltage',                    'swsh', 'Voltagem Vívida'],
-  ['SHF',    'swsh', 'swsh4.5',    'swsh45',     'Shining Fates',                    'swsh', 'Destinos Brilhantes'],
-  ['SHF-SV', 'swsh', 'swsh4.5sv',  'swsh45sv',   'Shining Fates Shiny Vault',        'swsh', undefined, true],
-  ['BST',    'swsh', 'swsh5',      'swsh5',      'Battle Styles',                    'swsh', 'Estilos de Batalha'],
-  ['CRE',    'swsh', 'swsh6',      'swsh6',      'Chilling Reign',                   'swsh', 'Reinado Arrepiante'],
-  ['EVS',    'swsh', 'swsh7',      'swsh7',      'Evolving Skies',                   'swsh', 'Céus em Evolução'],
-  ['CEL-CC', 'swsh', 'cel25cc',    'cel25cc',    'Celebrations Classic Collection',  'swsh', 'Celebrações Coleção Clássica', true],
-  ['CEL',    'swsh', 'cel25',      'cel25',      'Celebrations',                     'swsh', 'Celebrações'],
-  ['FST',    'swsh', 'swsh8',      'swsh8',      'Fusion Strike',                    'swsh', 'Golpe Fusão'],
-  ['BRS-TG', 'swsh', 'swsh9tg',    'swsh9tg',    'Brilliant Stars Trainer Gallery',  'swsh', 'Astros Cintilantes Galeria de Treinador', true],
-  ['BRS',    'swsh', 'swsh9',      'swsh9',      'Brilliant Stars',                  'swsh', 'Astros Cintilantes'],
-  ['ASR',    'swsh', 'swsh10',     'swsh10',     'Astral Radiance',                  'swsh', 'Estrelas Radiantes'],
-  ['ASR-TG', 'swsh', 'swsh10tg',   'swsh10tg',   'Astral Radiance Trainer Gallery',  'swsh', 'Estrelas Radiantes Galeria de Treinador', true],
-  ['PGO',    'swsh', 'swsh10.5',   'pgo',        'Pokémon GO',                       'swsh', 'Pokémon GO'],
-  ['LOR',    'swsh', 'swsh11',     'swsh11',     'Lost Origin',                      'swsh', 'Origem Perdida'],
-  ['LOR-TG', 'swsh', 'swsh11tg',   'swsh11tg',   'Lost Origin Trainer Gallery',      'swsh', 'Origem Perdida Galeria de Treinador', true],
-  ['SIT',    'swsh', 'swsh12',     'swsh12',     'Silver Tempest',                   'swsh', 'Tempestade Prateada'],
-  ['SIT-TG', 'swsh', 'swsh12tg',   'swsh12tg',   'Silver Tempest Trainer Gallery',   'swsh', 'Tempestade Prateada Galeria de Treinador', true],
-  ['CRZ',    'swsh', 'swsh12.5',   'swsh12pt5',  'Crown Zenith',                     'swsh', 'Realeza Absoluta'],
-  ['CRZ-GG', 'swsh', 'swsh12.5gg', 'swsh12pt5gg','Crown Zenith Galarian Gallery',    'swsh', 'Realeza Absoluta Galeria de Galar', true],
+  // ---------- SWSH ----------
+  { tpci: 'PR-SW',  tcgdexSeries: 'swsh', tcgdexSet: 'swshp',      ptcgIo: 'swshp',      name: 'SWSH Black Star Promos',        namePt: 'ESES Promos',                              era: 'swsh', regulationMark: 'D' },
+  { tpci: 'SSH',    tcgdexSeries: 'swsh', tcgdexSet: 'swsh1',      ptcgIo: 'swsh1',      name: 'Sword & Shield',                namePt: 'Espada e Escudo',                          era: 'swsh', regulationMark: 'D' },
+  { tpci: 'RCL',    tcgdexSeries: 'swsh', tcgdexSet: 'swsh2',      ptcgIo: 'swsh2',      name: 'Rebel Clash',                   namePt: 'Rixa Rebelde',                             era: 'swsh', regulationMark: 'D' },
+  { tpci: 'DAA',    tcgdexSeries: 'swsh', tcgdexSet: 'swsh3',      ptcgIo: 'swsh3',      name: 'Darkness Ablaze',               namePt: 'Escuridão Incandescente',                  era: 'swsh', regulationMark: 'D' },
+  { tpci: 'CPA',    tcgdexSeries: 'swsh', tcgdexSet: 'swsh3.5',    ptcgIo: 'swsh35',     name: "Champion's Path",               namePt: 'Caminho do Campeão',                       era: 'swsh', regulationMark: 'D' },
+  { tpci: 'VIV',    tcgdexSeries: 'swsh', tcgdexSet: 'swsh4',      ptcgIo: 'swsh4',      name: 'Vivid Voltage',                 namePt: 'Voltagem Vívida',                          era: 'swsh', regulationMark: 'D' },
+  { tpci: 'SHF',    tcgdexSeries: 'swsh', tcgdexSet: 'swsh4.5',    ptcgIo: 'swsh45',     name: 'Shining Fates',                 namePt: 'Destinos Brilhantes',                      era: 'swsh', regulationMark: 'D' },
+  { tpci: 'SHF-SV', tcgdexSeries: 'swsh', tcgdexSet: 'swsh4.5sv',  ptcgIo: 'swsh45sv',   name: 'Shining Fates Shiny Vault',     era: 'swsh', regulationMark: 'D', isSubset: true },
+  { tpci: 'BST',    tcgdexSeries: 'swsh', tcgdexSet: 'swsh5',      ptcgIo: 'swsh5',      name: 'Battle Styles',                 namePt: 'Estilos de Batalha',                       era: 'swsh', regulationMark: 'E' },
+  { tpci: 'CRE',    tcgdexSeries: 'swsh', tcgdexSet: 'swsh6',      ptcgIo: 'swsh6',      name: 'Chilling Reign',                namePt: 'Reinado Arrepiante',                       era: 'swsh', regulationMark: 'E' },
+  { tpci: 'EVS',    tcgdexSeries: 'swsh', tcgdexSet: 'swsh7',      ptcgIo: 'swsh7',      name: 'Evolving Skies',                namePt: 'Céus em Evolução',                         era: 'swsh', regulationMark: 'E' },
+  { tpci: 'CEL-CC', tcgdexSeries: 'swsh', tcgdexSet: 'cel25cc',    ptcgIo: 'cel25cc',    name: 'Celebrations Classic Collection', namePt: 'Celebrações Coleção Clássica',           era: 'swsh', regulationMark: 'D', isSubset: true },
+  { tpci: 'CEL',    tcgdexSeries: 'swsh', tcgdexSet: 'cel25',      ptcgIo: 'cel25',      name: 'Celebrations',                  namePt: 'Celebrações',                              era: 'swsh', regulationMark: 'D' },
+  { tpci: 'FST',    tcgdexSeries: 'swsh', tcgdexSet: 'swsh8',      ptcgIo: 'swsh8',      name: 'Fusion Strike',                 namePt: 'Golpe Fusão',                              era: 'swsh', regulationMark: 'E' },
+  { tpci: 'BRS-TG', tcgdexSeries: 'swsh', tcgdexSet: 'swsh9tg',    ptcgIo: 'swsh9tg',    name: 'Brilliant Stars Trainer Gallery', namePt: 'Astros Cintilantes Galeria de Treinador', era: 'swsh', regulationMark: 'F', isSubset: true },
+  { tpci: 'BRS',    tcgdexSeries: 'swsh', tcgdexSet: 'swsh9',      ptcgIo: 'swsh9',      name: 'Brilliant Stars',               namePt: 'Astros Cintilantes',                       era: 'swsh', regulationMark: 'F' },
+  { tpci: 'ASR',    tcgdexSeries: 'swsh', tcgdexSet: 'swsh10',     ptcgIo: 'swsh10',     name: 'Astral Radiance',               namePt: 'Estrelas Radiantes',                       era: 'swsh', regulationMark: 'F' },
+  { tpci: 'ASR-TG', tcgdexSeries: 'swsh', tcgdexSet: 'swsh10tg',   ptcgIo: 'swsh10tg',   name: 'Astral Radiance Trainer Gallery', namePt: 'Estrelas Radiantes Galeria de Treinador', era: 'swsh', regulationMark: 'F', isSubset: true },
+  { tpci: 'PGO',    tcgdexSeries: 'swsh', tcgdexSet: 'swsh10.5',   ptcgIo: 'pgo',        name: 'Pokémon GO',                    namePt: 'Pokémon GO',                               era: 'swsh', regulationMark: 'F' },
+  { tpci: 'LOR',    tcgdexSeries: 'swsh', tcgdexSet: 'swsh11',     ptcgIo: 'swsh11',     name: 'Lost Origin',                   namePt: 'Origem Perdida',                           era: 'swsh', regulationMark: 'F' },
+  { tpci: 'LOR-TG', tcgdexSeries: 'swsh', tcgdexSet: 'swsh11tg',   ptcgIo: 'swsh11tg',   name: 'Lost Origin Trainer Gallery',   namePt: 'Origem Perdida Galeria de Treinador',      era: 'swsh', regulationMark: 'F', isSubset: true },
+  { tpci: 'SIT',    tcgdexSeries: 'swsh', tcgdexSet: 'swsh12',     ptcgIo: 'swsh12',     name: 'Silver Tempest',                namePt: 'Tempestade Prateada',                      era: 'swsh', regulationMark: 'F' },
+  { tpci: 'SIT-TG', tcgdexSeries: 'swsh', tcgdexSet: 'swsh12tg',   ptcgIo: 'swsh12tg',   name: 'Silver Tempest Trainer Gallery', namePt: 'Tempestade Prateada Galeria de Treinador', era: 'swsh', regulationMark: 'F', isSubset: true },
+  { tpci: 'CRZ',    tcgdexSeries: 'swsh', tcgdexSet: 'swsh12.5',   ptcgIo: 'swsh12pt5',  name: 'Crown Zenith',                  namePt: 'Realeza Absoluta',                         era: 'swsh', regulationMark: 'F' },
+  { tpci: 'CRZ-GG', tcgdexSeries: 'swsh', tcgdexSet: 'swsh12.5gg', ptcgIo: 'swsh12pt5gg',name: 'Crown Zenith Galarian Gallery', namePt: 'Realeza Absoluta Galeria de Galar',        era: 'swsh', regulationMark: 'F', isSubset: true },
 
-  // ===== SV (Scarlet & Violet era) =====
-  ['SVI', 'sv', 'sv01',    'sv1',    'Scarlet & Violet',       'sv', 'Escarlate e Violeta'],
-  ['SVE', 'sv', 'sve',     'sve',    'SV Energies',            'sv', 'Escarlate e Violeta Energia'],
-  ['SVP', 'sv', 'svp',     'svp',    'SV Black Star Promos',   'sv', 'SVP Black Star Promos'],
-  ['PAL', 'sv', 'sv02',    'sv2',    'Paldea Evolved',         'sv', 'Evoluções em Paldea'],
-  ['OBF', 'sv', 'sv03',    'sv3',    'Obsidian Flames',        'sv', 'Obsidiana em Chamas'],
-  ['MEW', 'sv', 'sv03.5',  'sv3pt5', '151',                    'sv', '151'],
-  ['PAR', 'sv', 'sv04',    'sv4',    'Paradox Rift',           'sv', 'Fenda Paradoxal'],
-  ['PAF', 'sv', 'sv04.5',  'sv4pt5', 'Paldean Fates',          'sv', 'Destinos de Paldea'],
-  ['TEF', 'sv', 'sv05',    'sv5',    'Temporal Forces',        'sv', 'Forças Temporais'],
-  ['TWM', 'sv', 'sv06',    'sv6',    'Twilight Masquerade',    'sv', 'Máscaras do Crepúsculo'],
-  ['SFA', 'sv', 'sv06.5',  'sv6pt5', 'Shrouded Fable',         'sv', 'Fábulas Nebulosas'],
-  ['SCR', 'sv', 'sv07',    'sv7',    'Stellar Crown',          'sv', 'Coroa Estelar'],
-  ['SSP', 'sv', 'sv08',    'sv8',    'Surging Sparks',         'sv', 'Fagulhas Impetuosas'],
-  ['PRE', 'sv', 'sv08.5',  'sv8pt5', 'Prismatic Evolutions',   'sv', 'Evoluções Prismáticas'],
-  ['JTG', 'sv', 'sv09',    'sv9',    'Journey Together',       'sv', 'Amigos de Jornada'],
-  ['DRI', 'sv', 'sv10',    'sv10',   'Destined Rivals',        'sv', 'Rivais Predestinados'],
-  ['BLK', 'sv', 'sv10.5b', 'sv10pt5b','Black Bolt',            'sv', 'Raio Preto'],
-  ['WHT', 'sv', 'sv10.5w', 'sv10pt5w','White Flare',           'sv', 'Fogo Branco'],
+  // ---------- SV — Scarlet & Violet ----------
+  { tpci: 'SVI', tcgdexSeries: 'sv', tcgdexSet: 'sv01',    ptcgIo: 'sv1',    name: 'Scarlet & Violet',     namePt: 'Escarlate e Violeta',          era: 'sv', regulationMark: 'G' },
+  { tpci: 'SVE', tcgdexSeries: 'sv', tcgdexSet: 'sve',     ptcgIo: 'sve',    name: 'SV Energies',          namePt: 'Escarlate e Violeta Energia',  era: 'sv', regulationMark: 'G' },
+  { tpci: 'SVP', tcgdexSeries: 'sv', tcgdexSet: 'svp',     ptcgIo: 'svp',    name: 'SV Black Star Promos', namePt: 'SVP Black Star Promos',        era: 'sv', regulationMark: 'G' },
+  { tpci: 'PAL', tcgdexSeries: 'sv', tcgdexSet: 'sv02',    ptcgIo: 'sv2',    name: 'Paldea Evolved',       namePt: 'Evoluções em Paldea',          era: 'sv', regulationMark: 'G' },
+  { tpci: 'OBF', tcgdexSeries: 'sv', tcgdexSet: 'sv03',    ptcgIo: 'sv3',    name: 'Obsidian Flames',      namePt: 'Obsidiana em Chamas',          era: 'sv', regulationMark: 'G' },
+  { tpci: 'MEW', tcgdexSeries: 'sv', tcgdexSet: 'sv03.5',  ptcgIo: 'sv3pt5', name: '151',                  namePt: '151',                          era: 'sv', regulationMark: 'G' },
+  { tpci: 'PAR', tcgdexSeries: 'sv', tcgdexSet: 'sv04',    ptcgIo: 'sv4',    name: 'Paradox Rift',         namePt: 'Fenda Paradoxal',              era: 'sv', regulationMark: 'G' },
+  { tpci: 'PAF', tcgdexSeries: 'sv', tcgdexSet: 'sv04.5',  ptcgIo: 'sv4pt5', name: 'Paldean Fates',        namePt: 'Destinos de Paldea',           era: 'sv', regulationMark: 'G' },
+  { tpci: 'TEF', tcgdexSeries: 'sv', tcgdexSet: 'sv05',    ptcgIo: 'sv5',    name: 'Temporal Forces',      namePt: 'Forças Temporais',             era: 'sv', regulationMark: 'H' },
+  { tpci: 'TWM', tcgdexSeries: 'sv', tcgdexSet: 'sv06',    ptcgIo: 'sv6',    name: 'Twilight Masquerade',  namePt: 'Máscaras do Crepúsculo',       era: 'sv', regulationMark: 'H' },
+  { tpci: 'SFA', tcgdexSeries: 'sv', tcgdexSet: 'sv06.5',  ptcgIo: 'sv6pt5', name: 'Shrouded Fable',       namePt: 'Fábulas Nebulosas',            era: 'sv', regulationMark: 'H' },
+  { tpci: 'SCR', tcgdexSeries: 'sv', tcgdexSet: 'sv07',    ptcgIo: 'sv7',    name: 'Stellar Crown',        namePt: 'Coroa Estelar',                era: 'sv', regulationMark: 'H' },
+  { tpci: 'SSP', tcgdexSeries: 'sv', tcgdexSet: 'sv08',    ptcgIo: 'sv8',    name: 'Surging Sparks',       namePt: 'Fagulhas Impetuosas',          era: 'sv', regulationMark: 'H' },
+  { tpci: 'PRE', tcgdexSeries: 'sv', tcgdexSet: 'sv08.5',  ptcgIo: 'sv8pt5', name: 'Prismatic Evolutions', namePt: 'Evoluções Prismáticas',        era: 'sv', regulationMark: 'H' },
+  { tpci: 'JTG', tcgdexSeries: 'sv', tcgdexSet: 'sv09',    ptcgIo: 'sv9',    name: 'Journey Together',     namePt: 'Amigos de Jornada',            era: 'sv', regulationMark: 'I' },
+  { tpci: 'DRI', tcgdexSeries: 'sv', tcgdexSet: 'sv10',    ptcgIo: 'sv10',   name: 'Destined Rivals',      namePt: 'Rivais Predestinados',         era: 'sv', regulationMark: 'I' },
+  { tpci: 'BLK', tcgdexSeries: 'sv', tcgdexSet: 'sv10.5b', ptcgIo: 'sv10pt5b', name: 'Black Bolt',         namePt: 'Raio Preto',                   era: 'sv', regulationMark: 'I' },
+  { tpci: 'WHT', tcgdexSeries: 'sv', tcgdexSet: 'sv10.5w', ptcgIo: 'sv10pt5w', name: 'White Flare',        namePt: 'Fogo Branco',                  era: 'sv', regulationMark: 'I' },
 
-  // ===== ME (Mega Evolution era) =====
-  ['MEE',   'me', 'mee',    null,   'Mega Evolution Energy',  'me', 'Megaevolução Energia'],
-  ['MEG',   'me', 'me01',   'me1',  'Mega Evolution',         'me', 'Megaevolução'],
-  ['PR-ME', 'me', 'mep',    'mep',  'MEP Black Star Promos',  'me', 'MEP Black Star Promos'],
-  ['PFL',   'me', 'me02',   'me2',  'Phantasmal Flames',      'me', 'Fogo Fantasmagórico'],
-  ['ASC',   'me', 'me02.5', 'me2pt5','Ascended Heroes',       'me', 'Heróis Excelsos'],
-  ['POR',   'me', 'me03',   'me3',  'Perfect Order',          'me', 'Equilíbrio Perfeito'],
-  ['CRI',   'me', 'me04',   'me4',  'Chaos Rising',           'me', 'Caos Ascendente'],
-  ['PBL',   'me', 'me05',   'me5',  'Pitch Black',            'me', 'Escuridão Absoluta'],
+  // ---------- ME — Mega Evolution ----------
+  { tpci: 'MEE',   tcgdexSeries: 'me', tcgdexSet: 'mee',    ptcgIo: null,   name: 'Mega Evolution Energy',  namePt: 'Megaevolução Energia',    era: 'me', regulationMark: 'I' },
+  { tpci: 'MEG',   tcgdexSeries: 'me', tcgdexSet: 'me01',   ptcgIo: 'me1',  name: 'Mega Evolution',         namePt: 'Megaevolução',            era: 'me', regulationMark: 'I' },
+  { tpci: 'PR-ME', tcgdexSeries: 'me', tcgdexSet: 'mep',    ptcgIo: 'mep',  name: 'MEP Black Star Promos',  namePt: 'MEP Black Star Promos',   era: 'me', regulationMark: 'I' },
+  { tpci: 'PFL',   tcgdexSeries: 'me', tcgdexSet: 'me02',   ptcgIo: 'me2',  name: 'Phantasmal Flames',      namePt: 'Fogo Fantasmagórico',     era: 'me', regulationMark: 'I' },
+  { tpci: 'ASC',   tcgdexSeries: 'me', tcgdexSet: 'me02.5', ptcgIo: 'me2pt5', name: 'Ascended Heroes',      namePt: 'Heróis Excelsos',         era: 'me', regulationMark: 'I' },
+  { tpci: 'POR',   tcgdexSeries: 'me', tcgdexSet: 'me03',   ptcgIo: 'me3',  name: 'Perfect Order',          namePt: 'Equilíbrio Perfeito',     era: 'me', regulationMark: 'I' },
+  { tpci: 'CRI',   tcgdexSeries: 'me', tcgdexSet: 'me04',   ptcgIo: 'me4',  name: 'Chaos Rising',           namePt: 'Caos Ascendente',         era: 'me', regulationMark: 'I' },
+  { tpci: 'PBL',   tcgdexSeries: 'me', tcgdexSet: 'me05',   ptcgIo: 'me5',  name: 'Pitch Black',            namePt: 'Escuridão Absoluta',      era: 'me', regulationMark: 'I' },
 
-  // ===== Pokémon TCG Pocket (jogo separado, sem PTCGL) =====
-  ['TCGP-A1',  'tcgp', 'A1',  null, 'Genetic Apex',          'tcgp', 'Dominação Genética'],
-  ['TCGP-A1a', 'tcgp', 'A1a', null, 'Mythical Island',       'tcgp', 'Ilha Mítica'],
-  ['TCGP-A2',  'tcgp', 'A2',  null, 'Space-Time Smackdown',  'tcgp', 'Embate do Tempo e Espaço'],
-  ['TCGP-A2a', 'tcgp', 'A2a', null, 'Triumphant Light',      'tcgp', 'Luz Triunfante'],
-  ['TCGP-A2b', 'tcgp', 'A2b', null, 'Shining Revelry',       'tcgp', 'Festival Brilhante'],
-  ['TCGP-A3',  'tcgp', 'A3',  null, 'Celestial Guardians',   'tcgp', 'Guardiões Celestiais'],
-  ['TCGP-A4a', 'tcgp', 'A4a', null, 'Secluded Springs',      'tcgp', 'Nascentes Reclusas'],
-  ['TCGP-B1a', 'tcgp', 'B1a', null, 'Crimson Blaze',         'tcgp', 'Chama Carmesim'],
-  ['TCGP-B2',  'tcgp', 'B2',  null, 'Dream Parade',          'tcgp', 'Desfile Onírico'],
-  ['TCGP-B2a', 'tcgp', 'B2a', null, 'Paldean Wonders',       'tcgp', 'Paldean Wonders'],
+  // ---------- 30th Anniversary ----------
+  { tpci: '30TH',   tcgdexSeries: 'anniv', tcgdexSet: '30th',   ptcgIo: '30th',   name: '30th Anniversary Celebration',  namePt: 'Celebração de 30 Anos',         era: 'anniv', regulationMark: 'I' },
+  { tpci: '30C',    tcgdexSeries: 'anniv', tcgdexSet: '30th',   ptcgIo: '30th',   name: '30th Anniversary (30C alias)',  namePt: 'Celebração de 30 Anos (30C)',   era: 'anniv', regulationMark: 'I' },
+  { tpci: '30TH-C', tcgdexSeries: 'anniv', tcgdexSet: '30th-c', ptcgIo: '30th-c', name: '30th Classic Collection',       namePt: 'Coleção Clássica de 30 Anos',   era: 'anniv', regulationMark: 'I', isSubset: true },
 
-  // ===== 30º Aniversário =====
-  ['30TH',   'anniv', '30th',   '30th',   '30th Anniversary',                    'anniv', 'Celebração de 30 Anos'],
-  ['30TH-C', 'anniv', '30th-c', '30th-c', '30th Anniversary Classic Collection', 'anniv', 'Coleção Clássica de 30 Anos', true],
+  // ---------- Pokémon TCG Pocket (jogo separado, sem PTCGL) ----------
+  { tpci: 'TCGP-A1',  tcgdexSeries: 'tcgp', tcgdexSet: 'A1',  ptcgIo: null, name: 'Genetic Apex',         namePt: 'Dominação Genética',       era: 'tcgp' },
+  { tpci: 'TCGP-A1a', tcgdexSeries: 'tcgp', tcgdexSet: 'A1a', ptcgIo: null, name: 'Mythical Island',      namePt: 'Ilha Mítica',              era: 'tcgp' },
+  { tpci: 'TCGP-A2',  tcgdexSeries: 'tcgp', tcgdexSet: 'A2',  ptcgIo: null, name: 'Space-Time Smackdown', namePt: 'Embate do Tempo e Espaço', era: 'tcgp' },
+  { tpci: 'TCGP-A2a', tcgdexSeries: 'tcgp', tcgdexSet: 'A2a', ptcgIo: null, name: 'Triumphant Light',     namePt: 'Luz Triunfante',           era: 'tcgp' },
+  { tpci: 'TCGP-A2b', tcgdexSeries: 'tcgp', tcgdexSet: 'A2b', ptcgIo: null, name: 'Shining Revelry',      namePt: 'Festival Brilhante',       era: 'tcgp' },
+  { tpci: 'TCGP-A3',  tcgdexSeries: 'tcgp', tcgdexSet: 'A3',  ptcgIo: null, name: 'Celestial Guardians',  namePt: 'Guardiões Celestiais',     era: 'tcgp' },
+  { tpci: 'TCGP-A4a', tcgdexSeries: 'tcgp', tcgdexSet: 'A4a', ptcgIo: null, name: 'Secluded Springs',     namePt: 'Nascentes Reclusas',       era: 'tcgp' },
+  { tpci: 'TCGP-B1a', tcgdexSeries: 'tcgp', tcgdexSet: 'B1a', ptcgIo: null, name: 'Crimson Blaze',        namePt: 'Chama Carmesim',           era: 'tcgp' },
+  { tpci: 'TCGP-B2',  tcgdexSeries: 'tcgp', tcgdexSet: 'B2',  ptcgIo: null, name: 'Dream Parade',         namePt: 'Desfile Onírico',          era: 'tcgp' },
+  { tpci: 'TCGP-B2a', tcgdexSeries: 'tcgp', tcgdexSet: 'B2a', ptcgIo: null, name: 'Paldean Wonders',      namePt: 'Paldean Wonders',          era: 'tcgp' },
 ];
 
 // ============================================================================
 // LOOKUP MAPS
 // ============================================================================
-
-export const SET_SYNC_TABLE: SetSyncEntry[] = SET_SYNC_RAW.map(r => ({
-  tpci: r[0],
-  tcgdexSeries: r[1],
-  tcgdexSet: r[2],
-  ptcgIo: r[3],
-  name: r[4],
-  era: r[5],
-  namePt: r[6],
-  isSubset: r[7],
-}));
 
 const BY_TPCI = new Map<string, SetSyncEntry>();
 const BY_TCGDEX = new Map<string, SetSyncEntry>();
@@ -240,11 +220,25 @@ for (const e of SET_SYNC_TABLE) {
   if (e.ptcgIo) BY_PTCGIO.set(e.ptcgIo.toLowerCase(), e);
 }
 
+// Aliases manuais de set codes → TPCi canônico
+const SET_CODE_ALIASES: Record<string, string> = {
+  '30C': '30TH',         // 30C é alias do 30TH (regular, não classic)
+  '30TH': '30TH',
+  'PR-SW': 'PR-SW',
+  'PR-SM': 'PR-SM',
+  'PR-ME': 'PR-ME',
+};
+
 export function findSet(query: string): SetSyncEntry | null {
   if (!query) return null;
   const q = String(query).trim();
+  const upper = q.toUpperCase();
+  if (SET_CODE_ALIASES[upper]) {
+    const alias = SET_CODE_ALIASES[upper];
+    return BY_TPCI.get(alias) || null;
+  }
   return (
-    BY_TPCI.get(q.toUpperCase()) ||
+    BY_TPCI.get(upper) ||
     BY_TCGDEX.get(q.toLowerCase()) ||
     BY_PTCGIO.get(q.toLowerCase()) ||
     null
@@ -255,58 +249,66 @@ export function getTpciCode(query: string): string | null {
   return findSet(query)?.tpci ?? null;
 }
 
+export function getAllTpciCodes(): string[] {
+  return SET_SYNC_TABLE.map(e => e.tpci);
+}
+
 // ============================================================================
-// URL BUILDERS
+// REGULATION MARK HELPERS
+// ============================================================================
+
+/** Marcas válidas no Standard 2026. */
+export const CURRENT_STANDARD_MARKS: RegulationMark[] = ['G', 'H', 'I'];
+
+/** Marcas rotacionadas. */
+export const ROTATED_MARKS: RegulationMark[] = ['D', 'E', 'F'];
+
+/** Retorna a marca de um set (por TPCi, TCGdex ou ptcgIo). */
+export function getSetRegulationMark(setQuery: string): RegulationMark | null {
+  const entry = findSet(setQuery);
+  return entry?.regulationMark ?? null;
+}
+
+/** Diz se o set está no Standard hoje. Sem info → assume válido. */
+export function isSetStandardLegal(setQuery: string): boolean {
+  const mark = getSetRegulationMark(setQuery);
+  if (!mark) return true;
+  return CURRENT_STANDARD_MARKS.includes(mark);
+}
+
+/** Diz se o set é rotacionado. Sem info → assume válido. */
+export function isSetRotated(setQuery: string): boolean {
+  const mark = getSetRegulationMark(setQuery);
+  if (!mark) return false;
+  return ROTATED_MARKS.includes(mark);
+}
+
 // ============================================================================
 // URL BUILDERS
 // ============================================================================
 
 const CARD_BACK = 'https://images.pokemontcg.io/card-back.png';
 
-export function formatCardNumberForTcgdex(
-  entry: SetSyncEntry | null, 
-  num: string | number
-): { primaryNum: string; secondaryNum: string; cleanNum: string } {
-  const raw = String(num ?? '').trim().replace(/^#/, '');
-  if (!raw) return { primaryNum: '1', secondaryNum: '001', cleanNum: '1' };
-
-  // If number has alphanumeric prefix/suffix (e.g. TG01, GG05, SV01, 1a, etc.), keep exactly as-is
-  if (!/^\d+$/.test(raw)) {
-    return { primaryNum: raw, secondaryNum: raw, cleanNum: raw };
-  }
-
-  const cleanNum = raw.replace(/^0+/, '') || '1';
-  const paddedNum = cleanNum.padStart(3, '0');
-
-  // Scarlet & Violet (sv) and Mega Evolution (me) sets on TCGdex CDN strictly use 3-digit zero-padded numbers (001..252)
-  if (entry?.era === 'sv' || entry?.era === 'me') {
-    return { primaryNum: paddedNum, secondaryNum: cleanNum, cleanNum };
-  }
-
-  // Older eras (SWSH, SM, XY, BW, DP, EX, Base) use unpadded numbers (1..200)
-  return { primaryNum: cleanNum, secondaryNum: paddedNum, cleanNum };
-}
-
 export function tcgdexUrl(
   setQuery: string,
   num: string | number,
-  lang: 'pt' | 'en' = 'pt'
+  lang: 'pt' | 'en' = 'en'
 ): string | null {
   const entry = findSet(setQuery);
   if (!entry?.tcgdexSeries || !entry.tcgdexSet || num === undefined || num === null) return null;
-  const { primaryNum } = formatCardNumberForTcgdex(entry, num);
-  return `https://assets.tcgdex.net/${lang}/${entry.tcgdexSeries}/${entry.tcgdexSet}/${primaryNum}/high.webp`;
+  const clean = String(num).trim().replace(/^#/, '').replace(/^0+/, '') || '1';
+  return `https://assets.tcgdex.net/${lang}/${entry.tcgdexSeries}/${entry.tcgdexSet}/${clean}/high.webp`;
 }
 
 export function ptcgIoUrl(setQuery: string, num: string | number): string | null {
   const entry = findSet(setQuery);
   if (!entry?.ptcgIo || num === undefined || num === null) return null;
-  const { cleanNum } = formatCardNumberForTcgdex(entry, num);
-  return `https://images.pokemontcg.io/${entry.ptcgIo}/${cleanNum}.png`;
+  const clean = String(num).trim().replace(/^#/, '').replace(/^0+/, '') || '1';
+  return `https://images.pokemontcg.io/${entry.ptcgIo}/${clean}.png`;
 }
 
 // ============================================================================
-// HIERARQUIA UNIFICADA
+// HIERARQUIA DE IMAGEM
 // ============================================================================
 
 export interface ImageHierarchy {
@@ -323,28 +325,24 @@ export function buildImageHierarchy(
   preferredLang: 'pt' | 'en' = 'pt'
 ): ImageHierarchy {
   const entry = findSet(setQuery);
-  const otherLang: 'pt' | 'en' = preferredLang === 'pt' ? 'en' : 'pt';
-  const { primaryNum, secondaryNum, cleanNum } = formatCardNumberForTcgdex(entry, num);
+  const padded = String(num).replace(/^#/, '').replace(/^0+/, '').padStart(3, '0');
+  const clean = String(num).replace(/^#/, '').replace(/^0+/, '') || '1';
 
-  const primaryLangMain = entry?.tcgdexSet ? `https://assets.tcgdex.net/${preferredLang}/${entry.tcgdexSeries}/${entry.tcgdexSet}/${primaryNum}/high.webp` : null;
-  const secondaryLangMain = entry?.tcgdexSet ? `https://assets.tcgdex.net/${otherLang}/${entry.tcgdexSeries}/${entry.tcgdexSet}/${primaryNum}/high.webp` : null;
-  const primaryLangAlt = (entry?.tcgdexSet && secondaryNum !== primaryNum) ? `https://assets.tcgdex.net/${preferredLang}/${entry.tcgdexSeries}/${entry.tcgdexSet}/${secondaryNum}/high.webp` : null;
-  const secondaryLangAlt = (entry?.tcgdexSet && secondaryNum !== primaryNum) ? `https://assets.tcgdex.net/${otherLang}/${entry.tcgdexSeries}/${entry.tcgdexSet}/${secondaryNum}/high.webp` : null;
-  const ptIo = entry?.ptcgIo ? `https://images.pokemontcg.io/${entry.ptcgIo}/${cleanNum}.png` : null;
+  const pt   = entry?.tcgdexSet ? `https://assets.tcgdex.net/pt/${entry.tcgdexSeries}/${entry.tcgdexSet}/${clean}/high.webp` : null;
+  const en   = entry?.tcgdexSet ? `https://assets.tcgdex.net/en/${entry.tcgdexSeries}/${entry.tcgdexSet}/${clean}/high.webp` : null;
+  const ptIo = entry?.ptcgIo ? `https://images.pokemontcg.io/${entry.ptcgIo}/${clean}.png` : null;
+  const pad  = entry?.tcgdexSet ? `https://assets.tcgdex.net/${preferredLang}/${entry.tcgdexSeries}/${entry.tcgdexSet}/${padded}/high.webp` : null;
 
-  const candidates = [
-    primaryLangMain,
-    secondaryLangMain,
-    primaryLangAlt,
-    secondaryLangAlt,
-    ptIo
-  ].filter(Boolean) as string[];
+  const ordered = preferredLang === 'pt'
+    ? [pt, en, ptIo, pad]
+    : [en, pt, ptIo, pad];
 
+  const nonNull = ordered.filter(Boolean) as string[];
   return {
-    primary:    candidates[0] || CARD_BACK,
-    secondary:  candidates[1] || candidates[0] || CARD_BACK,
-    tertiary:   candidates[2] || candidates[1] || CARD_BACK,
-    quaternary: candidates[3] || candidates[2] || CARD_BACK,
+    primary:    nonNull[0] || CARD_BACK,
+    secondary:  nonNull[1] || CARD_BACK,
+    tertiary:   nonNull[2] || CARD_BACK,
+    quaternary: nonNull[3] || CARD_BACK,
     fallback:   CARD_BACK,
   };
 }
