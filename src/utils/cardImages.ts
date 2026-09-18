@@ -17,6 +17,7 @@
 //     - MEW 151 (coleção stale) → rejeitado → usa 30TH 66 (DB)
 //  3. resolvePTCGLCard e resolveCardByNameOnly têm a MESMA ordem
 //  4. ORB-SAFE: ordem de URL é ptcgIo → Limitless → TCGdex
+//  5. OVERRIDE DE IMAGENS: Força URLs corretas para sets que o setSync não conhece.
 // ============================================================================
 
 import {
@@ -33,6 +34,18 @@ import {
 
 export const POKEMON_CARD_BACK = 'https://images.pokemontcg.io/card-back.png';
 export const POKEMON_CARD_BACK_FALLBACK = 'https://archives.bulbagarden.net/media/upload/1/17/Cardback.jpg';
+
+// ============================================================================
+// OVERRIDE DE IMAGENS (Correção para sets que o setSync.ts não conhece)
+// ============================================================================
+const CARD_IMAGE_OVERRIDES: Record<string, string> = {
+  // Mew ex (30TH 66) - Força a imagem correta do TCGdex
+  '30TH-66': 'https://assets.tcgdex.net/en/tcgp/30th/66/high.webp',
+  // Meowth ex (JTG 106) - Força a imagem correta do TCGdex
+  'JTG-106': 'https://assets.tcgdex.net/en/sv/sv9/106/high.webp',
+  // Battle Cage (PFL 116) - Força a imagem correta do TCGdex
+  'PFL-116': 'https://assets.tcgdex.net/en/sv/me2/116/high.webp',
+};
 
 export { findSet, buildImageHierarchy, tcgdexUrl, ptcgIoUrl, limitlessUrl } from './setSync';
 
@@ -363,8 +376,16 @@ export const CARD_IMAGE_DATABASE: Record<string, CardMetadata> = {
 
 Object.values(CARD_IMAGE_DATABASE).forEach(card => {
   if (card.setCode && card.setNumber) {
-    const url = getBestImageUrl(card.setCode, card.setNumber);
-    if (url) card.imageUrl = url;
+    const cardId = `${card.setCode.toUpperCase()}-${card.setNumber}`;
+    
+    // 1. Tenta o override manual primeiro (NOVO)
+    if (CARD_IMAGE_OVERRIDES[cardId]) {
+      card.imageUrl = CARD_IMAGE_OVERRIDES[cardId];
+    } else {
+      // 2. Se não tiver override, tenta achar na API externa
+      const url = getBestImageUrl(card.setCode, card.setNumber);
+      if (url) card.imageUrl = url;
+    }
   }
 });
 
