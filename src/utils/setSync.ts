@@ -1,16 +1,9 @@
 // ============================================================================
 // setSync.ts — Fonte única de verdade para sets TCG
 //
-//   PTCGL (TPCi)  ──┐
-//                   ├──  SET_SYNC_TABLE  ──►  { tcgdex, ptcgIo, marks, ... }
-//   TCGdex       ───┤
-//                   │
-//   pokemontcg.io ──┘
-//
 // Regulation Marks (Standard 2026):
 //   D, E, F  → ROTACIONADAS
 //   G, H, I  → VÁLIDAS
-//   J        → próxima era (ainda não usada)
 // ============================================================================
 
 export type SetEra =
@@ -32,7 +25,7 @@ export interface SetSyncEntry {
 }
 
 // ============================================================================
-// TABELA COMPLETA — sincronizada com TCGdex + pokemontcg.io
+// TABELA COMPLETA
 // ============================================================================
 
 export const SET_SYNC_TABLE: SetSyncEntry[] = [
@@ -49,9 +42,9 @@ export const SET_SYNC_TABLE: SetSyncEntry[] = [
   { tpci: 'HL',  tcgdexSeries: 'ex', tcgdexSet: 'ex5',  ptcgIo: 'ex5',  name: 'EX Hidden Legends',          era: 'ex' },
   { tpci: 'RG',  tcgdexSeries: 'ex', tcgdexSet: 'ex6',  ptcgIo: 'ex6',  name: 'EX FireRed & LeafGreen',     era: 'ex' },
   { tpci: 'TRR', tcgdexSeries: 'ex', tcgdexSet: 'ex7',  ptcgIo: 'ex7',  name: 'EX Team Rocket Returns',     namePt: 'EX O Retorno da Equipe Rocket', era: 'ex' },
-  { tpci: 'DX',  tcgdexSeries: 'ex', tcgdexSet: 'ex8',  ptcgIo: 'ex8',  name: 'EX Deoxys',                  namePt: 'EX Deoxys',              era: 'ex' },
-  { tpci: 'EM',  tcgdexSeries: 'ex', tcgdexSet: 'ex9',  ptcgIo: 'ex9',  name: 'EX Emerald',                 namePt: 'EX Esmeralda',           era: 'ex' },
-  { tpci: 'UF',  tcgdexSeries: 'ex', tcgdexSet: 'ex10', ptcgIo: 'ex10', name: 'EX Unseen Forces',           namePt: 'EX Forças Ocultas',      era: 'ex' },
+  { tpci: 'DX',  tcgdexSeries: 'ex', tcgdexSet: 'ex8',  ptcgIo: 'ex8',  name: 'EX Deoxys',                  era: 'ex' },
+  { tpci: 'EM',  tcgdexSeries: 'ex', tcgdexSet: 'ex9',  ptcgIo: 'ex9',  name: 'EX Emerald',                 era: 'ex' },
+  { tpci: 'UF',  tcgdexSeries: 'ex', tcgdexSet: 'ex10', ptcgIo: 'ex10', name: 'EX Unseen Forces',           era: 'ex' },
   { tpci: 'DS',  tcgdexSeries: 'ex', tcgdexSet: 'ex11', ptcgIo: 'ex11', name: 'EX Delta Species',           era: 'ex' },
   { tpci: 'LM',  tcgdexSeries: 'ex', tcgdexSet: 'ex12', ptcgIo: 'ex12', name: 'EX Legend Maker',            era: 'ex' },
   { tpci: 'HP',  tcgdexSeries: 'ex', tcgdexSet: 'ex13', ptcgIo: 'ex13', name: 'EX Holon Phantoms',          era: 'ex' },
@@ -155,7 +148,7 @@ export const SET_SYNC_TABLE: SetSyncEntry[] = [
   { tpci: 'CRZ',    tcgdexSeries: 'swsh', tcgdexSet: 'swsh12.5',   ptcgIo: 'swsh12pt5',  name: 'Crown Zenith',                  namePt: 'Realeza Absoluta',                         era: 'swsh', regulationMark: 'F' },
   { tpci: 'CRZ-GG', tcgdexSeries: 'swsh', tcgdexSet: 'swsh12.5gg', ptcgIo: 'swsh12pt5gg',name: 'Crown Zenith Galarian Gallery', namePt: 'Realeza Absoluta Galeria de Galar',        era: 'swsh', regulationMark: 'F', isSubset: true },
 
-  // ---------- SV — Scarlet & Violet ----------
+  // ---------- SV ----------
   { tpci: 'SVI', tcgdexSeries: 'sv', tcgdexSet: 'sv01',    ptcgIo: 'sv1',    name: 'Scarlet & Violet',     namePt: 'Escarlate e Violeta',          era: 'sv', regulationMark: 'G' },
   { tpci: 'SVE', tcgdexSeries: 'sv', tcgdexSet: 'sve',     ptcgIo: 'sve',    name: 'SV Energies',          namePt: 'Escarlate e Violeta Energia',  era: 'sv', regulationMark: 'G' },
   { tpci: 'SVP', tcgdexSeries: 'sv', tcgdexSet: 'svp',     ptcgIo: 'svp',    name: 'SV Black Star Promos', namePt: 'SVP Black Star Promos',        era: 'sv', regulationMark: 'G' },
@@ -175,7 +168,7 @@ export const SET_SYNC_TABLE: SetSyncEntry[] = [
   { tpci: 'BLK', tcgdexSeries: 'sv', tcgdexSet: 'sv10.5b', ptcgIo: 'sv10pt5b', name: 'Black Bolt',         namePt: 'Raio Preto',                   era: 'sv', regulationMark: 'I' },
   { tpci: 'WHT', tcgdexSeries: 'sv', tcgdexSet: 'sv10.5w', ptcgIo: 'sv10pt5w', name: 'White Flare',        namePt: 'Fogo Branco',                  era: 'sv', regulationMark: 'I' },
 
-  // ---------- ME — Mega Evolution ----------
+  // ---------- ME ----------
   { tpci: 'MEE',   tcgdexSeries: 'me', tcgdexSet: 'mee',    ptcgIo: null,   name: 'Mega Evolution Energy',  namePt: 'Megaevolução Energia',    era: 'me', regulationMark: 'I' },
   { tpci: 'MEG',   tcgdexSeries: 'me', tcgdexSet: 'me01',   ptcgIo: 'me1',  name: 'Mega Evolution',         namePt: 'Megaevolução',            era: 'me', regulationMark: 'I' },
   { tpci: 'PR-ME', tcgdexSeries: 'me', tcgdexSet: 'mep',    ptcgIo: 'mep',  name: 'MEP Black Star Promos',  namePt: 'MEP Black Star Promos',   era: 'me', regulationMark: 'I' },
@@ -190,7 +183,7 @@ export const SET_SYNC_TABLE: SetSyncEntry[] = [
   { tpci: '30C',    tcgdexSeries: 'anniv', tcgdexSet: '30th',   ptcgIo: '30th',   name: '30th Anniversary (30C alias)',  namePt: 'Celebração de 30 Anos (30C)',   era: 'anniv', regulationMark: 'I' },
   { tpci: '30TH-C', tcgdexSeries: 'anniv', tcgdexSet: '30th-c', ptcgIo: '30th-c', name: '30th Classic Collection',       namePt: 'Coleção Clássica de 30 Anos',   era: 'anniv', regulationMark: 'I', isSubset: true },
 
-  // ---------- Pokémon TCG Pocket (jogo separado, sem PTCGL) ----------
+  // ---------- Pocket ----------
   { tpci: 'TCGP-A1',  tcgdexSeries: 'tcgp', tcgdexSet: 'A1',  ptcgIo: null, name: 'Genetic Apex',         namePt: 'Dominação Genética',       era: 'tcgp' },
   { tpci: 'TCGP-A1a', tcgdexSeries: 'tcgp', tcgdexSet: 'A1a', ptcgIo: null, name: 'Mythical Island',      namePt: 'Ilha Mítica',              era: 'tcgp' },
   { tpci: 'TCGP-A2',  tcgdexSeries: 'tcgp', tcgdexSet: 'A2',  ptcgIo: null, name: 'Space-Time Smackdown', namePt: 'Embate do Tempo e Espaço', era: 'tcgp' },
@@ -220,9 +213,8 @@ for (const e of SET_SYNC_TABLE) {
   if (e.ptcgIo) BY_PTCGIO.set(e.ptcgIo.toLowerCase(), e);
 }
 
-// Aliases manuais de set codes → TPCi canônico
 const SET_CODE_ALIASES: Record<string, string> = {
-  '30C': '30TH',         // 30C é alias do 30TH (regular, não classic)
+  '30C': '30TH',
   '30TH': '30TH',
   'PR-SW': 'PR-SW',
   'PR-SM': 'PR-SM',
@@ -257,26 +249,20 @@ export function getAllTpciCodes(): string[] {
 // REGULATION MARK HELPERS
 // ============================================================================
 
-/** Marcas válidas no Standard 2026. */
 export const CURRENT_STANDARD_MARKS: RegulationMark[] = ['G', 'H', 'I'];
-
-/** Marcas rotacionadas. */
 export const ROTATED_MARKS: RegulationMark[] = ['D', 'E', 'F'];
 
-/** Retorna a marca de um set (por TPCi, TCGdex ou ptcgIo). */
 export function getSetRegulationMark(setQuery: string): RegulationMark | null {
   const entry = findSet(setQuery);
   return entry?.regulationMark ?? null;
 }
 
-/** Diz se o set está no Standard hoje. Sem info → assume válido. */
 export function isSetStandardLegal(setQuery: string): boolean {
   const mark = getSetRegulationMark(setQuery);
   if (!mark) return true;
   return CURRENT_STANDARD_MARKS.includes(mark);
 }
 
-/** Diz se o set é rotacionado. Sem info → assume válido. */
 export function isSetRotated(setQuery: string): boolean {
   const mark = getSetRegulationMark(setQuery);
   if (!mark) return false;
@@ -307,16 +293,28 @@ export function ptcgIoUrl(setQuery: string, num: string | number): string | null
   return `https://images.pokemontcg.io/${entry.ptcgIo}/${clean}.png`;
 }
 
+// ---------------------------------------------------------------------------
+// NOVO: Limitless TCG CDN — cobre sets novos que TCGdex/pokemontcg.io não têm
+// ---------------------------------------------------------------------------
+export function limitlessUrl(setQuery: string, num: string | number): string | null {
+  const entry = findSet(setQuery);
+  if (!entry) return null;
+  const tpci = entry.tpci.toUpperCase();
+  const clean = String(num).trim().replace(/^#/, '').replace(/^0+/, '') || '1';
+  const padded = clean.padStart(3, '0');
+  return `https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/tpci/${tpci}/${tpci}_${padded}_R_EN_LG.png`;
+}
+
 // ============================================================================
-// HIERARQUIA DE IMAGEM
+// HIERARQUIA DE IMAGEM (5 níveis + fallback)
 // ============================================================================
 
 export interface ImageHierarchy {
-  primary: string;
-  secondary: string;
-  tertiary: string;
-  quaternary: string;
-  fallback: string;
+  primary: string;    // TCGdex PT
+  secondary: string;  // TCGdex EN
+  tertiary: string;   // Limitless TCG (novo)
+  quaternary: string; // pokemontcg.io (novo)
+  fallback: string;   // card back
 }
 
 export function buildImageHierarchy(
@@ -330,12 +328,12 @@ export function buildImageHierarchy(
 
   const pt   = entry?.tcgdexSet ? `https://assets.tcgdex.net/pt/${entry.tcgdexSeries}/${entry.tcgdexSet}/${clean}/high.webp` : null;
   const en   = entry?.tcgdexSet ? `https://assets.tcgdex.net/en/${entry.tcgdexSeries}/${entry.tcgdexSet}/${clean}/high.webp` : null;
+  const lim  = entry ? `https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/tpci/${entry.tpci.toUpperCase()}/${entry.tpci.toUpperCase()}_${padded}_R_EN_LG.png` : null;
   const ptIo = entry?.ptcgIo ? `https://images.pokemontcg.io/${entry.ptcgIo}/${clean}.png` : null;
-  const pad  = entry?.tcgdexSet ? `https://assets.tcgdex.net/${preferredLang}/${entry.tcgdexSeries}/${entry.tcgdexSet}/${padded}/high.webp` : null;
 
   const ordered = preferredLang === 'pt'
-    ? [pt, en, ptIo, pad]
-    : [en, pt, ptIo, pad];
+    ? [pt, en, lim, ptIo]
+    : [en, pt, lim, ptIo];
 
   const nonNull = ordered.filter(Boolean) as string[];
   return {
