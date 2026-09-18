@@ -1,17 +1,11 @@
 // ============================================================================
-// pokemonLocalApi.ts — Porta o server.ts pro navegador (GitHub Pages é estático)
-//
-// Reproduz EXATAMENTE os endpoints do server.ts:
-//   GET  /api/health
-//   GET  /api/pokemon/meta       → { decks: [...], tournamentName: string }
-//   GET  /api/pokemon/sets       → [ { id, ptcglCode, localId, name, ... } ]
-//   GET  /api/pokemon/search     → [ { id, name, imageUrl, setCode, ... } ]
-//
-// Fonte de dados: TCGdex (API pública) + pokemontcg.io + catálogo local.
+// pokemonLocalApi.ts — Porta os endpoints do server.ts pro navegador
 // ============================================================================
 
+import { COMPREHENSIVE_SETS as CATALOG_SETS } from '../data/pokemonCatalog';
+
 // ----------------------------------------------------------------------------
-// 1. MAPAS DE SET
+// 1. MAPAS DE SET (iguais ao server.ts)
 // ----------------------------------------------------------------------------
 
 const SET_TO_TCGDEX_MAP: Record<string, { series: string; set: string }> = {
@@ -97,18 +91,18 @@ const SET_QUERY_ALIASES: Record<string, string> = {
 };
 
 // ----------------------------------------------------------------------------
-// 2. CATÁLOGO DE COLEÇÕES
+// 2. COMPREHENSIVE_SETS — usa o catálogo local se existir, senão fallback interno
 // ----------------------------------------------------------------------------
 
-const COMPREHENSIVE_SETS = [
-  { id: '30TH', ptcglCode: '30TH', localId: '30th', name: 'Celebrações de 30 Anos (30th Anniversary Celebration - 30TH)', series: 'Mega Evolution', releaseDate: '2026-02-27', logo: 'https://assets.tcgdex.net/en/me/30th/logo', symbol: 'https://assets.tcgdex.net/univ/me/30th/symbol' },
-  { id: '30TH-C', ptcglCode: '30TH-C', localId: '30th-c', name: 'Coleção Clássica de 30 Anos (30th Classic Collection - 30TH-C)', series: 'Mega Evolution', releaseDate: '2026-02-27' },
-  { id: 'ASC', ptcglCode: 'ASC', localId: 'asc', name: 'Heróis Excelsos (Mega Evolution: Ascended Heroes - ASC)', series: 'Mega Evolution', releaseDate: '2026-01-30' },
-  { id: 'PFL', ptcglCode: 'PFL', localId: 'pfl', name: 'Fogo Fantasmagórico (Mega Evolution: Phantasmal Flames - PFL)', series: 'Mega Evolution', releaseDate: '2025-11-14' },
-  { id: 'POR', ptcglCode: 'POR', localId: 'por', name: 'Ordem Perfeita (Mega Evolution: Perfect Order - POR)', series: 'Mega Evolution', releaseDate: '2026-03-27' },
-  { id: 'MEG', ptcglCode: 'MEG', localId: 'meg', name: 'Mega Evolução Base (Mega Evolution - MEG)', series: 'Mega Evolution', releaseDate: '2025-09-26' },
-  { id: 'CRI', ptcglCode: 'CRI', localId: 'cri', name: 'Caos Ascendente (Mega Evolution: Chaos Rising - CRI)', series: 'Mega Evolution', releaseDate: '2026-05-22' },
-  { id: 'PBL', ptcglCode: 'PBL', localId: 'pbl', name: 'Escuridão Total (Mega Evolution: Pitch Black - PBL)', series: 'Mega Evolution', releaseDate: '2026-07-17' },
+const FALLBACK_SETS = [
+  { id: '30TH', ptcglCode: '30TH', localId: '30th', name: 'Celebrações de 30 Anos (30th Anniversary Celebration - 30TH)', series: 'Mega Evolution', releaseDate: '2026-02-27' },
+  { id: '30TH-C', ptcglCode: '30TH-C', localId: '30th-c', name: 'Coleção Clássica de 30 Anos (30TH-C)', series: 'Mega Evolution', releaseDate: '2026-02-27' },
+  { id: 'ASC', ptcglCode: 'ASC', localId: 'asc', name: 'Heróis Excelsos (Ascended Heroes - ASC)', series: 'Mega Evolution', releaseDate: '2026-01-30' },
+  { id: 'PFL', ptcglCode: 'PFL', localId: 'pfl', name: 'Fogo Fantasmagórico (Phantasmal Flames - PFL)', series: 'Mega Evolution', releaseDate: '2025-11-14' },
+  { id: 'POR', ptcglCode: 'POR', localId: 'por', name: 'Ordem Perfeita (Perfect Order - POR)', series: 'Mega Evolution', releaseDate: '2026-03-27' },
+  { id: 'MEG', ptcglCode: 'MEG', localId: 'meg', name: 'Mega Evolução Base (MEG)', series: 'Mega Evolution', releaseDate: '2025-09-26' },
+  { id: 'CRI', ptcglCode: 'CRI', localId: 'cri', name: 'Caos Ascendente (Chaos Rising - CRI)', series: 'Mega Evolution', releaseDate: '2026-05-22' },
+  { id: 'PBL', ptcglCode: 'PBL', localId: 'pbl', name: 'Escuridão Total (Pitch Black - PBL)', series: 'Mega Evolution', releaseDate: '2026-07-17' },
   { id: 'PRE', ptcglCode: 'PRE', localId: 'pre', name: 'Evoluções Prismáticas (Prismatic Evolutions - PRE)', series: 'Scarlet & Violet', releaseDate: '2025-01-17' },
   { id: 'JTG', ptcglCode: 'JTG', localId: 'jtg', name: 'Jornada em Conjunto (Journey Together - JTG)', series: 'Scarlet & Violet', releaseDate: '2025-03-28' },
   { id: 'DRI', ptcglCode: 'DRI', localId: 'dri', name: 'Rivais Destinados (Destined Rivals - DRI)', series: 'Scarlet & Violet', releaseDate: '2025-05-30' },
@@ -126,6 +120,10 @@ const COMPREHENSIVE_SETS = [
   { id: 'PAL', ptcglCode: 'PAL', localId: 'sv2', name: 'Evoluções em Paldea (Paldea Evolved - PAL)', series: 'Scarlet & Violet', releaseDate: '2023-06-09' },
   { id: 'SVI', ptcglCode: 'SVI', localId: 'sv1', name: 'Escarlate e Violeta Base (SVI)', series: 'Scarlet & Violet', releaseDate: '2023-03-31' },
 ];
+
+const COMPREHENSIVE_SETS = Array.isArray(CATALOG_SETS) && CATALOG_SETS.length > 0
+  ? (CATALOG_SETS as any[])
+  : FALLBACK_SETS;
 
 // ----------------------------------------------------------------------------
 // 3. HELPERS
@@ -146,18 +144,12 @@ function getTCGdexImageUrl(setCode: string, setNumber: string | number, lang: 'p
   const isSvOrMe = mapping ? (mapping.series === 'sv' || mapping.series === 'me') : /^(sv|me)/i.test(cleanSet);
   const finalNum = isSvOrMe ? paddedNum : cleanNum;
 
-  if (mapping) {
-    return `https://assets.tcgdex.net/${lang}/${mapping.series}/${mapping.set}/${finalNum}/high.webp`;
-  }
+  if (mapping) return `https://assets.tcgdex.net/${lang}/${mapping.series}/${mapping.set}/${finalNum}/high.webp`;
   return `https://assets.tcgdex.net/${lang}/sv/${cleanSet.toLowerCase()}/${finalNum}/high.webp`;
 }
 
 function normalizeSearchTerm(str: string): string {
-  return (str || '')
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .trim();
+  return (str || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
 }
 
 // Cache em memória para sets TCGdex completos
@@ -176,7 +168,6 @@ async function fetchTcgdexCompleteSet(
   const ptNameMap = new Map<string, string>();
   const ptImageMap = new Map<string, string>();
 
-  // Fetch PT + EN em paralelo
   const [ptResult, enResult] = await Promise.allSettled([
     fetch(`https://api.tcgdex.net/v2/pt/sets/${tcgdexSetId}`).then(r => r.ok ? r.json() : null),
     fetch(`https://api.tcgdex.net/v2/en/sets/${tcgdexSetId}`).then(r => r.ok ? r.json() : null),
@@ -187,8 +178,7 @@ async function fetchTcgdexCompleteSet(
 
   if (ptData?.cards) {
     for (const c of ptData.cards) {
-      const rawNum = String(c.localId || '').trim();
-      const cleanNum = rawNum.replace(/^0+/, '');
+      const cleanNum = String(c.localId || '').replace(/^0+/, '');
       if (cleanNum && c.name) ptNameMap.set(cleanNum, c.name);
       if (cleanNum && c.image) ptImageMap.set(cleanNum, `${c.image}/high.webp`);
     }
@@ -234,7 +224,7 @@ async function fetchTcgdexCompleteSet(
 }
 
 // ----------------------------------------------------------------------------
-// 4. FALLBACK DEKS (Meta) e FALLBACK CARDS
+// 4. META DECKS (fallback)
 // ----------------------------------------------------------------------------
 
 const metaDecks = [
@@ -246,7 +236,10 @@ const metaDecks = [
   { name: 'Dragapult ex', archetype: 'Dragapult ex / Pidgeot ex', share: 10.4, winRate: 51.9, imageUrl: 'https://images.pokemontcg.io/sv6/130.png', updatedAt: '2024-05-24', description: 'Dano cirúrgico.', cards: [], rawList: '' },
 ];
 
-// Fallback minimal — apenas algumas cartas icônicas para quando TCGdex falha
+// ----------------------------------------------------------------------------
+// 5. FALLBACK CARDS
+// ----------------------------------------------------------------------------
+
 const fallbackCards: any[] = [
   { id: 'OBF-125', name: 'Charizard ex', setCode: 'OBF', setName: 'Obsidian Flames', setNumber: '125', localSetId: 'sv3' },
   { id: 'TWM-130', name: 'Dragapult ex', setCode: 'TWM', setName: 'Twilight Masquerade', setNumber: '130', localSetId: 'sv6' },
@@ -267,7 +260,7 @@ const fallbackCards: any[] = [
 }));
 
 // ----------------------------------------------------------------------------
-// 5. HANDLERS DOS ENDPOINTS
+// 6. HANDLERS DOS ENDPOINTS
 // ----------------------------------------------------------------------------
 
 function jsonResponse(data: unknown, status = 200): Response {
@@ -278,7 +271,6 @@ function jsonResponse(data: unknown, status = 200): Response {
 }
 
 async function handleMeta(): Promise<Response> {
-  // Não dá pra raspar Limitless do browser (CORS) — devolve o fallback local
   return jsonResponse({
     decks: metaDecks,
     tournamentName: 'Standard format meta (Local Database / Fallback)',
@@ -286,7 +278,7 @@ async function handleMeta(): Promise<Response> {
 }
 
 async function handleSets(): Promise<Response> {
-  // Retorna array DIRETO, igual ao server.ts
+  // Retorna array DIRETO (igual ao server.ts)
   return jsonResponse(COMPREHENSIVE_SETS);
 }
 
@@ -303,13 +295,11 @@ async function handleSearch(params: URLSearchParams): Promise<Response> {
   let resolvedNumber = '';
   let nameQuery = rawQuery;
 
-  // Alias de set (ex: "herois excelsos" → "asc")
   if (!resolvedSetId && SET_QUERY_ALIASES[normQuery]) {
     resolvedSetId = SET_QUERY_ALIASES[normQuery];
     nameQuery = '';
   }
 
-  // "ASC 085" → set + número
   const codeMatch = rawQuery.match(/^([A-Za-z0-9.-]{2,7})[- ]+(\d+|promo)$/i);
   if (codeMatch) {
     const setToken = codeMatch[1].toUpperCase();
@@ -326,7 +316,6 @@ async function handleSearch(params: URLSearchParams): Promise<Response> {
     }
   }
 
-  // 1) Se tem set específico com mapping TCGdex → busca set completo
   const tcgdexMapping =
     (rawSet && SET_TO_TCGDEX_MAP[rawSet]) ||
     (rawSet && SET_TO_TCGDEX_MAP[rawSet.toUpperCase()]) ||
@@ -338,8 +327,10 @@ async function handleSearch(params: URLSearchParams): Promise<Response> {
     const rawSetCode = rawSet
       ? (LOCAL_TO_TPCI_SET_MAP[rawSet.toLowerCase()] || rawSet.toUpperCase())
       : (LOCAL_TO_TPCI_SET_MAP[resolvedSetId.toLowerCase()] || resolvedSetId.toUpperCase());
-    const matchedExp = COMPREHENSIVE_SETS.find(s =>
-      s.id.toUpperCase() === rawSetCode || (s.localId && s.localId.toLowerCase() === rawSetCode.toLowerCase())
+    const matchedExp = COMPREHENSIVE_SETS.find((s: any) =>
+      s.id?.toUpperCase() === rawSetCode ||
+      s.ptcglCode?.toUpperCase() === rawSetCode ||
+      (s.localId && s.localId.toLowerCase() === rawSetCode.toLowerCase())
     );
     const setName = matchedExp?.name || rawSet || resolvedSetId;
 
@@ -358,10 +349,7 @@ async function handleSearch(params: URLSearchParams): Promise<Response> {
 
         if (nameQuery) {
           const nq = normalizeSearchTerm(nameQuery);
-          results = results.filter(c => {
-            const cardName = normalizeSearchTerm(c.name);
-            return cardName.includes(nq);
-          });
+          results = results.filter(c => normalizeSearchTerm(c.name).includes(nq));
         }
 
         if (results.length > 0) return jsonResponse(results);
@@ -371,9 +359,8 @@ async function handleSearch(params: URLSearchParams): Promise<Response> {
     }
   }
 
-  // 2) Fallback: busca no DB local
   const normQ = normalizeSearchTerm(nameQuery || rawQuery);
-  let matched = fallbackCards.filter(c => {
+  const matched = fallbackCards.filter(c => {
     const cardSetCode = (c.setCode || '').toLowerCase();
     const cardName = normalizeSearchTerm(c.name || '');
 
@@ -386,22 +373,59 @@ async function handleSearch(params: URLSearchParams): Promise<Response> {
     }
 
     if (normQ) {
-      const nameMatches = cardName.includes(normQ);
-      const numMatches = c.setNumber && String(c.setNumber).includes(normQ);
-      return nameMatches || numMatches;
+      return cardName.includes(normQ) || (c.setNumber && String(c.setNumber).includes(normQ));
     }
-
     return true;
   });
 
-  if (matched.length > 0) return jsonResponse(matched);
+  return jsonResponse(matched);
+}
 
-  // 3) Nada encontrado
-  return jsonResponse([]);
+async function handleParseDeck(body: string): Promise<Response> {
+  // Regex parser (mesmo do server.ts, sem Gemini)
+  const lines = String(body || '').split('\n');
+  const cards: any[] = [];
+  let currentCategory: 'Pokémon' | 'Treinador' | 'Energia' = 'Pokémon';
+
+  for (let line of lines) {
+    line = line.trim();
+    if (!line) continue;
+
+    const lowerLine = line.toLowerCase();
+    if (lowerLine.startsWith('pokémon:') || lowerLine.startsWith('pokemon:')) { currentCategory = 'Pokémon'; continue; }
+    if (lowerLine.startsWith('treinador:') || lowerLine.startsWith('trainer:') || lowerLine.startsWith('trainers:')) { currentCategory = 'Treinador'; continue; }
+    if (lowerLine.startsWith('energia:') || lowerLine.startsWith('energy:')) { currentCategory = 'Energia'; continue; }
+
+    const match = line.match(/^(\d+)\s+(.+?)(?:\s+([A-Z]{3,4}|[a-z]{3,4})\s+(\d+))?$/);
+    if (match) {
+      const count = parseInt(match[1], 10);
+      const name = match[2].trim();
+      const set = match[3] ? match[3].toUpperCase() : undefined;
+      const number = match[4] || undefined;
+
+      const imageUrl = set && number
+        ? getTCGdexImageUrl(set, number)
+        : 'https://images.pokemontcg.io/card-back.png';
+
+      cards.push({ name, count, set, number, type: currentCategory, imageUrl });
+    } else {
+      const simpleMatch = line.match(/^(\d+)\s+(.+)$/);
+      if (simpleMatch) {
+        cards.push({
+          name: simpleMatch[2].trim(),
+          count: parseInt(simpleMatch[1], 10),
+          type: currentCategory,
+          imageUrl: 'https://images.pokemontcg.io/card-back.png',
+        });
+      }
+    }
+  }
+
+  return jsonResponse(cards);
 }
 
 // ----------------------------------------------------------------------------
-// 6. INTERCEPTOR DE FETCH
+// 7. INTERCEPTOR DE FETCH
 // ----------------------------------------------------------------------------
 
 let _installed = false;
@@ -409,21 +433,21 @@ let _installed = false;
 async function handleLocalApi(url: string, init?: RequestInit): Promise<Response> {
   const u = new URL(url, 'http://local');
   const path = u.pathname;
+  const method = (init?.method || 'GET').toUpperCase();
 
   try {
-    if (/\/api\/health\/?$/.test(path)) {
-      return jsonResponse({ status: 'ok' });
+    if (/\/api\/health\/?$/.test(path)) return jsonResponse({ status: 'ok' });
+    if (/\/api\/pokemon\/meta\/?$/.test(path)) return handleMeta();
+    if (/\/api\/pokemon\/sets\/?$/.test(path)) return handleSets();
+    if (/\/api\/pokemon\/search\/?$/.test(path)) return handleSearch(u.searchParams);
+    if (/\/api\/pokemon\/parse-deck\/?$/.test(path) && method === 'POST') {
+      let bodyText = '';
+      try {
+        const parsed = init?.body ? JSON.parse(String(init.body)) : {};
+        bodyText = parsed.deckText || '';
+      } catch { /* ignora */ }
+      return handleParseDeck(bodyText);
     }
-    if (/\/api\/pokemon\/meta\/?$/.test(path)) {
-      return handleMeta();
-    }
-    if (/\/api\/pokemon\/sets\/?$/.test(path)) {
-      return handleSets();
-    }
-    if (/\/api\/pokemon\/search\/?$/.test(path)) {
-      return handleSearch(u.searchParams);
-    }
-    // Endpoint desconhecido — 404
     return jsonResponse({ error: 'Endpoint não suportado', path }, 404);
   } catch (err) {
     return jsonResponse({ error: String(err) }, 500);
@@ -443,8 +467,7 @@ export function installPokemonApiInterceptor(): void {
     else if (input instanceof URL) url = input.toString();
     else if (input && typeof input === 'object' && 'url' in input) url = (input as Request).url;
 
-    // Intercepta qualquer URL que contenha "/api/pokemon/" ou "/api/health"
-    if (/\/api\/(pokemon|health)\//.test(url) || /\/api\/pokemon\/[a-z]/.test(url)) {
+    if (/\/api\/pokemon\//.test(url) || /\/api\/health/.test(url)) {
       return handleLocalApi(url, init);
     }
 
@@ -453,6 +476,3 @@ export function installPokemonApiInterceptor(): void {
 
   console.info('[pokemonLocalApi] interceptor instalado — /api/pokemon/* agora é local');
 }
-
-// Exporta helpers úteis
-export { COMPREHENSIVE_SETS, getTCGdexImageUrl };
