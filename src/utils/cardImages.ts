@@ -4,9 +4,15 @@
 // - Registry de cartas canônicas (TPCi-first)
 // - CARD_ALIASES para PT-BR
 // - Fuzzy match com FRONTEIRA DE PALAVRA
-// - PLAYER DECK REGISTRY + VERSION OVERRIDE (persistido em localStorage)
+// - PLAYER DECK REGISTRY + VERSION OVERRIDE (localStorage)
 // - REGULATION MARK FILTER (prefere sets legais H/I)
 // - Cartas do deck do usuário pré-cadastradas
+//
+// FIX (última revisão):
+//  1. registerCollectionCards SEMPRE recalcula URL via TCGdex (ignora stale)
+//  2. getRegisteredCollectionCard verifica se o NOME bate antes de retornar
+//     (evita "Fezandipiti ex" virar "Earthen Vessel")
+//  3. resolvePTCGLCard e resolveCardByNameOnly têm a MESMA ordem de prioridade
 // ============================================================================
 
 import {
@@ -472,7 +478,6 @@ export const PTCGL_CARD_ID_MAP: Record<string, CardMetadata> = {};
 function registerCardId(key: string, card: CardMetadata | undefined) {
   if (!key || !card) return;
   const k = key.toLowerCase().trim();
-  // Não sobrescreve entradas já registradas (prioriza as primeiras inseridas)
   if (!PTCGL_CARD_ID_MAP[k]) PTCGL_CARD_ID_MAP[k] = card;
   const k2 = k.replace(/\s+/g, '-');
   if (!PTCGL_CARD_ID_MAP[k2]) PTCGL_CARD_ID_MAP[k2] = card;
@@ -636,28 +641,18 @@ function fuzzyMatchAsWords(norm: string): CardMetadata | null {
 // ============================================================================
 
 const STANDARD_ORDER: string[] = [
-  // ME era (mais recentes)
   'PBL', 'CRI', 'POR', 'ASC', 'PFL', 'MEG',
-  // SV era
   'WHT', 'BLK', 'DRI', 'JTG', 'PRE', 'SSP', 'SCR', 'SFA', 'TWM', 'TEF',
   'PAF', 'PAR', 'MEW', 'OBF', 'PAL', 'SVI',
-  // 30th
   '30TH', '30C', '30TH-C',
-  // SWSH recentes
   'CRZ', 'SIT', 'LOR', 'ASR', 'BRS',
 ];
 
-/**
- * Resolve uma carta preferindo sets legais (H/I/J).
- * Para "Mew ex": acha MEW 151 (G, rotacionada) e 30TH 66 (I, legal)
- * → retorna 30TH 66.
- */
 export function resolveCardStandardPreferred(name: string): CardMetadata {
   if (!name) return makeFallbackCard(name, '');
 
   const norm = normalizeCardName(name);
 
-  // 1. Coleta todos os candidatos com o mesmo nome normalizado
   const candidates: CardMetadata[] = [];
   for (const card of Object.values(CARD_IMAGE_DATABASE)) {
     if (normalizeCardName(card.name) === norm) {
@@ -667,11 +662,9 @@ export function resolveCardStandardPreferred(name: string): CardMetadata {
 
   if (candidates.length === 0) return makeFallbackCard(name, norm);
 
-  // 2. Filtra por legalidade (H/I/J)
   const legal = candidates.filter(c => !c.setCode || isSetStandardLegal(c.setCode));
   const pool = legal.length > 0 ? legal : candidates;
 
-  // 3. Ordena por STANDARD_ORDER (mais recente primeiro)
   pool.sort((a, b) => {
     const ai = STANDARD_ORDER.indexOf((a.setCode || '').toUpperCase());
     const bi = STANDARD_ORDER.indexOf((b.setCode || '').toUpperCase());
@@ -690,31 +683,59 @@ export function resolveCardStandardPreferred(name: string): CardMetadata {
 
 const COLLECTION_CARDS_REGISTRY: Map<string, CardMetadata> = new Map();
 
+/**
+ * Registra cartas do acervo do usuário.
+ *
+ * FIX: SEMPRE recalcula a URL a partir de setCode+setNumber (via TCGdex).
+ * Isso ignora qualquer imageUrl stale que esteja salvo no Firestore (que
+ * poderia ter sido computado com bugs antigos, apontando para a carta errada).
+ */
 export function registerCollectionCards(cards: Array<any>): void {
   if (!cards || !Array.isArray(cards)) return;
+
   for (const c of cards) {
     if (!c) continue;
     const rawName = c.name || '';
     if (!rawName) continue;
 
     const norm = normalizeCardName(rawName);
-    const cleanSet = (c.setCode || c.ptcglCode || c.tpciSetCode || '').toUpperCase();
+    const cleanSet = String(c.setCode || c.ptcglCode || c.tpciSetCode || '').toUpperCase();
     const rawNum = String(c.setNumber ?? c.number ?? c.cleanNumber ?? '').trim();
     const cleanNum = rawNum.replace(/^0+/, '') || '1';
     const localSet = c.localSetId || (cleanSet ? mapTPCiToLocalSetId(cleanSet) : '');
 
-    let finalImageUrl = c.imageUrl || '';
-    if (finalImageUrl.startsWith('https://assets.tcgdex.net/') && !finalImageUrl.endsWith('.webp') && !finalImageUrl.endsWith('.png')) {
-      finalImageUrl = `${finalImageUrl}/high.webp`;
+    // IMPORTANTE: recalcular URL SEMPRE que temos set+number.
+    // NÃO confiar em c.imageUrl (pode estar stale/errado).
+    let finalImageUrl = '';
+    if (cleanSet && cleanNum && cleanSet !== 'SVI' && cleanNum !== '1') {
+      finalImageUrl =
+        tcgdexUrl(cleanSet, cleanNum, 'pt') ||
+        tcgdexUrl(cleanSet, cleanNum, 'en') ||
+        ptcgIoUrl(cleanSet, cleanNum) ||
+        '';
     }
-    if ((!finalImageUrl || isSpriteUrl(finalImageUrl)) && cleanSet && cleanNum) {
-      finalImageUrl = tcgdexUrl(cleanSet, cleanNum, 'pt') || tcgdexUrl(cleanSet, cleanNum, 'en') || ptcgIoUrl(cleanSet, cleanNum) || '';
+    // Se não conseguimos recalcular, usa o stored URL como fallback
+    if (!finalImageUrl && c.imageUrl && !isSpriteUrl(c.imageUrl)) {
+      finalImageUrl = c.imageUrl;
+    }
+    // Normaliza URL TCGdex sem extensão
+    if (finalImageUrl.startsWith('https://assets.tcgdex.net/') &&
+        !finalImageUrl.endsWith('.webp') &&
+        !finalImageUrl.endsWith('.png')) {
+      finalImageUrl = `${finalImageUrl}/high.webp`;
     }
 
     const cardMeta: CardMetadata = {
       id: c.id || `${cleanSet}-${cleanNum}`,
       name: rawName,
-      category: c.category || (norm.includes('energia') || norm.includes('energy') ? 'energy' : (norm.includes('poi') || norm.includes('arven') || norm.includes('iono') || norm.includes('pesquisa') || norm.includes('ordem') || norm.includes('troca') ? 'supporter' : 'pokemon')),
+      category: c.category || (
+        norm.includes('energia') || norm.includes('energy')
+          ? 'energy'
+          : (norm.includes('poi') || norm.includes('arven') || norm.includes('iono') ||
+             norm.includes('pesquisa') || norm.includes('ordem') || norm.includes('troca'))
+            ? 'supporter'
+            : 'pokemon'
+      ),
       imageUrl: finalImageUrl || POKEMON_CARD_BACK,
       setCode: cleanSet,
       setNumber: rawNum || cleanNum,
@@ -741,23 +762,46 @@ export function getRegisteredCollectionCardsCount(): number {
   return COLLECTION_CARDS_REGISTRY.size;
 }
 
+/**
+ * Busca uma carta no acervo.
+ *
+ * FIX: Só retorna a carta se o NOME dela bater com o input (via normalizeCardName).
+ * Isso impede que um lookup por "Fezandipiti ex" retorne "Earthen Vessel" por
+ * colisão de chave no registry.
+ */
 export function getRegisteredCollectionCard(nameOrCode: string): CardMetadata | undefined {
   if (!nameOrCode) return undefined;
   const raw = nameOrCode.trim();
   const norm = normalizeCardName(raw);
 
-  if (COLLECTION_CARDS_REGISTRY.has(norm)) return COLLECTION_CARDS_REGISTRY.get(norm);
-  const alias = CARD_ALIASES[norm];
-  if (alias && COLLECTION_CARDS_REGISTRY.has(alias)) return COLLECTION_CARDS_REGISTRY.get(alias);
+  const nameMatches = (card: CardMetadata | undefined): boolean => {
+    if (!card) return false;
+    return normalizeCardName(card.name) === norm;
+  };
 
-  const cleanSpaced = raw.toLowerCase();
-  if (COLLECTION_CARDS_REGISTRY.has(cleanSpaced)) return COLLECTION_CARDS_REGISTRY.get(cleanSpaced);
+  const tryGet = (key: string): CardMetadata | undefined => {
+    const card = COLLECTION_CARDS_REGISTRY.get(key);
+    return nameMatches(card) ? card : undefined;
+  };
+
+  const direct = tryGet(norm);
+  if (direct) return direct;
+
+  const alias = CARD_ALIASES[norm];
+  if (alias) {
+    const viaAlias = tryGet(alias);
+    if (viaAlias) return viaAlias;
+  }
+
+  const viaClean = tryGet(raw.toLowerCase());
+  if (viaClean) return viaClean;
 
   const cleanId = raw.toLowerCase().replace(/[^a-z0-9.-]/g, '');
-  if (COLLECTION_CARDS_REGISTRY.has(cleanId)) return COLLECTION_CARDS_REGISTRY.get(cleanId);
+  const viaId = tryGet(cleanId);
+  if (viaId) return viaId;
 
   for (const [k, v] of COLLECTION_CARDS_REGISTRY.entries()) {
-    if (k.length >= 4 && matchesAsWholeWords(norm, k)) {
+    if (k.length >= 4 && matchesAsWholeWords(norm, k) && nameMatches(v)) {
       return v;
     }
   }
@@ -772,15 +816,15 @@ export function getRegisteredCollectionCard(nameOrCode: string): CardMetadata | 
 export function resolveCardByNameOnly(name: string): CardMetadata {
   if (!name) return makeFallbackCard(name, '');
 
-  // 0. Preferir set legal do DB
-  const preferred = resolveCardStandardPreferred(name);
-  if (preferred && preferred.id !== 'SVI-1') return preferred;
-
-  // 0.5. Acervo
+  // 1. Acervo do usuário (prioridade máxima — é o que ele TEM)
   const fromCollection = getRegisteredCollectionCard(name);
   if (fromCollection && fromCollection.imageUrl && !isSpriteUrl(fromCollection.imageUrl)) {
     return fromCollection;
   }
+
+  // 2. Preferir set legal do DB
+  const preferred = resolveCardStandardPreferred(name);
+  if (preferred && preferred.id !== 'SVI-1') return preferred;
 
   const cleanId = name.toLowerCase().trim().replace(/[^a-z0-9.-]/g, '');
   if (PTCGL_CARD_ID_MAP[cleanId]) return PTCGL_CARD_ID_MAP[cleanId];
@@ -904,13 +948,13 @@ export function parsePTCGLLogLine(line: string): FormattedPTCGLCard | null {
 export function resolvePTCGLCard(name: string): CardMetadata {
   if (!name) return makeFallbackCard(name, '');
 
-  // 0. Prioridade Máxima: Acervo de Cartas vinculado
+  // 1. Acervo do usuário (prioridade máxima)
   const fromCollection = getRegisteredCollectionCard(name);
   if (fromCollection && fromCollection.imageUrl && !isSpriteUrl(fromCollection.imageUrl)) {
     return fromCollection;
   }
 
-  // 0.5. Preferir set legal (H/I) do DB
+  // 2. Preferir set legal (H/I) do DB
   const preferred = resolveCardStandardPreferred(name);
   if (preferred && preferred.id !== 'SVI-1') return preferred;
 
@@ -1204,7 +1248,7 @@ export function getPlayerDeck(playerId: string): Record<string, CardMetadata> {
 }
 
 // ============================================================================
-// CARD VERSION OVERRIDE (persistido em localStorage)
+// CARD VERSION OVERRIDE (localStorage)
 // ============================================================================
 
 const STORAGE_KEY = 'pkmn:card-version-overrides:v1';
