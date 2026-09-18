@@ -10,7 +10,11 @@
 //
 // FIX (última revisão):
 //  1. registerCollectionCards SEMPRE recalcula URL (ignora stale)
-//  2. getRegisteredCollectionCard VALIDA o par (set, number)
+//  2. getRegisteredCollectionCard REJEITA se (set, number) da coleção
+//     divergir do DB canônico. Isso força o uso da versão correta:
+//     - SFA 096 (coleção stale) → rejeitado → usa SFA 038 (DB)
+//     - POR 862 (coleção stale) → rejeitado → usa JTG 106 (DB)
+//     - MEW 151 (coleção stale) → rejeitado → usa 30TH 66 (DB)
 //  3. resolvePTCGLCard e resolveCardByNameOnly têm a MESMA ordem
 //  4. ORB-SAFE: ordem de URL é ptcgIo → Limitless → TCGdex
 // ============================================================================
@@ -124,10 +128,6 @@ export function getPokemonTcgIoImageUrl(
   return ptcgIoUrl(setCode, setNumber);
 }
 
-/**
- * Retorna a MELHOR URL de imagem para uma carta, usando a ordem ORB-safe:
- *   pokemontcg.io → Limitless → TCGdex
- */
 function getBestImageUrl(setCode: string, setNumber: string | number): string {
   return (
     ptcgIoUrl(setCode, setNumber) ||
@@ -142,7 +142,6 @@ function getBestImageUrl(setCode: string, setNumber: string | number): string {
 // ============================================================================
 
 export const CARD_IMAGE_DATABASE: Record<string, CardMetadata> = {
-  // ----- Pokémon standard -----
   'charizard ex':      { id: 'OBF-125', name: 'Charizard ex', category: 'pokemon', energyType: 'darkness', stage: 'ESTÁGIO 2', hp: 330, imageUrl: '', setCode: 'OBF', setNumber: '125', localSetId: 'sv3' },
   'charmander':        { id: 'OBF-26',  name: 'Charmander',   category: 'pokemon', energyType: 'fire',     stage: 'BÁSICO',    hp: 70,  imageUrl: '', setCode: 'OBF', setNumber: '26',  localSetId: 'sv3' },
   'charmeleon':        { id: 'OBF-27',  name: 'Charmeleon',   category: 'pokemon', energyType: 'fire',     stage: 'ESTÁGIO 1', hp: 90,  imageUrl: '', setCode: 'OBF', setNumber: '27',  localSetId: 'sv3' },
@@ -212,9 +211,7 @@ export const CARD_IMAGE_DATABASE: Record<string, CardMetadata> = {
   'lumineon v':        { id: 'BRS-40',  name: 'Lumineon V',   category: 'pokemon', energyType: 'water',     stage: 'BÁSICO',    hp: 170, imageUrl: '', setCode: 'BRS', setNumber: '40', localSetId: 'swsh9' },
   'crobat v':          { id: 'DAA-104', name: 'Crobat V',     category: 'pokemon', energyType: 'darkness',  stage: 'BÁSICO',    hp: 180, imageUrl: '', setCode: 'DAA', setNumber: '104', localSetId: 'swsh3' },
 
-  // ---------------------------------------------------------------------------
-  // CARTAS DO DECK "MEW EX / MEGA LOPUNNY" (usuário)
-  // ---------------------------------------------------------------------------
+  // ----- CARTAS DO DECK DO USUÁRIO -----
   'mew ex 30th':        { id: '30TH-66',  name: 'Mew ex',         category: 'pokemon', energyType: 'psychic',   stage: 'BÁSICO',    hp: 180, imageUrl: '', setCode: '30TH', setNumber: '66',  localSetId: '30th' },
   'mew ex':             { id: '30TH-66',  name: 'Mew ex',         category: 'pokemon', energyType: 'psychic',   stage: 'BÁSICO',    hp: 180, imageUrl: '', setCode: '30TH', setNumber: '66',  localSetId: '30th' },
   'stunfisk asc':       { id: 'ASC-62',   name: 'Stunfisk',       category: 'pokemon', energyType: 'fighting',  stage: 'BÁSICO',    hp: 110, imageUrl: '', setCode: 'ASC',  setNumber: '62',  localSetId: 'me2pt5' },
@@ -366,7 +363,6 @@ export const CARD_IMAGE_DATABASE: Record<string, CardMetadata> = {
 
 Object.values(CARD_IMAGE_DATABASE).forEach(card => {
   if (card.setCode && card.setNumber) {
-    // ORB-SAFE: ptcgIo → Limitless → TCGdex
     const url = getBestImageUrl(card.setCode, card.setNumber);
     if (url) card.imageUrl = url;
   }
@@ -712,16 +708,14 @@ export function registerCollectionCards(cards: Array<any>): void {
     const cleanNum = rawNum.replace(/^0+/, '') || '1';
     const localSet = c.localSetId || (cleanSet ? mapTPCiToLocalSetId(cleanSet) : '');
 
-    // ORB-SAFE: ptcgIo → Limitless → TCGdex (NÃO confia em c.imageUrl)
+    // ORB-SAFE: ptcgIo → Limitless → TCGdex
     let finalImageUrl = '';
     if (cleanSet && cleanNum && cleanSet !== 'SVI' && cleanNum !== '1') {
       finalImageUrl = getBestImageUrl(cleanSet, cleanNum);
     }
-    // Fallback: usa o stored URL apenas se não conseguimos recalcular
     if (!finalImageUrl && c.imageUrl && !isSpriteUrl(c.imageUrl)) {
       finalImageUrl = c.imageUrl;
     }
-    // Normaliza URL TCGdex sem extensão
     if (finalImageUrl.startsWith('https://assets.tcgdex.net/') &&
         !finalImageUrl.endsWith('.webp') &&
         !finalImageUrl.endsWith('.png')) {
@@ -765,6 +759,16 @@ export function getRegisteredCollectionCardsCount(): number {
   return COLLECTION_CARDS_REGISTRY.size;
 }
 
+// ============================================================================
+// VALIDAÇÃO: rejeita entradas da coleção que divergem do DB canônico
+//
+// Regras:
+//   1. Nome da carta precisa bater com o input
+//   2. Se (set, number) do coleção aponta para OUTRA carta no registry → rejeita
+//   3. Se (set, number) do coleção DIVERGE do DB canônico → rejeita
+//      (isso força o uso da versão correta do DB: SFA 038 em vez de SFA 096)
+// ============================================================================
+
 export function getRegisteredCollectionCard(nameOrCode: string): CardMetadata | undefined {
   if (!nameOrCode) return undefined;
   const raw = nameOrCode.trim();
@@ -772,8 +776,11 @@ export function getRegisteredCollectionCard(nameOrCode: string): CardMetadata | 
 
   const validate = (card: CardMetadata | undefined): CardMetadata | undefined => {
     if (!card) return undefined;
+
+    // 1. Nome bate?
     if (normalizeCardName(card.name) !== norm) return undefined;
 
+    // 2. (set, number) aponta para OUTRA carta no registry? Rejeita.
     if (card.setCode && card.setNumber) {
       const num = String(card.setNumber).replace(/^#/, '').replace(/^0+/, '') || '1';
       const key1 = `${card.setCode.toLowerCase()} ${num}`;
@@ -784,11 +791,15 @@ export function getRegisteredCollectionCard(nameOrCode: string): CardMetadata | 
       }
     }
 
+    // 3. DB canônica tem essa carta com (set, number) DIFERENTE? Rejeita.
+    //    Isso é o fix principal: força o uso da versão correta do DB.
     const dbEntry = CARD_IMAGE_DATABASE[norm];
-    if (dbEntry?.setCode && card.setCode) {
-      const dbNum = String(dbEntry.setNumber || '').replace(/^0+/, '');
-      const cardNum = String(card.setNumber || '').replace(/^0+/, '');
-      if (dbNum && cardNum && dbNum !== cardNum && !isSetStandardLegal(card.setCode)) {
+    if (dbEntry?.setCode && dbEntry?.setNumber && card.setCode && card.setNumber) {
+      const dbSet = String(dbEntry.setCode).toUpperCase();
+      const cardSet = String(card.setCode).toUpperCase();
+      const dbNum = String(dbEntry.setNumber).replace(/^0+/, '');
+      const cardNum = String(card.setNumber).replace(/^0+/, '');
+      if (dbSet !== cardSet || dbNum !== cardNum) {
         return undefined;
       }
     }
@@ -1205,7 +1216,6 @@ export function registerPlayerDeck(playerId: string, decklistText: string): void
         setNumber: num,
         localSetId: mapTPCiToLocalSetId(set),
       };
-      // ORB-SAFE
       const url = getBestImageUrl(set, num);
       if (url) fallback.imageUrl = url;
       map[normalizeCardName(name)] = fallback;
@@ -1307,7 +1317,6 @@ export function getCardVersionForPlayer(
   if (card) return card;
 
   const localSetId = mapTPCiToLocalSetId(ov.setCode);
-  // ORB-SAFE
   const imageUrl = getBestImageUrl(ov.setCode, ov.setNumber) || POKEMON_CARD_BACK;
 
   return {
