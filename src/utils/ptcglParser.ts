@@ -28,10 +28,6 @@ export const KNOWN_ARCHETYPES: ArchetypeDefinition[] = [
   { name: 'Mega Lopunny ex', keywords: ['mega lopunny ex', 'mega lopunny'], sprites: ['lopunny', 'buneary'] },
 ];
 
-/**
- * Verifica se uma keyword aparece no texto como PALAVRA INTEIRA (word boundary).
- * Isso impede que "rotom v" case com "rotom ventilador".
- */
 function matchesArchetypeKeyword(text: string, keyword: string): boolean {
   const escaped = keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   const re = new RegExp(`\\b${escaped}\\b`, 'i');
@@ -351,30 +347,20 @@ export function parsePTCGLLog(rawLog: string, loggedInUserName?: string): Traine
       const side = getSide(actor);
 
       // ================================================================
-      // NOVO: EMBARALHAMENTO DE POKÉMON DO CAMPO
-      // (habilidade do Dudunsparce "Comprar e Dar no Pé", Rotom etc)
-      //
-      // Padrão no log:
-      //   "Wilksman embaralhou 2 cartas no baralho dele."
-      //   "   • Dudunsparce, Dunsparce"
-      //
-      // Ação: remove os Pokémon do campo (ativo ou banco) desse lado.
+      // EMBARALHAMENTO DE POKÉMON DO CAMPO
       // ================================================================
       if (lower.includes('embaralhou') && (lower.includes('no baralho') || lower.includes('into their deck') || lower.includes('into the deck'))) {
-        // Extrai o actor correto (a frase pode citar o oponente também)
         let ownerActor: 'player1' | 'player2' = actor;
         if (hasP2 && !hasP1) ownerActor = 'player2';
         else if (hasP1 && !hasP2) ownerActor = 'player1';
         const ownerSide = getSide(ownerActor);
 
-        // Varre as próximas 1-4 linhas procurando bullets com nomes
         const namesToRemove: string[] = [];
         for (let j = i + 1; j < Math.min(i + 5, block.rawLines.length); j++) {
           const nextRaw = block.rawLines[j];
           const nextIsBullet = /^[•\-*]\s+/.test(nextRaw);
           if (!nextIsBullet) {
             if (nextRaw.trim().length === 0) continue;
-            // Se a próxima linha não-bullet não é continuação, para
             break;
           }
           const nextLine = nextRaw.replace(/^[•\-*]\s+/, '').trim();
@@ -387,7 +373,6 @@ export function parsePTCGLLog(rawLog: string, loggedInUserName?: string): Traine
           }
         }
 
-        // Remove os nomes achados do campo
         if (namesToRemove.length > 0) {
           for (const nm of namesToRemove) {
             const act = ownerSide.active();
@@ -639,7 +624,9 @@ export function parsePTCGLLog(rawLog: string, loggedInUserName?: string): Traine
         continue;
       }
 
-      // PROMOÇÃO EXPLÍCITA
+      // ================================================================
+      // PROMOÇÃO EXPLÍCITA — FIX: idempotente + devolve o active anterior
+      // ================================================================
       if (lower.includes('promoveu') || lower.includes('promoted')) {
         let promotedCard = extractCardName(line);
         const promoPt = line.match(/promoveu\s+(.+?)\s+para\s+o\s+campo\s+ativo/i);
@@ -648,36 +635,56 @@ export function parsePTCGLLog(rawLog: string, loggedInUserName?: string): Traine
         else if (promoEn) promotedCard = promoEn[1].trim();
 
         const bench = side.bench();
-        const idx = bench.findIndex(b => isCardMatch(b.name, promotedCard));
-        if (idx !== -1) {
-          const [mon] = bench.splice(idx, 1);
-          side.setActive(mon);
+        const previousActive = side.active();
+
+        // Idempotente: se o active atual já é o promotedCard, não faz nada
+        if (previousActive && isCardMatch(previousActive.name, promotedCard)) {
+          // já está correto
         } else {
-          side.setActive(makePokemon(promotedCard));
+          const idx = bench.findIndex(b => isCardMatch(b.name, promotedCard));
+          if (idx !== -1) {
+            const [mon] = bench.splice(idx, 1);
+            side.setActive(mon);
+          } else {
+            side.setActive(makePokemon(promotedCard));
+          }
+
+          // Devolve o active anterior (auto-promovido) pro banco
+          if (previousActive && bench.length < 5) {
+            bench.push(previousActive);
+          }
         }
+
         actions.push({ id: actionId, type: 'play', player: actor, playerName: actorName, cardName: promotedCard, description: line });
         lastMainAction = 'other';
         continue;
       }
 
-      // "agora está no Campo Ativo"
+      // ================================================================
+      // "agora está no Campo Ativo" — FIX: idempotente
+      // ================================================================
       const nowActiveMatch = line.match(/^([^.\n]+?)\s+de\s+[^.\n]+?\s+agora\s+está\s+no\s+Campo\s+Ativo/i);
       if (nowActiveMatch) {
         const promotedCard = nowActiveMatch[1].trim();
         const bench = side.bench();
         const previousActive = side.active();
-        const idx = bench.findIndex(b => isCardMatch(b.name, promotedCard));
 
-        let promotedMon: PokemonInPlay;
-        if (idx !== -1) {
-          [promotedMon] = bench.splice(idx, 1);
+        // Idempotente: se o active atual já é o promotedCard, não faz nada
+        if (previousActive && isCardMatch(previousActive.name, promotedCard)) {
+          // já está correto
         } else {
-          promotedMon = makePokemon(promotedCard);
-        }
-        side.setActive(promotedMon);
+          const idx = bench.findIndex(b => isCardMatch(b.name, promotedCard));
+          let promotedMon: PokemonInPlay;
+          if (idx !== -1) {
+            [promotedMon] = bench.splice(idx, 1);
+          } else {
+            promotedMon = makePokemon(promotedCard);
+          }
+          side.setActive(promotedMon);
 
-        if (previousActive && previousActive !== promotedMon && bench.length < 5) {
-          bench.push(previousActive);
+          if (previousActive && previousActive !== promotedMon && bench.length < 5) {
+            bench.push(previousActive);
+          }
         }
 
         actions.push({ id: actionId, type: 'play', player: actor, playerName: actorName, cardName: promotedCard, description: line });
@@ -824,10 +831,13 @@ export function parsePTCGLLog(rawLog: string, loggedInUserName?: string): Traine
       }
     }
 
-    if (block.turnNumber === 0) {
-      if (!p1Active && p1Bench.length > 0) p1Active = p1Bench.shift()!;
-      if (!p2Active && p2Bench.length > 0) p2Active = p2Bench.shift()!;
-    }
+    // ================================================================
+    // AUTO-PROMOÇÃO: se algum lado ficou sem ativo mas ainda tem banco,
+    // promove o primeiro mon do banco. Garante que nunca fica um lado
+    // sem Pokémon Ativo.
+    // ================================================================
+    if (!p1Active && p1Bench.length > 0) p1Active = p1Bench.shift()!;
+    if (!p2Active && p2Bench.length > 0) p2Active = p2Bench.shift()!;
 
     processedTurns.push({
       turnNumber: block.turnNumber,
@@ -890,7 +900,10 @@ export function parsePTCGLLog(rawLog: string, loggedInUserName?: string): Traine
   };
 }
 
-// SAMPLE LOGS (não mudou — mantém igual)
+// ============================================================================
+// SAMPLE LOGS
+// ============================================================================
+
 export const SAMPLE_PT_LOG = `Preparação
 Felipe Wilks jogou 1 moeda(s), com resultado de 1 cara(s) e 0 coroa(s).
 Felipe Wilks comprou 7 cartas para a mão inicial.
