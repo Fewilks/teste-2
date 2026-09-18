@@ -11,6 +11,10 @@ import { Eye, Zap, Flame, ShieldAlert, Sparkles, ExternalLink, CheckCircle2 } fr
 
 export interface PokemonCardProps {
   name: string;
+  imageUrl?: string;
+  setCode?: string;
+  setNumber?: string;
+  card?: Partial<CardMetadata>;
   size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
   isBack?: boolean;
   damage?: number;
@@ -28,6 +32,10 @@ export interface PokemonCardProps {
 
 export default function PokemonCard({
   name,
+  imageUrl,
+  setCode,
+  setNumber,
+  card,
   size = 'md',
   isBack = false,
   damage = 0,
@@ -46,7 +54,21 @@ export default function PokemonCard({
   const [isHovered, setIsHovered] = useState(false);
   const [isInspecting, setIsInspecting] = useState(false);
 
-  const cardData: CardMetadata = resolveCard(name);
+  const fallbackData = resolveCard(name);
+  const cardData: CardMetadata = {
+    id: card?.id || fallbackData.id,
+    name: card?.name || fallbackData.name,
+    category: card?.category || fallbackData.category,
+    imageUrl: imageUrl || card?.imageUrl || fallbackData.imageUrl,
+    setCode: setCode || card?.setCode || fallbackData.setCode,
+    setNumber: setNumber || card?.setNumber || fallbackData.setNumber,
+    localSetId: card?.localSetId || fallbackData.localSetId,
+    stage: card?.stage || fallbackData.stage,
+    hp: card?.hp || fallbackData.hp,
+    energyType: card?.energyType || fallbackData.energyType,
+    isFromCollection: Boolean(imageUrl || card?.isFromCollection || fallbackData.isFromCollection),
+    collectionScanUrl: imageUrl || card?.collectionScanUrl || fallbackData.collectionScanUrl
+  };
   const ptcglCard = formatPTCGLCardCode(cardData);
   const spriteHierarchy = getPokemonSpriteHierarchy(cardData);
 
@@ -221,6 +243,12 @@ export default function PokemonCard({
                 <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-purple-950 border border-purple-500/40 text-[10px] font-mono font-bold text-amber-300">
                   <CheckCircle2 className="w-3 h-3 text-emerald-400" />
                   {ptcglCard.canonicalCode}
+                </span>
+              )}
+              {!isBack && cardData.isFromCollection && (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-950/80 border border-emerald-500/50 text-[10px] font-semibold text-emerald-300">
+                  <Sparkles className="w-3 h-3 text-emerald-400" />
+                  Vinculado ao Acervo
                 </span>
               )}
             </div>

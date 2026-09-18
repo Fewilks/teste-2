@@ -362,7 +362,13 @@ const SET_TO_TCGDEX_MAP: Record<string, { series: string; set: string }> = {
   'FST': { series: 'swsh', set: 'swsh08' },
   'EVS': { series: 'swsh', set: 'swsh07' },
   'CRE': { series: 'swsh', set: 'swsh06' },
-  'BST': { series: 'swsh', set: 'swsh05' }
+  'BST': { series: 'swsh', set: 'swsh05' },
+  '30TH': { series: 'me', set: '30th' },
+  '30th': { series: 'me', set: '30th' },
+  '30C': { series: 'me', set: '30th' },
+  '30c': { series: 'me', set: '30th' },
+  '30TH-C': { series: 'me', set: '30th-c' },
+  '30th-c': { series: 'me', set: '30th-c' }
 };
 
 function getTCGdexImageUrl(setCode: string, setNumber: string | number, lang: 'pt' | 'en' = 'pt'): string {
@@ -394,6 +400,10 @@ async function fetchTcgdexCompleteSet(tcgdexSetId: string, series: string, tpciS
   }
 
   let cardsData: any[] = [];
+  const ptNameMap = new Map<string, string>();
+  const ptImageMap = new Map<string, string>();
+
+  // 1. Fetch Portuguese data for localized names and Portuguese card scans
   try {
     const controllerPt = new AbortController();
     const timeoutPt = setTimeout(() => controllerPt.abort(), 4500);
@@ -402,30 +412,40 @@ async function fetchTcgdexCompleteSet(tcgdexSetId: string, series: string, tpciS
 
     if (resPt.ok) {
       const dataPt = await resPt.json();
-      if (dataPt.cards && Array.isArray(dataPt.cards) && dataPt.cards.length > 0) {
+      if (dataPt.cards && Array.isArray(dataPt.cards)) {
+        for (const c of dataPt.cards) {
+          const rawNum = String(c.localId || c.id?.split('-')[1] || '').trim();
+          const cleanNum = rawNum.replace(/^0+/, '');
+          if (cleanNum && c.name) {
+            ptNameMap.set(cleanNum, c.name);
+          }
+          if (cleanNum && c.image) {
+            ptImageMap.set(cleanNum, `${c.image}/high.webp`);
+          }
+        }
+        // If Portuguese already has a comprehensive list, keep it
         cardsData = dataPt.cards;
       }
     }
   } catch {
-    // fallback to English
+    // ignore
   }
 
-  if (cardsData.length === 0) {
-    try {
-      const controllerEn = new AbortController();
-      const timeoutEn = setTimeout(() => controllerEn.abort(), 4500);
-      const resEn = await fetch(`https://api.tcgdex.net/v2/en/sets/${tcgdexSetId}`, { signal: controllerEn.signal });
-      clearTimeout(timeoutEn);
+  // 2. Fetch English complete set (guaranteed to contain ALL cards, e.g. 158 for 30th)
+  try {
+    const controllerEn = new AbortController();
+    const timeoutEn = setTimeout(() => controllerEn.abort(), 4500);
+    const resEn = await fetch(`https://api.tcgdex.net/v2/en/sets/${tcgdexSetId}`, { signal: controllerEn.signal });
+    clearTimeout(timeoutEn);
 
-      if (resEn.ok) {
-        const dataEn = await resEn.json();
-        if (dataEn.cards && Array.isArray(dataEn.cards) && dataEn.cards.length > 0) {
-          cardsData = dataEn.cards;
-        }
+    if (resEn.ok) {
+      const dataEn = await resEn.json();
+      if (dataEn.cards && Array.isArray(dataEn.cards) && dataEn.cards.length > cardsData.length) {
+        cardsData = dataEn.cards;
       }
-    } catch {
-      // offline
     }
+  } catch {
+    // ignore
   }
 
   if (cardsData.length === 0) {
@@ -438,17 +458,23 @@ async function fetchTcgdexCompleteSet(tcgdexSetId: string, series: string, tpciS
     const cleanNum = rawLocalId.replace(/^0+/, '') || '1';
     const formattedNum = isSvOrMe && /^\d+$/.test(rawLocalId) ? cleanNum.padStart(3, '0') : rawLocalId;
 
-    let imageUrl = '';
-    if (c.image) {
-      imageUrl = `${c.image}/high.webp`;
-    } else {
-      imageUrl = `https://assets.tcgdex.net/pt/${series}/${tcgdexSetId}/${formattedNum}/high.webp`;
+    // Use Portuguese image if present, else English image with high quality webp
+    let imageUrl = ptImageMap.get(cleanNum) || '';
+    if (!imageUrl) {
+      if (c.image) {
+        imageUrl = `${c.image}/high.webp`;
+      } else {
+        imageUrl = `https://assets.tcgdex.net/pt/${series}/${tcgdexSetId}/${formattedNum}/high.webp`;
+      }
     }
+
+    // Use Portuguese card name if available, otherwise English
+    const finalName = ptNameMap.get(cleanNum) || c.name;
 
     return {
       id: `${tpciSetCode}-${formattedNum}`,
       localId: c.id || `${tcgdexSetId}-${formattedNum}`,
-      name: c.name,
+      name: finalName,
       imageUrl,
       setCode: tpciSetCode,
       setName: setNameFallback,
@@ -858,6 +884,9 @@ const TPCI_TO_LOCAL_SET_MAP: Record<string, string> = {
   'MEG': 'meg',
   'CRI': 'cri',
   'PBL': 'pbl',
+  '30TH': '30th',
+  '30TH-C': '30th-c',
+  '30C': '30th',
   'JTG': 'jtg',
   'DRI': 'dri',
   'BLK': 'blk',
@@ -924,6 +953,9 @@ const LOCAL_TO_TPCI_SET_MAP: Record<string, string> = {
   'meg': 'MEG',
   'cri': 'CRI',
   'pbl': 'PBL',
+  '30th': '30TH',
+  '30th-c': '30TH-C',
+  '30c': '30TH',
   'jtg': 'JTG',
   'dri': 'DRI',
   'blk': 'BLK',
@@ -1008,12 +1040,28 @@ const SET_QUERY_ALIASES: Record<string, string> = {
   'blk': 'blk',
   'chama branca': 'wht',
   'white flare': 'wht',
-  'wht': 'wht'
+  'wht': 'wht',
+  'celebracoes de 30 anos': '30th',
+  'celebrações de 30 anos': '30th',
+  'celebracoes 30 anos': '30th',
+  '30 anos': '30th',
+  '30th celebration': '30th',
+  '30th anniversary': '30th',
+  '30th': '30th',
+  '30c': '30th',
+  'colecao classica de 30 anos': '30th-c',
+  'coleção clássica de 30 anos': '30th-c',
+  '30th classic collection': '30th-c',
+  '30th-c': '30th-c'
 };
 
 // Master catalog of modern Pokémon TCG collections (2025+ Mega Evolution Era & Modern Standard)
 const COMPREHENSIVE_SETS = [
-  // 1. Nova Era Mega Evolution (Lançadas a partir de 2025 para frente)
+  // 1. Coleções de Celebração de 30 Anos
+  { id: '30TH', ptcglCode: '30TH', localId: '30th', name: 'Celebrações de 30 Anos (30th Anniversary Celebration - 30TH)', series: 'Mega Evolution', releaseDate: '2026-02-27', logo: 'https://assets.tcgdex.net/en/me/30th/logo', symbol: 'https://assets.tcgdex.net/univ/me/30th/symbol' },
+  { id: '30TH-C', ptcglCode: '30TH-C', localId: '30th-c', name: 'Coleção Clássica de 30 Anos (30th Classic Collection - 30TH-C)', series: 'Mega Evolution', releaseDate: '2026-02-27' },
+
+  // 2. Nova Era Mega Evolution (Lançadas a partir de 2025 para frente)
   { id: 'ASC', ptcglCode: 'ASC', localId: 'asc', name: 'Heróis Excelsos (Mega Evolution: Ascended Heroes - ASC)', series: 'Mega Evolution', releaseDate: '2026-01-30' },
   { id: 'PFL', ptcglCode: 'PFL', localId: 'pfl', name: 'Fogo Fantasmagórico (Mega Evolution: Phantasmal Flames - PFL)', series: 'Mega Evolution', releaseDate: '2025-11-14' },
   { id: 'POR', ptcglCode: 'POR', localId: 'por', name: 'Ordem Perfeita (Mega Evolution: Perfect Order - POR)', series: 'Mega Evolution', releaseDate: '2026-03-27' },
@@ -1021,7 +1069,7 @@ const COMPREHENSIVE_SETS = [
   { id: 'CRI', ptcglCode: 'CRI', localId: 'cri', name: 'Caos Ascendente (Mega Evolution: Chaos Rising - CRI)', series: 'Mega Evolution', releaseDate: '2026-05-22' },
   { id: 'PBL', ptcglCode: 'PBL', localId: 'pbl', name: 'Escuridão Total (Mega Evolution: Pitch Black - PBL)', series: 'Mega Evolution', releaseDate: '2026-07-17' },
 
-  // 2. Expansões de 2025 de Scarlet & Violet
+  // 3. Expansões de 2025 de Scarlet & Violet
   { id: 'PRE', ptcglCode: 'PRE', localId: 'pre', name: 'Evoluções Prismáticas (Prismatic Evolutions - PRE)', series: 'Scarlet & Violet', releaseDate: '2025-01-17' },
   { id: 'JTG', ptcglCode: 'JTG', localId: 'jtg', name: 'Jornada em Conjunto (Journey Together - JTG)', series: 'Scarlet & Violet', releaseDate: '2025-03-28' },
   { id: 'DRI', ptcglCode: 'DRI', localId: 'dri', name: 'Rivais Destinados (Destined Rivals - DRI)', series: 'Scarlet & Violet', releaseDate: '2025-05-30' },
@@ -1051,7 +1099,7 @@ function normalizeSearchTerm(str: string): string {
 }
 
 // Set of all modern Mega Evolution collection IDs (2025+)
-const MODERN_MEGA_SET_IDS = new Set(['asc', 'pfl', 'por', 'meg', 'cri', 'pbl', 'ASC', 'PFL', 'POR', 'MEG', 'CRI', 'PBL']);
+const MODERN_MEGA_SET_IDS = new Set(['asc', 'pfl', 'por', 'meg', 'cri', 'pbl', '30th', '30th-c', '30c', 'ASC', 'PFL', 'POR', 'MEG', 'CRI', 'PBL', '30TH', '30TH-C', '30C']);
 
 // Search Pokémon cards via modern database & pokemontcg.io with intelligent local and Gemini fallbacks
 app.get('/api/pokemon/search', async (req, res) => {

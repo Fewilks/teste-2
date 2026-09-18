@@ -16,7 +16,7 @@ import {
   Info
 } from 'lucide-react';
 import PokemonSprite from './PokemonSprite';
-import { getAuthenticCardImageUrl, getCardScanHierarchy, POKEMON_CARD_BACK } from '../utils/cardImages';
+import { getAuthenticCardImageUrl, getCardScanHierarchy, POKEMON_CARD_BACK, registerCollectionCards } from '../utils/cardImages';
 import { 
   normalizePokemonCard, 
   normalizeCollectionCards, 
@@ -81,6 +81,7 @@ export default function Collection({ currentMember }: CollectionProps) {
         
         // Mapeamento retroativo: normaliza cartas da coleção para priorizar o ID do PTCGL
         const normalizedCards = normalizeCollectionCards(rawCards);
+        registerCollectionCards(normalizedCards as any);
         setCollectionCards(normalizedCards as any);
       } catch (err) {
         console.error('Error fetching collection:', err);

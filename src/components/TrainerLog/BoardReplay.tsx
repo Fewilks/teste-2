@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { TrainerLogMatch, BattleTurnAction } from '../../types';
 import PokemonCard from '../PokemonCard';
-import { convertLocalIdToPTCGL } from '../../utils/cardImages';
+import { convertLocalIdToPTCGL, getRegisteredCollectionCardsCount } from '../../utils/cardImages';
 import { 
   Play, 
   Pause, 
@@ -34,6 +34,7 @@ export default function BoardReplay({ match }: BoardReplayProps) {
 
   const turns = match.turns || [];
   const currentTurn = turns[currentTurnIdx] || turns[0];
+  const linkedCardsCount = getRegisteredCollectionCardsCount();
 
   // Auto playback loop
   useEffect(() => {
@@ -286,6 +287,17 @@ export default function BoardReplay({ match }: BoardReplayProps) {
                 2x
               </button>
             </div>
+
+            {/* Acervo de Cartas Link Indicator */}
+            {linkedCardsCount > 0 && (
+              <div 
+                className="hidden lg:flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-950/70 border border-emerald-500/40 text-[11px] text-emerald-300 font-semibold shadow-sm"
+                title="Imagens oficiais do acervo de cartas integradas à simulação deste replay"
+              >
+                <Sparkles className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                <span>Acervo Vinculado ({linkedCardsCount} cartas)</span>
+              </div>
+            )}
           </div>
 
           {/* Turn status indicator */}

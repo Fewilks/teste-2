@@ -1,4 +1,4 @@
-import { getTCGdexImageUrl, getAuthenticCardImageUrl, normalizeTPCiSetCode } from '../utils/cardImages';
+import { getTCGdexImageUrl, getAuthenticCardImageUrl, normalizeTPCiSetCode, registerCollectionCards } from '../utils/cardImages';
 
 export interface PokemonSet {
   id: string;          // Official PTCGL uppercase 3-4 letter code (e.g. "TWM", "OBF", "SSP", "ASC")
@@ -25,7 +25,11 @@ export interface CatalogCard {
 
 // Master list of Pokémon TCG collections using PTCGL official codes as primary
 export const COMPREHENSIVE_SETS: PokemonSet[] = [
-  // 1. Nova Era Mega Evolution (2025+)
+  // 1. Coleções de Celebração de 30 Anos
+  { id: '30TH', ptcglCode: '30TH', localId: '30th', name: 'Celebrações de 30 Anos (30th Anniversary Celebration - 30TH)', series: 'Mega Evolution', releaseDate: '2026-02-27', logo: 'https://assets.tcgdex.net/en/me/30th/logo', symbol: 'https://assets.tcgdex.net/univ/me/30th/symbol' },
+  { id: '30TH-C', ptcglCode: '30TH-C', localId: '30th-c', name: 'Coleção Clássica de 30 Anos (30th Classic Collection - 30TH-C)', series: 'Mega Evolution', releaseDate: '2026-02-27' },
+
+  // 2. Nova Era Mega Evolution (2025+)
   { id: 'ASC', ptcglCode: 'ASC', localId: 'asc', name: 'Heróis Excelsos (Mega Evolution: Ascended Heroes - ASC)', series: 'Mega Evolution', releaseDate: '2026-01-30', logo: 'https://images.pokemontcg.io/asc/logo.png', symbol: 'https://images.pokemontcg.io/asc/symbol.png' },
   { id: 'PFL', ptcglCode: 'PFL', localId: 'pfl', name: 'Fogo Fantasmagórico (Mega Evolution: Phantasmal Flames - PFL)', series: 'Mega Evolution', releaseDate: '2025-11-14', logo: 'https://images.pokemontcg.io/pfl/logo.png', symbol: 'https://images.pokemontcg.io/pfl/symbol.png' },
   { id: 'POR', ptcglCode: 'POR', localId: 'por', name: 'Ordem Perfeita (Mega Evolution: Perfect Order - POR)', series: 'Mega Evolution', releaseDate: '2026-03-27', logo: 'https://images.pokemontcg.io/por/logo.png', symbol: 'https://images.pokemontcg.io/por/symbol.png' },
@@ -376,4 +380,11 @@ export function searchCardsLocally(rawQuery: string, rawSet: string): CatalogCar
   }
 
   return matched;
+}
+
+// Auto-seed collection registry with modern meta cards
+try {
+  registerCollectionCards(MODERN_CARDS_CATALOG);
+} catch {
+  // safe fallback
 }

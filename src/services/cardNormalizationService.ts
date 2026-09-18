@@ -60,6 +60,24 @@ export interface SetDefinition {
 // 1. DICIONÁRIO COMPLETO DE EXPANSÕES (COM ALIASES E NOMENCLATURA OFICIAL)
 // ----------------------------------------------------------------------------
 export const OFFICIAL_SETS_REGISTRY: Record<string, SetDefinition> = {
+  // --- 30th Anniversary Celebrations ---
+  '30TH': {
+    tpciCode: '30TH',
+    name: 'Celebrações de 30 Anos (30th Anniversary Celebration)',
+    localId: '30th',
+    series: 'Mega Evolution',
+    releaseDate: '2026-02-27',
+    aliases: ['30th', '30c', '30-c', 'celebration', 'celebrations', 'celebracoes de 30 anos', '30th celebration', '30th anniversary']
+  },
+  '30TH-C': {
+    tpciCode: '30TH-C',
+    name: 'Coleção Clássica de 30 Anos (30th Classic Collection)',
+    localId: '30th-c',
+    series: 'Mega Evolution',
+    releaseDate: '2026-02-27',
+    aliases: ['30th-c', '30thc', '30c-c', 'classic collection', 'colecao classica de 30 anos', '30th classic collection']
+  },
+
   // --- Mega Evolution Era (2025-2026) ---
   'ASC': {
     tpciCode: 'ASC',

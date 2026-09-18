@@ -32,6 +32,8 @@ export interface CardMetadata {
   setCode?: string;
   setNumber?: string;
   localSetId?: string;
+  isFromCollection?: boolean;
+  collectionScanUrl?: string;
 }
 
 // ============================================================================
@@ -567,11 +569,108 @@ function fuzzyMatchAsWords(norm: string): CardMetadata | null {
 }
 
 // ============================================================================
+// GLOBAL COLLECTION REGISTRY (VINCULAÇÃO DIRETA ACERVO <-> TRAINERLOG)
+// ============================================================================
+
+const COLLECTION_CARDS_REGISTRY: Map<string, CardMetadata> = new Map();
+
+/**
+ * Registra cartas do acervo de cartas do usuário/time no sistema de resolução de imagens.
+ * Permite que partidas do TrainerLog e o visualizador de tabuleiro puxem as imagens autênticas
+ * e atualizadas diretamente a partir do acervo cadastrado.
+ */
+export function registerCollectionCards(cards: Array<any>): void {
+  if (!cards || !Array.isArray(cards)) return;
+  for (const c of cards) {
+    if (!c) continue;
+    const rawName = c.name || '';
+    if (!rawName) continue;
+
+    const norm = normalizeCardName(rawName);
+    const cleanSet = (c.setCode || c.ptcglCode || c.tpciSetCode || '').toUpperCase();
+    const rawNum = String(c.setNumber ?? c.number ?? c.cleanNumber ?? '').trim();
+    const cleanNum = rawNum.replace(/^0+/, '') || '1';
+    const localSet = c.localSetId || (cleanSet ? mapTPCiToLocalSetId(cleanSet) : '');
+
+    // Identificar melhor URL de imagem da carta
+    let finalImageUrl = c.imageUrl || '';
+    if (finalImageUrl.startsWith('https://assets.tcgdex.net/') && !finalImageUrl.endsWith('.webp') && !finalImageUrl.endsWith('.png')) {
+      finalImageUrl = `${finalImageUrl}/high.webp`;
+    }
+    if ((!finalImageUrl || isSpriteUrl(finalImageUrl)) && cleanSet && cleanNum) {
+      finalImageUrl = tcgdexUrl(cleanSet, cleanNum, 'pt') || tcgdexUrl(cleanSet, cleanNum, 'en') || ptcgIoUrl(cleanSet, cleanNum);
+    }
+
+    const cardMeta: CardMetadata = {
+      id: c.id || `${cleanSet}-${cleanNum}`,
+      name: rawName,
+      category: c.category || (norm.includes('energia') || norm.includes('energy') ? 'energy' : (norm.includes('poi') || norm.includes('arven') || norm.includes('iono') || norm.includes('pesquisa') || norm.includes('ordem') || norm.includes('troca') ? 'supporter' : 'pokemon')),
+      imageUrl: finalImageUrl || POKEMON_CARD_BACK,
+      setCode: cleanSet,
+      setNumber: rawNum || cleanNum,
+      localSetId: localSet,
+      isFromCollection: true,
+      collectionScanUrl: finalImageUrl
+    };
+
+    // 1. Chave por nome normalizado (ex: "charizard ex", "budew", "dragapult ex")
+    COLLECTION_CARDS_REGISTRY.set(norm, cardMeta);
+
+    // 2. Chave por PTCGL canônico (ex: "ssp 57", "obf 125")
+    if (cleanSet && cleanNum) {
+      COLLECTION_CARDS_REGISTRY.set(`${cleanSet.toLowerCase()} ${cleanNum.toLowerCase()}`, cardMeta);
+      COLLECTION_CARDS_REGISTRY.set(`${cleanSet.toLowerCase()}-${cleanNum.toLowerCase()}`, cardMeta);
+      if (rawNum && rawNum !== cleanNum) {
+        COLLECTION_CARDS_REGISTRY.set(`${cleanSet.toLowerCase()} ${rawNum.toLowerCase()}`, cardMeta);
+        COLLECTION_CARDS_REGISTRY.set(`${cleanSet.toLowerCase()}-${rawNum.toLowerCase()}`, cardMeta);
+      }
+      // Indexação por código completo com nome (ex: "charizard ex obf 125")
+      COLLECTION_CARDS_REGISTRY.set(`${norm} ${cleanSet.toLowerCase()} ${cleanNum.toLowerCase()}`, cardMeta);
+    }
+  }
+}
+
+export function getRegisteredCollectionCardsCount(): number {
+  return COLLECTION_CARDS_REGISTRY.size;
+}
+
+export function getRegisteredCollectionCard(nameOrCode: string): CardMetadata | undefined {
+  if (!nameOrCode) return undefined;
+  const raw = nameOrCode.trim();
+  const norm = normalizeCardName(raw);
+  
+  if (COLLECTION_CARDS_REGISTRY.has(norm)) return COLLECTION_CARDS_REGISTRY.get(norm);
+  const alias = CARD_ALIASES[norm];
+  if (alias && COLLECTION_CARDS_REGISTRY.has(alias)) return COLLECTION_CARDS_REGISTRY.get(alias);
+
+  const cleanSpaced = raw.toLowerCase();
+  if (COLLECTION_CARDS_REGISTRY.has(cleanSpaced)) return COLLECTION_CARDS_REGISTRY.get(cleanSpaced);
+
+  const cleanId = raw.toLowerCase().replace(/[^a-z0-9.-]/g, '');
+  if (COLLECTION_CARDS_REGISTRY.has(cleanId)) return COLLECTION_CARDS_REGISTRY.get(cleanId);
+
+  // Busca por limite de palavras nas cartas do acervo
+  for (const [k, v] of COLLECTION_CARDS_REGISTRY.entries()) {
+    if (k.length >= 4 && matchesAsWholeWords(norm, k)) {
+      return v;
+    }
+  }
+
+  return undefined;
+}
+
+// ============================================================================
 // RESOLVER
 // ============================================================================
 
 export function resolveCardByNameOnly(name: string): CardMetadata {
   if (!name) return makeFallbackCard(name, '');
+
+  // 0. Prioridade Máxima: Acervo de Cartas vinculado
+  const fromCollection = getRegisteredCollectionCard(name);
+  if (fromCollection && fromCollection.imageUrl && !isSpriteUrl(fromCollection.imageUrl)) {
+    return fromCollection;
+  }
 
   const cleanId = name.toLowerCase().trim().replace(/[^a-z0-9.-]/g, '');
   if (PTCGL_CARD_ID_MAP[cleanId]) return PTCGL_CARD_ID_MAP[cleanId];
@@ -588,6 +687,12 @@ export function resolveCardByNameOnly(name: string): CardMetadata {
   }
 
   const norm = normalizeCardName(name);
+
+  // Checar acervo por nome normalizado
+  const fromNormCollection = getRegisteredCollectionCard(norm);
+  if (fromNormCollection && fromNormCollection.imageUrl && !isSpriteUrl(fromNormCollection.imageUrl)) {
+    return fromNormCollection;
+  }
 
   if (CARD_IMAGE_DATABASE[norm]) return CARD_IMAGE_DATABASE[norm];
 
@@ -695,6 +800,12 @@ export function parsePTCGLLogLine(line: string): FormattedPTCGLCard | null {
 
 export function resolvePTCGLCard(name: string): CardMetadata {
   if (!name) return makeFallbackCard(name, '');
+
+  // 0. Prioridade Máxima: Acervo de Cartas vinculado
+  const fromCollection = getRegisteredCollectionCard(name);
+  if (fromCollection && fromCollection.imageUrl && !isSpriteUrl(fromCollection.imageUrl)) {
+    return fromCollection;
+  }
 
   const cleanId = name.toLowerCase().trim().replace(/[^a-z0-9.-]/g, '');
   if (PTCGL_CARD_ID_MAP[cleanId]) return PTCGL_CARD_ID_MAP[cleanId];

@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Member } from './types';
-import { db, seedDatabaseIfEmpty, membersCol, auth } from './lib/firebase';
+import { db, seedDatabaseIfEmpty, membersCol, collectionCol, auth } from './lib/firebase';
 import { getDocs, getDoc, doc, setDoc, deleteDoc } from 'firebase/firestore';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
+import { registerCollectionCards } from './utils/cardImages';
 import Auth from './components/Auth';
 import Dashboard from './components/Dashboard';
 import Collection from './components/Collection';
@@ -139,6 +140,17 @@ export default function App() {
       } else {
         const defaultUser = list.find(m => m.id === 'member-felipe') || list[0] || null;
         setCurrentMember(defaultUser);
+      }
+
+      // Sincroniza acervo de cartas do time com o TrainerLog e renderizador de partidas
+      try {
+        const collSnap = await getDocs(collectionCol);
+        if (!collSnap.empty) {
+          const collCards = collSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+          registerCollectionCards(collCards);
+        }
+      } catch (collErr) {
+        console.warn('Could not auto-register collection cards into TrainerLog image resolver:', collErr);
       }
     } catch (err) {
       console.error('Error bootstrapping Spirits portal:', err);
