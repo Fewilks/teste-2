@@ -350,6 +350,67 @@ export function parsePTCGLLog(rawLog: string, loggedInUserName?: string): Traine
       const actorName = actor === 'player1' ? p1Name : p2Name;
       const side = getSide(actor);
 
+      // ================================================================
+      // NOVO: EMBARALHAMENTO DE POKÉMON DO CAMPO
+      // (habilidade do Dudunsparce "Comprar e Dar no Pé", Rotom etc)
+      //
+      // Padrão no log:
+      //   "Wilksman embaralhou 2 cartas no baralho dele."
+      //   "   • Dudunsparce, Dunsparce"
+      //
+      // Ação: remove os Pokémon do campo (ativo ou banco) desse lado.
+      // ================================================================
+      if (lower.includes('embaralhou') && (lower.includes('no baralho') || lower.includes('into their deck') || lower.includes('into the deck'))) {
+        // Extrai o actor correto (a frase pode citar o oponente também)
+        let ownerActor: 'player1' | 'player2' = actor;
+        if (hasP2 && !hasP1) ownerActor = 'player2';
+        else if (hasP1 && !hasP2) ownerActor = 'player1';
+        const ownerSide = getSide(ownerActor);
+
+        // Varre as próximas 1-4 linhas procurando bullets com nomes
+        const namesToRemove: string[] = [];
+        for (let j = i + 1; j < Math.min(i + 5, block.rawLines.length); j++) {
+          const nextRaw = block.rawLines[j];
+          const nextIsBullet = /^[•\-*]\s+/.test(nextRaw);
+          if (!nextIsBullet) {
+            if (nextRaw.trim().length === 0) continue;
+            // Se a próxima linha não-bullet não é continuação, para
+            break;
+          }
+          const nextLine = nextRaw.replace(/^[•\-*]\s+/, '').trim();
+          if (!nextLine) continue;
+          if (ACTION_VERB_RE.test(nextLine)) break;
+
+          for (const part of nextLine.split(/,\s*/)) {
+            const clean = part.trim();
+            if (clean && clean.length > 1) namesToRemove.push(clean);
+          }
+        }
+
+        // Remove os nomes achados do campo
+        if (namesToRemove.length > 0) {
+          for (const nm of namesToRemove) {
+            const act = ownerSide.active();
+            if (act && isCardMatch(act.name, nm)) {
+              ownerSide.setActive(undefined);
+              continue;
+            }
+            const bench = ownerSide.bench();
+            const filtered = bench.filter(b => !isCardMatch(b.name, nm));
+            if (filtered.length < bench.length) ownerSide.setBench(filtered);
+          }
+        }
+
+        actions.push({
+          id: actionId, type: 'other', player: ownerActor,
+          playerName: ownerActor === 'player1' ? p1Name : p2Name,
+          cardName: namesToRemove.join(', '),
+          description: line
+        });
+        lastMainAction = 'other';
+        continue;
+      }
+
       // DANO PREVENIDO
       const damagePreventedMatch = line.match(/^o\s+dano\s+(?:em|de|no|na)\s+(.+?)\s+(?:foi|foram)\s+prevenid[ao]s?/i);
       if (damagePreventedMatch) {
