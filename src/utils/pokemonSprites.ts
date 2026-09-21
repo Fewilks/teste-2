@@ -63,7 +63,13 @@ export const POPULAR_POKEMON_AVATARS: PokemonAvatarOption[] = [
   { id: 'chienpao', name: 'Chien-Pao', category: 'Água & Grama' },
   { id: 'ogerpon', name: 'Ogerpon', category: 'Água & Grama' },
 
-  // Outros Destaques
+  // Lendários, Megas & Ex
+  { id: 'lucario-mega', name: 'Mega Lucario', category: 'Lendários & Ex' },
+  { id: 'charizard-megax', name: 'Mega Charizard X', category: 'Lendários & Ex' },
+  { id: 'gardevoir-mega', name: 'Mega Gardevoir', category: 'Lendários & Ex' },
+  { id: 'rayquaza-mega', name: 'Mega Rayquaza', category: 'Lendários & Ex' },
+  { id: 'gengar-mega', name: 'Mega Gengar', category: 'Lendários & Ex' },
+  { id: 'zygarde-complete', name: 'Mega Zygarde (100%)', category: 'Lendários & Ex' },
   { id: 'terapagos', name: 'Terapagos', category: 'Lendários & Ex' },
   { id: 'lugia', name: 'Lugia', category: 'Lendários & Ex' },
   { id: 'scizor', name: 'Scizor', category: 'Lendários & Ex' },
@@ -72,17 +78,35 @@ export const POPULAR_POKEMON_AVATARS: PokemonAvatarOption[] = [
 ];
 
 /**
- * Normaliza nomes de arquétipos ou apelidos para IDs compatíveis com Pokemon Showdown & PokeAPI
+ * Normaliza nomes de arquétipos, cartas ou apelidos para IDs compatíveis com Pokemon Showdown & PokeAPI
+ * Suporta detecção avançada de Mega Evoluções (ex: Mega Lucario, Mega Charizard X, Mega Zygarde, etc.)
  */
 export function sanitizePokemonCreatureName(input: string): string {
   if (!input) return 'substitute';
-  let s = input.toLowerCase().trim();
+  
+  // 1. Remove parênteses com apelidos ou nomes de expansões brasileiras/inglesas
+  // Ex: "Mega Lucario ex (Heróis Excelsos)" -> "Mega Lucario ex"
+  let s = input.replace(/\(.*?\)/g, '').replace(/\[.*?\]/g, '').trim().toLowerCase();
 
-  // Remove sufixos comuns de cartas TCG como "ex", "vstar", "vmax", "v", "radiant", "baby", "deck"
+  // 2. Remove acentuação
+  s = s.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
+  // 3. Remove sufixos comuns de cartas TCG
   s = s.replace(/\b(ex|vstar|vmax|v|radiant|radiante|baby|deck|forma|forme|origin|origem|paldea|galar|alola|hisui)\b/gi, '').trim();
 
-  // Mapeamentos específicos
-  const aliasMap: Record<string, string> = {
+  // 4. Mapeamentos específicos diretos
+  const exactMap: Record<string, string> = {
+    'mega charizard x': 'charizard-megax',
+    'mega charizard y': 'charizard-megay',
+    'mega mewtwo x': 'mewtwo-megax',
+    'mega mewtwo y': 'mewtwo-megay',
+    'mega zygarde': 'zygarde-complete',
+    'zygarde mega': 'zygarde-complete',
+    'zygarde 100%': 'zygarde-complete',
+    'zygarde complete': 'zygarde-complete',
+    'primal groudon': 'groudon-primal',
+    'primal kyogre': 'kyogre-primal',
+    'ultra necrozma': 'necrozma-ultra',
     'roaring moon': 'roaringmoon',
     'iron hands': 'ironhands',
     'iron thorns': 'ironthorns',
@@ -112,36 +136,83 @@ export function sanitizePokemonCreatureName(input: string): string {
     'regidrago vstar': 'regidrago',
     'lugia vstar': 'lugia',
     'fezandipiti ex': 'fezandipiti',
-    'mega lopunny': 'lopunny-mega',
     'mew ex': 'mew',
     'clefairy ex': 'clefairy',
-    "lillie's clefairy": 'clefairy',
+    "lillie's clefairy": 'clefairy'
   };
 
-  if (aliasMap[s]) return aliasMap[s];
+  const normalizedKey = s.replace(/\s+/g, ' ').trim();
+  if (exactMap[normalizedKey]) return exactMap[normalizedKey];
 
-  // Limpa caracteres especiais mantendo hífen se já existir
+  // 5. Detecção genérica inteligente de Mega Evolução
+  // Ex: "mega lucario", "lucario mega", "m-lucario", "mega-lucario", "m lucario"
+  const isMega = /\b(mega|m)\b/i.test(s) || s.startsWith('mega-') || s.startsWith('m-');
+  if (isMega) {
+    // Verifica se possui variante X ou Y
+    const hasX = /\b(x)\b/i.test(s) || s.endsWith('-x') || s.endsWith(' x');
+    const hasY = /\b(y)\b/i.test(s) || s.endsWith('-y') || s.endsWith(' y');
+
+    // Extrai o nome do pokémon removendo termos mega/m e letras x/y
+    let basePoke = s
+      .replace(/\b(mega|m)\b/gi, '')
+      .replace(/\b[xy]\b/gi, '')
+      .replace(/[^a-z0-9]/g, '')
+      .trim();
+
+    if (basePoke === 'zygarde') return 'zygarde-complete';
+
+    if (basePoke) {
+      if (hasX) return `${basePoke}-megax`;
+      if (hasY) return `${basePoke}-megay`;
+      return `${basePoke}-mega`;
+    }
+  }
+
+  // 6. Limpa caracteres especiais mantendo hífen se já existir
   s = s.replace(/[^a-z0-9-]/g, '');
   return s || 'substitute';
 }
 
 /**
  * Retorna lista ordenada de URLs para renderizar o sprite da criatura Pokémon
- * com múltiplos fallbacks (Showdown animated -> Showdown gen5 -> PokeAPI artwork -> PokeAPI icon -> SVG)
+ * com múltiplos fallbacks (Showdown animated -> Showdown dex -> PokeAPI animated -> Base Pokémon fallback -> Mascote substituto)
  */
 export function getCreatureSpriteHierarchy(nameOrArchetype: string): string[] {
   const clean = sanitizePokemonCreatureName(nameOrArchetype);
 
-  return [
-    // 1. Showdown Animated GIF (perfeito para visual dinâmico)
+  const sources: string[] = [
+    // 1. Showdown Animated GIF
     `https://play.pokemonshowdown.com/sprites/ani/${clean}.gif`,
-    // 2. Showdown Gen 5 Pixel Art
-    `https://play.pokemonshowdown.com/sprites/gen5/${clean}.png`,
-    // 3. Showdown Dex standard
+    // 2. Showdown Dex standard
     `https://play.pokemonshowdown.com/sprites/dex/${clean}.png`,
+    // 3. Showdown Gen 5 Pixel Art
+    `https://play.pokemonshowdown.com/sprites/gen5/${clean}.png`,
     // 4. PokeAPI Showdown Animated (Mirror)
-    `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/showdown/${clean}.gif`,
-    // 5. Fallback com mascote substituto do Showdown
-    `https://play.pokemonshowdown.com/sprites/dex/substitute.png`
+    `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/showdown/${clean}.gif`
   ];
+
+  // Se for Mega Evolução com variante X/Y com ou sem hífen (ex: charizard-megax vs charizard-mega-x)
+  if (clean.includes('-megax')) {
+    const hyphenated = clean.replace('-megax', '-mega-x');
+    sources.splice(1, 0, `https://play.pokemonshowdown.com/sprites/ani/${hyphenated}.gif`);
+    sources.push(`https://play.pokemonshowdown.com/sprites/dex/${hyphenated}.png`);
+  } else if (clean.includes('-megay')) {
+    const hyphenated = clean.replace('-megay', '-mega-y');
+    sources.splice(1, 0, `https://play.pokemonshowdown.com/sprites/ani/${hyphenated}.gif`);
+    sources.push(`https://play.pokemonshowdown.com/sprites/dex/${hyphenated}.png`);
+  }
+
+  // Fallback para a forma base caso o sprite da mega ou variante temporariamente falhe
+  if (clean.includes('-mega') || clean.includes('-complete') || clean.includes('-primal')) {
+    const baseName = clean.split('-')[0];
+    if (baseName && baseName !== 'substitute') {
+      sources.push(`https://play.pokemonshowdown.com/sprites/ani/${baseName}.gif`);
+      sources.push(`https://play.pokemonshowdown.com/sprites/dex/${baseName}.png`);
+    }
+  }
+
+  // Fallback final com mascote substituto do Showdown
+  sources.push('https://play.pokemonshowdown.com/sprites/dex/substitute.png');
+
+  return sources;
 }

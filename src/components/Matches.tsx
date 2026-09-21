@@ -29,12 +29,15 @@ interface MatchesProps {
 export function getArchetypeSprites(archetype: string): string[] {
   if (!archetype) return ['substitute'];
   
-  // Split by '/', '+', 'and', 'with', 'ex', 'vstar', 'vmax', 'v', 'gmax', 'tera', 'prime', 'baby', 'deck'
-  const parts = archetype.split(/[\/\+\-]|and|with/i);
+  // Remove parenthesized text (like set names: "(Heróis Excelsos)", "(Fogo Fantasmagórico)")
+  const cleaned = archetype.replace(/\(.*?\)/g, '').replace(/\[.*?\]/g, '').trim();
+
+  // Split by '/', '+', '&', '|', ' and ', ' with ', ' e ' (NOT by single hyphen '-' to protect names like Chien-Pao, Mega-Lucario)
+  const parts = cleaned.split(/\s*[\/\+\&\|]\s*|\s+(?:and|with|e)\s+/i);
   const pokemonNames = parts
     .map(p => {
-      let name = p.trim().toLowerCase();
-      // Remove typical suffixes
+      let name = p.trim();
+      // Remove typical suffixes while keeping mega / x / y qualifiers
       name = name.replace(/\b(ex|vstar|vmax|v|gmax|tera|prime|baby|deck)\b/gi, '');
       return name.trim();
     })

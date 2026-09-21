@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { db, decksCol } from '../lib/firebase';
-import { getDocs, addDoc, doc, deleteDoc, query, where } from 'firebase/firestore';
+import { getDocs, addDoc, doc, deleteDoc, updateDoc, query, where } from 'firebase/firestore';
 import { Member, DeckRecord, ParsedDeckCard } from '../types';
 import { 
   PlusCircle, 
@@ -15,7 +15,8 @@ import {
   Eye,
   Activity,
   Flame,
-  Wand2
+  Wand2,
+  Pencil
 } from 'lucide-react';
 import PokemonSprite from './PokemonSprite';
 import PokemonLoader from './PokemonLoader';
@@ -86,8 +87,9 @@ export default function Decks({ currentMember }: DecksProps) {
   const [copiedDeckId, setCopiedDeckId] = useState<string | null>(null);
   const [tournamentName, setTournamentName] = useState('Carregando...');
 
-  // Import Deck State
+  // Import & Edit Deck State
   const [showImportModal, setShowImportModal] = useState(false);
+  const [editingDeck, setEditingDeck] = useState<DeckRecord | null>(null);
   const [rawText, setRawText] = useState('');
   const [deckName, setDeckName] = useState('');
   const [pokemon1, setPokemon1] = useState('');
@@ -235,6 +237,26 @@ export default function Decks({ currentMember }: DecksProps) {
     }
   };
 
+  const handleOpenCreateModal = () => {
+    setEditingDeck(null);
+    setDeckName('');
+    setPokemon1('');
+    setPokemon2('');
+    setRawText('');
+    setShowImportModal(true);
+  };
+
+  const handleOpenEditModal = (deck: DeckRecord, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    setEditingDeck(deck);
+    setDeckName(deck.deckName);
+    const sprites = getDeckSprites(deck);
+    setPokemon1(deck.pokemon1 || sprites[0] || '');
+    setPokemon2(deck.pokemon2 || (sprites.length > 1 ? sprites[1] : ''));
+    setRawText(deck.rawList || '');
+    setShowImportModal(true);
+  };
+
   const handleParseAndSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!rawText.trim() || !deckName.trim()) {
@@ -249,70 +271,114 @@ export default function Decks({ currentMember }: DecksProps) {
     try {
       setParsing(true);
       
-      let parsedCards: ParsedDeckCard[] = [];
-      try {
-        const res = await fetch('/api/pokemon/parse-deck', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ deckText: rawText })
-        });
+      let normalizedCards: ParsedDeckCard[] = [];
 
-        if (res.ok) {
-          parsedCards = await res.json();
+      // Se estiver editando e a lista de cartas não tiver mudado, podemos reaproveitar as cartas existentes
+      if (editingDeck && rawText.trim() === (editingDeck.rawList || '').trim() && editingDeck.parsedCards?.length > 0) {
+        normalizedCards = editingDeck.parsedCards;
+      } else {
+        let parsedCards: ParsedDeckCard[] = [];
+        try {
+          const res = await fetch('/api/pokemon/parse-deck', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ deckText: rawText })
+          });
+
+          if (res.ok) {
+            parsedCards = await res.json();
+          }
+        } catch (err) {
+          // Fallback to client-side parser
         }
-      } catch (err) {
-        // Fallback to client-side parser
-      }
 
-      // Client-side PTCGL First parser fallback
-      if (!parsedCards || parsedCards.length === 0) {
-        parsedCards = parsePTCGLDeckList(rawText);
-      }
-      
-      if (parsedCards.length === 0) {
-        alert('Não foi possível extrair nenhuma carta da lista colada. Verifique o formato!');
-        return;
-      }
+        // Client-side PTCGL First parser fallback
+        if (!parsedCards || parsedCards.length === 0) {
+          parsedCards = parsePTCGLDeckList(rawText);
+        }
+        
+        if (parsedCards.length === 0) {
+          alert('Não foi possível extrair nenhuma carta da lista colada. Verifique o formato!');
+          setParsing(false);
+          return;
+        }
 
-      // Normaliza todas as cartas garantindo identificador oficial do PTCGL
-      const normalizedCards: ParsedDeckCard[] = parsedCards.map(c => {
-        const norm = normalizePokemonCard({ name: c.name, setCode: c.set, setNumber: c.number });
-        return {
-          ...c,
-          set: norm.setCode,
-          number: norm.setNumber,
-          imageUrl: norm.imageUrl || c.imageUrl
-        };
-      });
+        // Normaliza todas as cartas garantindo identificador oficial do PTCGL
+        normalizedCards = parsedCards.map(c => {
+          const norm = normalizePokemonCard({ name: c.name, setCode: c.set, setNumber: c.number });
+          return {
+            ...c,
+            set: norm.setCode,
+            number: norm.setNumber,
+            imageUrl: norm.imageUrl || c.imageUrl
+          };
+        });
+      }
 
       const cleanP1 = pokemon1.trim();
       const cleanP2 = pokemon2.trim();
       const computedArchetype = cleanP2 ? `${cleanP1} / ${cleanP2}` : cleanP1;
 
-      const newDeck: Omit<DeckRecord, 'id'> = {
-        userId: currentMember.id,
-        userName: currentMember.name,
-        deckName: deckName.trim(),
-        archetype: computedArchetype,
-        pokemon1: cleanP1,
-        pokemon2: cleanP2,
-        rawList: rawText,
-        parsedCards: normalizedCards,
-        createdAt: new Date().toISOString()
-      };
+      if (editingDeck) {
+        // Modo Edição: Atualiza no Firestore
+        const updatedFields = {
+          deckName: deckName.trim(),
+          archetype: computedArchetype,
+          pokemon1: cleanP1,
+          pokemon2: cleanP2,
+          rawList: rawText,
+          parsedCards: normalizedCards,
+          updatedAt: new Date().toISOString()
+        };
 
-      const docRef = await addDoc(decksCol, newDeck);
-      setDecks(prev => [{ id: docRef.id, ...newDeck } as DeckRecord, ...prev]);
-      
-      setShowImportModal(false);
-      setRawText('');
-      setDeckName('');
-      setPokemon1('');
-      setPokemon2('');
-      alert('Deck analisado e cadastrado com sucesso!');
+        await updateDoc(doc(db, 'decks', editingDeck.id), updatedFields);
+
+        const updatedDeck: DeckRecord = {
+          ...editingDeck,
+          ...updatedFields
+        };
+
+        setDecks(prev => prev.map(d => d.id === editingDeck.id ? updatedDeck : d));
+        if (activeDeck?.id === editingDeck.id) {
+          setActiveDeck(updatedDeck);
+        }
+
+        setShowImportModal(false);
+        setEditingDeck(null);
+        setRawText('');
+        setDeckName('');
+        setPokemon1('');
+        setPokemon2('');
+        alert('Baralho atualizado com sucesso!');
+      } else {
+        // Modo Criação: Adiciona ao Firestore
+        const newDeck: Omit<DeckRecord, 'id'> = {
+          userId: currentMember.id,
+          userName: currentMember.name,
+          deckName: deckName.trim(),
+          archetype: computedArchetype,
+          pokemon1: cleanP1,
+          pokemon2: cleanP2,
+          rawList: rawText,
+          parsedCards: normalizedCards,
+          createdAt: new Date().toISOString()
+        };
+
+        const docRef = await addDoc(decksCol, newDeck);
+        const createdDeck = { id: docRef.id, ...newDeck } as DeckRecord;
+        setDecks(prev => [createdDeck, ...prev]);
+        setActiveDeck(createdDeck);
+        
+        setShowImportModal(false);
+        setRawText('');
+        setDeckName('');
+        setPokemon1('');
+        setPokemon2('');
+        alert('Deck analisado e cadastrado com sucesso!');
+      }
     } catch (err) {
-      console.error('Error importing deck:', err);
-      alert('Erro ao analisar deck. O serviço pode estar indisponível ou a lista possui um formato inválido.');
+      console.error('Error saving deck:', err);
+      alert('Erro ao salvar o deck. Verifique a conexão com a rede ou o formato da lista.');
     } finally {
       setParsing(false);
     }
@@ -357,13 +423,7 @@ export default function Decks({ currentMember }: DecksProps) {
         
         <button
           id="btn-open-import-deck"
-          onClick={() => {
-            setDeckName('');
-            setRawText('');
-            setPokemon1('');
-            setPokemon2('');
-            setShowImportModal(true);
-          }}
+          onClick={handleOpenCreateModal}
           className="px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white rounded-lg font-bold text-sm flex items-center gap-2 shadow-lg shadow-purple-950/40 cursor-pointer transition-all duration-300"
         >
           <Wand2 className="w-5 h-5 animate-pulse" /> Importar Lista do Live / Limitless
@@ -416,13 +476,7 @@ export default function Decks({ currentMember }: DecksProps) {
             </p>
             <button
               id="empty-decks-add"
-              onClick={() => {
-                setDeckName('');
-                setRawText('');
-                setPokemon1('');
-                setPokemon2('');
-                setShowImportModal(true);
-              }}
+              onClick={handleOpenCreateModal}
               className="mt-6 px-4 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-semibold text-sm cursor-pointer"
             >
               Importar Meu Primeiro Deck
@@ -471,15 +525,25 @@ export default function Decks({ currentMember }: DecksProps) {
                       >
                         <Eye className="w-3.5 h-3.5" />
                       </button>
-                      {deck.userId === currentMember.id && (
-                        <button
-                          id={`delete-deck-${deck.id}`}
-                          onClick={(e) => handleDeleteDeck(deck.id, e)}
-                          title="Deletar Deck"
-                          className="p-1.5 bg-rose-950/40 hover:bg-rose-900 text-rose-400 rounded transition-colors cursor-pointer"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
+                      {(deck.userId === currentMember.id || currentMember.role === 'masterball' || currentMember.role === 'Premium ball') && (
+                        <>
+                          <button
+                            id={`edit-deck-${deck.id}`}
+                            onClick={(e) => handleOpenEditModal(deck, e)}
+                            title="Editar Baralho"
+                            className="p-1.5 bg-purple-950/60 hover:bg-purple-900 text-purple-300 hover:text-white rounded transition-colors cursor-pointer border border-purple-800/40"
+                          >
+                            <Pencil className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            id={`delete-deck-${deck.id}`}
+                            onClick={(e) => handleDeleteDeck(deck.id, e)}
+                            title="Deletar Deck"
+                            className="p-1.5 bg-rose-950/40 hover:bg-rose-900 text-rose-400 rounded transition-colors cursor-pointer border border-rose-900/30"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </>
                       )}
                     </div>
                   </div>
@@ -493,7 +557,7 @@ export default function Decks({ currentMember }: DecksProps) {
                 <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-6 space-y-6 animate-fade-in" id="deck-detail-sheet">
                   
                   {/* Header info sheet */}
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-850 pb-5">
+                  <div className="flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4 border-b border-slate-850 pb-5">
                     <div className="flex items-center gap-4">
                       <div className="flex items-center -space-x-3 shrink-0">
                         {getDeckSprites(activeDeck).map((spriteName, idx) => (
@@ -507,31 +571,54 @@ export default function Decks({ currentMember }: DecksProps) {
                       </div>
                     </div>
 
-                    {/* Deck stats pill */}
-                    <div className="flex gap-3 bg-slate-950/50 px-4 py-2 rounded-xl border border-slate-850">
-                      <div className="text-center">
-                        <div className="text-[10px] text-slate-500 uppercase font-bold">Total</div>
-                        <div className="text-sm font-extrabold text-white font-mono">{activeDeck.parsedCards.reduce((sum, c) => sum + c.count, 0)}</div>
-                      </div>
-                      <div className="border-l border-slate-850 h-6 shrink-0 mt-1"></div>
-                      <div className="text-center">
-                        <div className="text-[10px] text-slate-500 uppercase font-bold">Pokémon</div>
-                        <div className="text-sm font-extrabold text-purple-400 font-mono">
-                          {activeDeck.parsedCards.filter(c => c.type === 'Pokémon').reduce((sum, c) => sum + c.count, 0)}
+                    <div className="flex flex-wrap items-center gap-3 w-full xl:w-auto justify-between xl:justify-end">
+                      {(activeDeck.userId === currentMember.id || currentMember.role === 'masterball' || currentMember.role === 'Premium ball') && (
+                        <div className="flex items-center gap-2">
+                          <button
+                            id={`btn-edit-active-deck-${activeDeck.id}`}
+                            onClick={() => handleOpenEditModal(activeDeck)}
+                            className="px-3 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shadow-md shadow-purple-950/40 cursor-pointer border border-purple-500/30"
+                            title="Editar baralho"
+                          >
+                            <Pencil className="w-3.5 h-3.5" /> Editar Baralho
+                          </button>
+                          <button
+                            id={`btn-delete-active-deck-${activeDeck.id}`}
+                            onClick={(e) => handleDeleteDeck(activeDeck.id, e)}
+                            className="p-2 bg-rose-950/40 hover:bg-rose-900 text-rose-300 hover:text-white rounded-xl transition-colors cursor-pointer border border-rose-900/30"
+                            title="Excluir baralho"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
                         </div>
-                      </div>
-                      <div className="border-l border-slate-850 h-6 shrink-0 mt-1"></div>
-                      <div className="text-center">
-                        <div className="text-[10px] text-slate-500 uppercase font-bold">Treinador</div>
-                        <div className="text-sm font-extrabold text-indigo-400 font-mono">
-                          {activeDeck.parsedCards.filter(c => c.type === 'Treinador').reduce((sum, c) => sum + c.count, 0)}
+                      )}
+
+                      {/* Deck stats pill */}
+                      <div className="flex gap-3 bg-slate-950/50 px-4 py-2 rounded-xl border border-slate-850">
+                        <div className="text-center">
+                          <div className="text-[10px] text-slate-500 uppercase font-bold">Total</div>
+                          <div className="text-sm font-extrabold text-white font-mono">{activeDeck.parsedCards.reduce((sum, c) => sum + c.count, 0)}</div>
                         </div>
-                      </div>
-                      <div className="border-l border-slate-850 h-6 shrink-0 mt-1"></div>
-                      <div className="text-center">
-                        <div className="text-[10px] text-slate-500 uppercase font-bold">Energia</div>
-                        <div className="text-sm font-extrabold text-amber-400 font-mono">
-                          {activeDeck.parsedCards.filter(c => c.type === 'Energia').reduce((sum, c) => sum + c.count, 0)}
+                        <div className="border-l border-slate-850 h-6 shrink-0 mt-1"></div>
+                        <div className="text-center">
+                          <div className="text-[10px] text-slate-500 uppercase font-bold">Pokémon</div>
+                          <div className="text-sm font-extrabold text-purple-400 font-mono">
+                            {activeDeck.parsedCards.filter(c => c.type === 'Pokémon').reduce((sum, c) => sum + c.count, 0)}
+                          </div>
+                        </div>
+                        <div className="border-l border-slate-850 h-6 shrink-0 mt-1"></div>
+                        <div className="text-center">
+                          <div className="text-[10px] text-slate-500 uppercase font-bold">Treinador</div>
+                          <div className="text-sm font-extrabold text-indigo-400 font-mono">
+                            {activeDeck.parsedCards.filter(c => c.type === 'Treinador').reduce((sum, c) => sum + c.count, 0)}
+                          </div>
+                        </div>
+                        <div className="border-l border-slate-850 h-6 shrink-0 mt-1"></div>
+                        <div className="text-center">
+                          <div className="text-[10px] text-slate-500 uppercase font-bold">Energia</div>
+                          <div className="text-sm font-extrabold text-amber-400 font-mono">
+                            {activeDeck.parsedCards.filter(c => c.type === 'Energia').reduce((sum, c) => sum + c.count, 0)}
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -797,14 +884,26 @@ export default function Decks({ currentMember }: DecksProps) {
             
             {/* Header */}
             <div className="p-5 border-b border-slate-800 flex items-center justify-between bg-gradient-to-r from-purple-900/40 to-slate-900">
-              <div className="flex items-center gap-2">
-                <Wand2 className="w-5 h-5 text-purple-400" />
-                <h3 className="text-base font-bold text-white">Importar Deck Inteligente</h3>
+              <div className="flex items-center gap-2.5">
+                {editingDeck ? <Pencil className="w-5 h-5 text-purple-400 shrink-0" /> : <Wand2 className="w-5 h-5 text-purple-400 shrink-0" />}
+                <div>
+                  <h3 className="text-base font-bold text-white">
+                    {editingDeck ? `Editar Baralho: ${editingDeck.deckName}` : 'Importar Deck Inteligente'}
+                  </h3>
+                  <p className="text-xs text-slate-400">
+                    {editingDeck 
+                      ? 'Atualize o nome, Pokémon chave do arquétipo ou a lista de cartas.' 
+                      : 'Cole a lista do Pokémon TCG Live ou Limitless para análise instantânea.'}
+                  </p>
+                </div>
               </div>
               <button 
                 id="close-import-x"
-                onClick={() => setShowImportModal(false)}
-                className="text-slate-400 hover:text-white transition-all cursor-pointer"
+                onClick={() => {
+                  setShowImportModal(false);
+                  setEditingDeck(null);
+                }}
+                className="text-slate-400 hover:text-white transition-all cursor-pointer p-1 rounded-lg hover:bg-slate-800"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -957,9 +1056,19 @@ Pokémon: 3
                 id="btn-submit-import-deck"
                 type="submit"
                 disabled={parsing}
-                className="w-full py-3 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 disabled:bg-slate-800 text-white font-bold rounded-xl text-sm cursor-pointer shadow-lg"
+                className="w-full py-3 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 disabled:bg-slate-800 text-white font-bold rounded-xl text-sm cursor-pointer shadow-lg flex items-center justify-center gap-2 transition-all"
               >
-                {parsing ? 'Analisando Lista com IA de Elite...' : 'Analisar e Salvar no Time'}
+                {parsing ? (
+                  <>
+                    <Sparkles className="w-4 h-4 animate-spin text-purple-200" />
+                    <span>{editingDeck ? 'Atualizando Baralho...' : 'Analisando Lista com IA de Elite...'}</span>
+                  </>
+                ) : (
+                  <>
+                    {editingDeck ? <Check className="w-4 h-4" /> : <Sparkles className="w-4 h-4" />}
+                    <span>{editingDeck ? 'Salvar Alterações no Baralho' : 'Analisar e Salvar no Time'}</span>
+                  </>
+                )}
               </button>
 
             </form>
