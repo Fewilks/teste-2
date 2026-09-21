@@ -106,11 +106,27 @@ function extractCardName(text: string): string {
   return cleaned || text;
 }
 
-function isCardMatch(cardA?: string, cardB?: string): boolean {
+function isCardMatch(cardA?: string, cardB?: string, mon?: PokemonInPlay): boolean {
   if (!cardA || !cardB) return false;
   const a = cardA.toLowerCase().trim();
   const b = cardB.toLowerCase().trim();
-  return a === b;
+  if (a === b) return true;
+  if (a.startsWith(b) || b.startsWith(a)) return true;
+
+  // If a PokemonInPlay is provided, check any pre-evolution in its evolution stack
+  if (mon && mon.stageCards) {
+    for (const sc of mon.stageCards) {
+      const scLower = sc.toLowerCase().trim();
+      if (scLower === b || scLower.startsWith(b) || b.startsWith(scLower)) return true;
+    }
+  }
+
+  // Evolutionary lineage alias for Dudunsparce / Dunsparce
+  if ((a.includes('dudunsparce') || a.includes('dunsparce')) && (b.includes('dudunsparce') || b.includes('dunsparce'))) {
+    return true;
+  }
+
+  return false;
 }
 
 function isEnergyCard(name: string): boolean {
@@ -126,10 +142,30 @@ interface PokemonInPlay {
   name: string;
   damage: number;
   energies: string[];
+  stageCards: string[];
 }
 
 function makePokemon(name: string): PokemonInPlay {
-  return { name, damage: 0, energies: [] };
+  return { name, damage: 0, energies: [], stageCards: [name] };
+}
+
+function removePokemonFromPlay(
+  side: { active: () => PokemonInPlay | undefined; setActive: (p?: PokemonInPlay) => void; bench: () => PokemonInPlay[]; setBench: (b: PokemonInPlay[]) => void },
+  searchName: string
+): { removed: boolean; wasActive: boolean; removedMon?: PokemonInPlay } {
+  const act = side.active();
+  if (act && isCardMatch(act.name, searchName, act)) {
+    side.setActive(undefined);
+    return { removed: true, wasActive: true, removedMon: act };
+  }
+  const bench = side.bench();
+  const idx = bench.findIndex(b => isCardMatch(b.name, searchName, b));
+  if (idx !== -1) {
+    const [removedMon] = bench.splice(idx, 1);
+    side.setBench([...bench]);
+    return { removed: true, wasActive: false, removedMon };
+  }
+  return { removed: false, wasActive: false };
 }
 
 function escapeReg(s: string): string {
@@ -347,16 +383,81 @@ export function parsePTCGLLog(rawLog: string, loggedInUserName?: string): Traine
       const side = getSide(actor);
 
       // ================================================================
-      // EMBARALHAMENTO DE POKÉMON DO CAMPO
+      // HABILIDADE DE DUDUNSPARCE (Fuga e Compra / Run Away Draw)
+      // Dudunsparce e o Dunsparce do qual evoluiu são embaralhados no baralho
       // ================================================================
-      if (lower.includes('embaralhou') && (lower.includes('no baralho') || lower.includes('into their deck') || lower.includes('into the deck'))) {
+      const isDudunsparceAbility = lower.includes('dudunsparce') && (
+        lower.includes('fuga') || lower.includes('draw') || lower.includes('correr') ||
+        lower.includes('habilidade') || lower.includes('ability') || lower.includes('ativou') ||
+        lower.includes('usou') || lower.includes('used') || lower.includes('embaralhou') || lower.includes('shuffled')
+      );
+
+      if (isDudunsparceAbility && (lower.includes('fuga') || lower.includes('run away') || lower.includes('correr') || lower.includes('habilidade') || lower.includes('ability') || lower.includes('embaralhou') || lower.includes('shuffled') || lower.includes('comprou'))) {
+        let ownerActor: 'player1' | 'player2' = actor;
+        if (hasP2 && !hasP1) ownerActor = 'player2';
+        else if (hasP1 && !hasP2) ownerActor = 'player1';
+        let ownerSide = getSide(ownerActor);
+
+        let res = removePokemonFromPlay(ownerSide, 'Dudunsparce');
+        if (!res.removed) {
+          res = removePokemonFromPlay(ownerSide, 'Dunsparce');
+        }
+        if (!res.removed) {
+          const otherActor = ownerActor === 'player1' ? 'player2' : 'player1';
+          const otherSide = getSide(otherActor);
+          const otherRes = removePokemonFromPlay(otherSide, 'Dudunsparce') || removePokemonFromPlay(otherSide, 'Dunsparce');
+          if (otherRes.removed) {
+            ownerActor = otherActor;
+            ownerSide = otherSide;
+            res = otherRes;
+          }
+        }
+
+        const effectiveActorName = ownerActor === 'player1' ? p1Name : p2Name;
+        actions.push({
+          id: actionId,
+          type: 'ability',
+          player: ownerActor,
+          playerName: effectiveActorName,
+          cardName: 'Dudunsparce',
+          description: line
+        });
+        lastMainAction = 'other';
+        continue;
+      }
+
+      // ================================================================
+      // EMBARALHAMENTO OU RETORNO DE POKÉMON DO CAMPO (Baralho / Mão)
+      // ================================================================
+      const isShuffleOrReturn = (
+        (lower.includes('embaralhou') || lower.includes('shuffled') || lower.includes('embaralhad') || lower.includes('retornou') || lower.includes('devolveu') || lower.includes('de volta')) &&
+        (lower.includes('baralho') || lower.includes('deck') || lower.includes('mão') || lower.includes('hand'))
+      );
+
+      if (isShuffleOrReturn) {
         let ownerActor: 'player1' | 'player2' = actor;
         if (hasP2 && !hasP1) ownerActor = 'player2';
         else if (hasP1 && !hasP2) ownerActor = 'player1';
         const ownerSide = getSide(ownerActor);
+        const otherActor = ownerActor === 'player1' ? 'player2' : 'player1';
+        const otherSide = getSide(otherActor);
 
         const namesToRemove: string[] = [];
-        for (let j = i + 1; j < Math.min(i + 5, block.rawLines.length); j++) {
+
+        // Verifica se a própria linha já nomeia Dudunsparce, Dunsparce ou outro Pokémon
+        if (lower.includes('dudunsparce')) namesToRemove.push('Dudunsparce');
+        if (lower.includes('dunsparce') && !namesToRemove.includes('Dudunsparce')) namesToRemove.push('Dunsparce');
+
+        const directMatch = line.match(/(?:embaralhou|shuffled|retornou|devolveu)\s+(?:o\s+|a\s+)?([A-Za-z0-9\s'\-]+?)\s+(?:e\s+todas|no\s+baralho|no\s+próprio\s+baralho|para\s+a\s+mão|into\s+(?:their|the)\s+deck|to\s+(?:their|the)\s+hand)/i);
+        if (directMatch) {
+          const extracted = directMatch[1].trim();
+          if (extracted && !namesToRemove.some(n => isCardMatch(n, extracted))) {
+            namesToRemove.push(extracted);
+          }
+        }
+
+        // Lê linhas com bullet points abaixo do embaralhamento
+        for (let j = i + 1; j < Math.min(i + 8, block.rawLines.length); j++) {
           const nextRaw = block.rawLines[j];
           const nextIsBullet = /^[•\-*]\s+/.test(nextRaw);
           if (!nextIsBullet) {
@@ -365,7 +466,12 @@ export function parsePTCGLLog(rawLog: string, loggedInUserName?: string): Traine
           }
           const nextLine = nextRaw.replace(/^[•\-*]\s+/, '').trim();
           if (!nextLine) continue;
-          if (ACTION_VERB_RE.test(nextLine)) break;
+          if (/^\d+\s+(?:cartas|cards)/i.test(nextLine) || /foram embaralhad/i.test(nextLine) || /were shuffled/i.test(nextLine)) {
+            continue;
+          }
+          if (ACTION_VERB_RE.test(nextLine) && !nextLine.toLowerCase().includes('dudunsparce') && !nextLine.toLowerCase().includes('dunsparce')) {
+            break;
+          }
 
           for (const part of nextLine.split(/,\s*/)) {
             const clean = part.trim();
@@ -375,14 +481,10 @@ export function parsePTCGLLog(rawLog: string, loggedInUserName?: string): Traine
 
         if (namesToRemove.length > 0) {
           for (const nm of namesToRemove) {
-            const act = ownerSide.active();
-            if (act && isCardMatch(act.name, nm)) {
-              ownerSide.setActive(undefined);
-              continue;
+            let res = removePokemonFromPlay(ownerSide, nm);
+            if (!res.removed) {
+              removePokemonFromPlay(otherSide, nm);
             }
-            const bench = ownerSide.bench();
-            const filtered = bench.filter(b => !isCardMatch(b.name, nm));
-            if (filtered.length < bench.length) ownerSide.setBench(filtered);
           }
         }
 
@@ -590,19 +692,29 @@ export function parsePTCGLLog(rawLog: string, loggedInUserName?: string): Traine
         const benchIdx = bench.findIndex(b => fromMon ? isCardMatch(b.name, fromMon) : false);
 
         if (spotHint === 'bench' && benchIdx !== -1) {
+          bench[benchIdx].stageCards = [...(bench[benchIdx].stageCards || [bench[benchIdx].name]), toMon];
           bench[benchIdx].name = toMon;
           evolvedBenchIndex = benchIdx;
         } else if (spotHint === 'active' || (activeMatches && spotHint !== 'bench')) {
-          if (active) active.name = toMon;
-          else side.setActive(makePokemon(toMon));
+          if (active) {
+            active.stageCards = [...(active.stageCards || [active.name]), toMon];
+            active.name = toMon;
+          } else {
+            side.setActive(makePokemon(toMon));
+          }
           isSpotActive = true;
         } else if (benchIdx !== -1) {
+          bench[benchIdx].stageCards = [...(bench[benchIdx].stageCards || [bench[benchIdx].name]), toMon];
           bench[benchIdx].name = toMon;
           evolvedBenchIndex = benchIdx;
         } else if (activeMatches) {
-          if (active) active.name = toMon;
+          if (active) {
+            active.stageCards = [...(active.stageCards || [active.name]), toMon];
+            active.name = toMon;
+          }
           isSpotActive = true;
         } else if (bench.length > 0) {
+          bench[0].stageCards = [...(bench[0].stageCards || [bench[0].name]), toMon];
           bench[0].name = toMon;
           evolvedBenchIndex = 0;
         } else {
@@ -720,9 +832,17 @@ export function parsePTCGLLog(rawLog: string, loggedInUserName?: string): Traine
 
       // HABILIDADE
       if (lower.includes('habilidade') || lower.includes('ability') || lower.includes('ativou') || lower.includes('activated')) {
+        const abilityCard = extractCardName(line);
+        if (abilityCard.toLowerCase().includes('dudunsparce') || lower.includes('dudunsparce')) {
+          const res = removePokemonFromPlay(side, 'Dudunsparce');
+          if (!res.removed) {
+            const otherSide = getSide(actor === 'player1' ? 'player2' : 'player1');
+            removePokemonFromPlay(otherSide, 'Dudunsparce');
+          }
+        }
         actions.push({
           id: actionId, type: 'ability', player: actor, playerName: actorName,
-          cardName: extractCardName(line), description: line
+          cardName: abilityCard, description: line
         });
         lastMainAction = 'other';
         continue;
