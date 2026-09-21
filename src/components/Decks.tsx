@@ -23,6 +23,7 @@ import PokemonSprite from './PokemonSprite';
 import PokemonLoader from './PokemonLoader';
 import { getArchetypeSprites } from './Matches';
 import { fallbackMetaDecks } from '../data/fallbackDecks';
+import { fetchLiveMetaDecks } from '../services/limitlessApi';
 import { normalizePokemonCard, parsePTCGLDeckList, getPTCGLId } from '../services/cardNormalizationService';
 
 function detectPokemonsFromDeckText(text: string): { p1?: string; p2?: string } {
@@ -99,6 +100,9 @@ export default function Decks({ currentMember }: DecksProps) {
 
   // Active Deck Detail view
   const [activeDeck, setActiveDeck] = useState<DeckRecord | null>(null);
+  const [metaSource, setMetaSource] = useState<'api-server' | 'api-direct-limitless' | 'offline-fallback'>('api-server');
+  const [metaTournamentDate, setMetaTournamentDate] = useState<string>('');
+  const [metaPlayersCount, setMetaPlayersCount] = useState<number | undefined>(undefined);
 
   useEffect(() => {
     async function loadDecks() {
@@ -117,38 +121,27 @@ export default function Decks({ currentMember }: DecksProps) {
     loadDecks();
   }, [currentMember]);
 
-  // Load Limitless meta decks from backend API with fallback
-  const loadMetaDecks = async (forceRefresh = false) => {
+  // Load Limitless meta decks forcing live data directly from API (bypassing any stale cache or GitHub fallbacks)
+  const loadMetaDecks = async (forceRefresh = true) => {
     try {
       setLoadingMeta(true);
-      const url = forceRefresh ? '/api/pokemon/meta?refresh=true' : '/api/pokemon/meta';
-      const res = await fetch(url);
-      if (res.ok) {
-        const data = await res.json();
-        const decksList = data.decks || (Array.isArray(data) ? data : []);
-        const tName = data.tournamentName || 'Standard format meta';
-        
-        // Sort by share / placing
-        const sorted = decksList.sort((a: any, b: any) => {
-          const shareA = typeof a.share === 'number' ? a.share : 99;
-          const shareB = typeof b.share === 'number' ? b.share : 99;
-          return shareA - shareB;
-        });
-        setMetaDecks(sorted);
-        setTournamentName(tName);
-      } else {
-        throw new Error('Retornou status ' + res.status);
-      }
-    } catch (err) {
-      console.error('Error loading meta decks from API, using fallback:', err);
-      // Fallback to our robust local list, sorted by placing
-      const sortedFallback = [...fallbackMetaDecks].sort((a: any, b: any) => {
+      const result = await fetchLiveMetaDecks(forceRefresh);
+      const decksList = result.decks || [];
+      const tName = result.tournamentName || 'Limitless Premier Metagame';
+      
+      // Sort by share / placing
+      const sorted = [...decksList].sort((a: any, b: any) => {
         const shareA = typeof a.share === 'number' ? a.share : 99;
         const shareB = typeof b.share === 'number' ? b.share : 99;
         return shareA - shareB;
       });
-      setMetaDecks(sortedFallback);
-      setTournamentName('Pokémon World Championships (Limitless Premier Metagame)');
+      setMetaDecks(sorted);
+      setTournamentName(tName);
+      setMetaSource(result.source);
+      if (result.tournamentDate) setMetaTournamentDate(result.tournamentDate);
+      if (result.playersCount) setMetaPlayersCount(result.playersCount);
+    } catch (err) {
+      console.error('Erro ao carregar meta decks:', err);
     } finally {
       setLoadingMeta(false);
     }
@@ -156,7 +149,7 @@ export default function Decks({ currentMember }: DecksProps) {
 
   useEffect(() => {
     if (activeTab === 'meta') {
-      loadMetaDecks(false);
+      loadMetaDecks(true);
     }
   }, [activeTab]);
 
@@ -744,29 +737,55 @@ export default function Decks({ currentMember }: DecksProps) {
         loadingMeta ? (
           <div className="flex flex-col items-center justify-center py-20">
             <PokemonSprite name="pikachu" size="lg" className="animate-pulse" />
-            <p className="mt-4 text-purple-300 font-mono text-xs animate-pulse">Sincronizando meta global com o Limitless TCG...</p>
+            <p className="mt-4 text-purple-300 font-mono text-xs animate-pulse">Consultando API oficial do Limitless TCG em tempo real...</p>
+            <span className="text-[11px] text-slate-400 mt-1 font-sans">Bypassing caches e buscando torneios ativos...</span>
           </div>
         ) : (
           <div className="space-y-6">
-            <div className="bg-slate-900/40 border border-slate-850 p-4 rounded-xl flex items-center justify-between gap-4">
-              <div>
-                <span className="text-[10px] font-bold text-purple-400 uppercase tracking-widest block font-mono">Torneio Ativo Limitless</span>
-                <h2 className="text-white text-base font-extrabold">{tournamentName}</h2>
+            <div className="bg-slate-900/60 border border-slate-800 p-4 md:p-5 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xl">
+              <div className="space-y-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-[10px] font-bold text-purple-400 uppercase tracking-widest font-mono">
+                    Metagame Oficial Standard
+                  </span>
+                  {metaSource === 'offline-fallback' ? (
+                    <span className="px-2 py-0.5 bg-amber-500/10 border border-amber-500/30 text-[10px] font-bold text-amber-400 rounded-md font-mono flex items-center gap-1">
+                      ⚠️ Modo Contingência
+                    </span>
+                  ) : metaSource === 'api-direct-limitless' ? (
+                    <span className="px-2 py-0.5 bg-emerald-500/10 border border-emerald-500/30 text-[10px] font-bold text-emerald-400 rounded-md font-mono flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
+                      ⚡ API Limitless Direta (GitHub / Mobile)
+                    </span>
+                  ) : (
+                    <span className="px-2 py-0.5 bg-emerald-500/10 border border-emerald-500/30 text-[10px] font-bold text-emerald-400 rounded-md font-mono flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
+                      ⚡ API Limitless Oficial (Ao Vivo)
+                    </span>
+                  )}
+                  {metaPlayersCount ? (
+                    <span className="px-2 py-0.5 bg-purple-950/50 border border-purple-850 text-[10px] font-bold text-purple-300 rounded-md font-mono">
+                      👥 {metaPlayersCount} Jogadores
+                    </span>
+                  ) : null}
+                </div>
+                <h2 className="text-white text-base md:text-lg font-extrabold break-words">{tournamentName}</h2>
+                <p className="text-xs text-slate-400">
+                  Dados sincronizados diretamente dos torneios oficiais mais recentes, sem dependência de caches obsoletos.
+                </p>
               </div>
-              <div className="flex items-center gap-2">
+
+              <div className="flex items-center gap-2 self-stretch sm:self-auto shrink-0">
                 <button
                   id="btn-refresh-limitless"
                   onClick={() => loadMetaDecks(true)}
                   disabled={loadingMeta}
-                  className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors border border-slate-700 cursor-pointer disabled:opacity-50"
-                  title="Buscar baralhos mais recentes no Limitless TCG"
+                  className="flex-1 sm:flex-none min-h-[44px] px-4 py-2 bg-gradient-to-r from-purple-700 to-indigo-700 hover:from-purple-600 hover:to-indigo-600 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all shadow-md shadow-purple-950/30 border border-purple-500/30 cursor-pointer disabled:opacity-50"
+                  title="Forçar busca dos baralhos mais recentes ignorando cache"
                 >
-                  <RefreshCw className={`w-3.5 h-3.5 ${loadingMeta ? 'animate-spin' : ''}`} />
-                  <span>Sincronizar</span>
+                  <RefreshCw className={`w-4 h-4 ${loadingMeta ? 'animate-spin' : ''}`} />
+                  <span>Forçar Atualização</span>
                 </button>
-                <span className="px-3 py-1.5 bg-purple-950/40 border border-purple-900/40 text-[10px] font-bold text-purple-300 rounded-lg font-mono flex items-center gap-1">
-                  🏆 Ao Vivo
-                </span>
               </div>
             </div>
 
@@ -782,26 +801,26 @@ export default function Decks({ currentMember }: DecksProps) {
                   <div className="space-y-4">
                     {/* Top Header Card */}
                     <div className="flex items-start justify-between gap-3">
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-3 min-w-0">
                         <img 
                           src={deck.imageUrl} 
                           alt={deck.name} 
-                          className="w-12 h-16 object-contain drop-shadow-md rounded group-hover:scale-105 transition-transform" 
+                          className="w-12 h-16 object-contain shrink-0 drop-shadow-md rounded group-hover:scale-105 transition-transform" 
                           referrerPolicy="no-referrer"
                         />
-                        <div>
-                          <h3 className="text-white font-extrabold text-base leading-snug">{deck.name}</h3>
-                          <p className="text-xs text-purple-400 font-semibold mt-0.5">{deck.archetype}</p>
+                        <div className="min-w-0">
+                          <h3 className="text-white font-extrabold text-base leading-snug truncate">{deck.name}</h3>
+                          <p className="text-xs text-purple-400 font-semibold mt-0.5 truncate">{deck.archetype}</p>
                         </div>
                       </div>
                       
                       {/* Share percent Badge */}
-                      <div className="text-right">
+                      <div className="text-right shrink-0">
                         <span className="text-[10px] text-slate-500 uppercase font-bold block">
-                          {typeof deck.share === 'number' && deck.share <= 8 ? 'Colocação' : 'Uso no Meta'}
+                          {typeof deck.share === 'number' && deck.share <= 16 ? 'Colocação' : 'Uso no Meta'}
                         </span>
                         <span className="text-sm font-black text-white font-mono">
-                          {typeof deck.share === 'number' && deck.share <= 8 ? `${deck.share}º` : `${deck.share}%`}
+                          {typeof deck.share === 'number' && deck.share <= 16 ? `${deck.share}º` : `${deck.share}%`}
                         </span>
                       </div>
                     </div>
@@ -810,16 +829,16 @@ export default function Decks({ currentMember }: DecksProps) {
                     <p className="text-xs text-slate-300 leading-relaxed font-sans">{deck.description}</p>
 
                     {/* Stats section */}
-                    <div className="grid grid-cols-3 gap-3 bg-slate-950/40 p-3 rounded-xl border border-slate-850">
+                    <div className="grid grid-cols-3 gap-2 sm:gap-3 bg-slate-950/40 p-3 rounded-xl border border-slate-850">
                       <div>
                         <span className="text-[10px] text-slate-500 uppercase font-bold block">Atualizado</span>
-                        <span className="text-sm font-bold text-indigo-400 font-mono">
-                          {deck.updatedAt ? new Date(deck.updatedAt + 'T00:00:00').toLocaleDateString('pt-BR') : '08/11/2024'}
+                        <span className="text-xs sm:text-sm font-bold text-indigo-400 font-mono">
+                          {deck.updatedAt ? new Date(deck.updatedAt + 'T00:00:00').toLocaleDateString('pt-BR') : new Date().toLocaleDateString('pt-BR')}
                         </span>
                       </div>
                       <div>
                         <span className="text-[10px] text-slate-500 uppercase font-bold block">Winrate</span>
-                        <span className="text-sm font-extrabold text-emerald-400 font-mono block">
+                        <span className="text-xs sm:text-sm font-extrabold text-emerald-400 font-mono block">
                           {(() => {
                             const wr = deck.winRate && deck.winRate !== 55.0
                               ? deck.winRate
@@ -831,7 +850,7 @@ export default function Decks({ currentMember }: DecksProps) {
                       <div>
                         <span className="text-[10px] text-slate-500 uppercase font-bold block">Principais</span>
                         <div className="flex flex-wrap gap-1 mt-1">
-                          {deck.cards.slice(0, 2).map((c: any, i: number) => (
+                          {(deck.cards || []).slice(0, 2).map((c: any, i: number) => (
                             <span key={i} className="text-[9px] bg-slate-900 text-slate-400 px-1 py-0.5 rounded border border-slate-800 font-mono truncate max-w-full block" title={c.name}>
                               {c.name.split(' (')[0]}
                             </span>
@@ -843,32 +862,32 @@ export default function Decks({ currentMember }: DecksProps) {
                     {/* Usage Progress bar */}
                     <div className="space-y-1">
                       <div className="flex justify-between text-[10px] text-slate-400 font-mono">
-                        <span>{typeof deck.share === 'number' && deck.share <= 8 ? 'Rank no Torneio' : 'Presença nos campeonatos'}</span>
-                        <span>{typeof deck.share === 'number' && deck.share <= 8 ? `${deck.share}º Lugar` : `${deck.share}%`}</span>
+                        <span>{typeof deck.share === 'number' && deck.share <= 16 ? 'Rank no Torneio' : 'Presença nos campeonatos'}</span>
+                        <span>{typeof deck.share === 'number' && deck.share <= 16 ? `${deck.share}º Lugar` : `${deck.share}%`}</span>
                       </div>
                       <div className="w-full bg-slate-950 h-1.5 rounded-full overflow-hidden border border-slate-850">
                         <div 
                           className="bg-gradient-to-r from-purple-600 to-indigo-500 h-full rounded-full" 
-                          style={{ width: `${typeof deck.share === 'number' && deck.share <= 8 ? (9 - deck.share) * 12.5 : deck.share * 4}%` }} 
+                          style={{ width: `${typeof deck.share === 'number' && deck.share <= 16 ? Math.max(10, (17 - deck.share) * 6) : deck.share * 4}%` }} 
                         ></div>
                       </div>
                     </div>
                   </div>
 
                 {/* Actions bottom */}
-                <div className="flex gap-2.5 mt-5 pt-4 border-t border-slate-850">
+                <div className="flex flex-col sm:flex-row gap-2.5 mt-5 pt-4 border-t border-slate-850">
                   <button
                     onClick={() => handleCopyMetaList(deck.rawList, deck.name)}
-                    className="flex-1 py-2 bg-slate-800 hover:bg-slate-700 text-slate-250 hover:text-white rounded-lg font-bold text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+                    className="flex-1 min-h-[44px] py-2.5 px-3 bg-slate-800 hover:bg-slate-700 text-slate-250 hover:text-white rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer border border-slate-700"
                   >
                     {copiedDeckId === deck.name ? (
                       <>
-                        <Check className="w-3.5 h-3.5 text-emerald-400" />
+                        <Check className="w-4 h-4 text-emerald-400" />
                         Copiado!
                       </>
                     ) : (
                       <>
-                        <FileText className="w-3.5 h-3.5" />
+                        <FileText className="w-4 h-4" />
                         Copiar Lista Live
                       </>
                     )}
@@ -877,9 +896,9 @@ export default function Decks({ currentMember }: DecksProps) {
                   <button
                     onClick={() => handleImportMetaDeck(deck)}
                     disabled={parsing}
-                    className="flex-1 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white rounded-lg font-bold text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-lg shadow-purple-950/20 disabled:opacity-50"
+                    className="flex-1 min-h-[44px] py-2.5 px-3 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-lg shadow-purple-950/20 disabled:opacity-50"
                   >
-                    <PlusCircle className="w-3.5 h-3.5" />
+                    <PlusCircle className="w-4 h-4" />
                     Importar para o Time
                   </button>
                 </div>

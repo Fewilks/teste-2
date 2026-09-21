@@ -815,11 +815,105 @@ function resolveCardImageUrl(name: string, set?: string, number?: string): strin
   return 'https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/tpci/TWM/TWM_130_R_EN_LG.png';
 }
 
-async function fetchFromLimitlessLive(): Promise<{ decks: any[]; tournamentName: string } | null> {
+async function fetchFromLimitlessLive(): Promise<{ decks: any[]; tournamentName: string; tournamentDate?: string; playersCount?: number } | null> {
+  const cacheBuster = `_t=${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+  
+  // 1. Tenta a API oficial REST do Limitless TCG (mais rápida, direta e atualizada)
   try {
-    // 1. Fetch tournaments list from official Limitless website
-    const torResp = await fetch('https://limitlesstcg.com/tournaments', {
-      headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' }
+    const playResp = await fetch(`https://play.limitlesstcg.com/api/tournaments?game=PTCG&format=STANDARD&${cacheBuster}`, {
+      headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)', 'Accept': 'application/json' },
+      cache: 'no-store'
+    });
+
+    if (playResp.ok) {
+      const tournaments = await playResp.json();
+      if (Array.isArray(tournaments) && tournaments.length > 0) {
+        const pool = tournaments.filter(t => (t.players || 0) >= 12);
+        const candidates = pool.length > 0 ? pool : tournaments;
+
+        for (const tour of candidates.slice(0, 5)) {
+          try {
+            const stResp = await fetch(`https://play.limitlesstcg.com/api/tournaments/${tour.id}/standings?${cacheBuster}`, {
+              headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)', 'Accept': 'application/json' },
+              cache: 'no-store'
+            });
+            if (!stResp.ok) continue;
+
+            const standings = await stResp.json();
+            if (!Array.isArray(standings)) continue;
+
+            const withDecks = standings.filter(
+              s => s.decklist && Array.isArray(s.decklist.pokemon) && s.decklist.pokemon.length > 0
+            );
+
+            if (withDecks.length >= 3) {
+              const tourDateStr = tour.date ? new Date(tour.date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0];
+              const decks = withDecks.slice(0, 10).map((item, index) => {
+                const place = typeof item.placing === 'number' ? item.placing : index + 1;
+                const wins = item.record?.wins || 0;
+                const losses = item.record?.losses || 0;
+                const ties = item.record?.ties || 0;
+                const total = wins + losses + ties;
+                const computedWr = total > 0 ? parseFloat(((wins / total) * 100).toFixed(1)) : parseFloat((65 - place * 1.1).toFixed(1));
+
+                const allCards: { count: number; name: string; set?: string; number?: string }[] = [
+                  ...(item.decklist.pokemon || []),
+                  ...(item.decklist.trainer || []),
+                  ...(item.decklist.energy || [])
+                ];
+                const rawList = buildRawListFromCards(allCards);
+
+                const aceCard = (item.decklist.pokemon || []).find((p: any) => 
+                  p.name.toLowerCase().includes('ex') || 
+                  p.name.toLowerCase().includes('vstar') ||
+                  p.name.toLowerCase().includes('mega')
+                ) || item.decklist.pokemon[0];
+
+                const imageUrl = resolveCardImageUrl(aceCard?.name || '', aceCard?.set, aceCard?.number);
+                const deckName = item.deck?.name || aceCard?.name || 'Deck Premier';
+                const playerName = item.name || 'Jogador';
+                const countryStr = item.country ? ` (${item.country})` : '';
+
+                const topCards = (item.decklist.pokemon || []).slice(0, 4).map((p: any) => ({
+                  name: `${p.name} (${p.set || ''} ${p.number || ''})`.trim(),
+                  count: p.count || 1
+                }));
+
+                return {
+                  name: deckName,
+                  archetype: `Jogador: ${playerName}${countryStr} (${place}º Lugar)`,
+                  share: place,
+                  winRate: Math.max(48, Math.min(85, computedWr)),
+                  imageUrl,
+                  description: `Baralho oficial utilizado por ${playerName} conquistando o ${place}º lugar no torneio '${tour.name}' (${tour.players || 0} participantes) com lista validada pela Limitless TCG.`,
+                  updatedAt: tourDateStr,
+                  cards: topCards,
+                  rawList
+                };
+              });
+
+              return {
+                decks,
+                tournamentName: `${tour.name} (Limitless Live)`,
+                tournamentDate: tourDateStr,
+                playersCount: tour.players
+              };
+            }
+          } catch (e) {
+            console.warn(`Erro checando standings do torneio ${tour.id}:`, e);
+          }
+        }
+      }
+    }
+  } catch (apiErr) {
+    console.warn('Erro ao consultar API play.limitlesstcg.com:', apiErr);
+  }
+
+  // 2. Fallback: Scraping do site oficial limitlesstcg.com
+  try {
+    const torResp = await fetch(`https://limitlesstcg.com/tournaments?${cacheBuster}`, {
+      headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' },
+      cache: 'no-store'
     });
     if (!torResp.ok) throw new Error(`HTTP ${torResp.status} from limitlesstcg.com/tournaments`);
     const torHtml = await torResp.text();
@@ -830,9 +924,9 @@ async function fetchFromLimitlessLive(): Promise<{ decks: any[]; tournamentName:
     const tournamentUrl = `https://limitlesstcg.com${torMatch[1]}`;
     const tournamentName = torMatch[3].trim();
 
-    // 2. Fetch tournament standings
     const standResp = await fetch(tournamentUrl, {
-      headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' }
+      headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' },
+      cache: 'no-store'
     });
     if (!standResp.ok) throw new Error(`HTTP ${standResp.status} from tournament standings`);
     const standHtml = await standResp.text();
@@ -863,17 +957,16 @@ async function fetchFromLimitlessLive(): Promise<{ decks: any[]; tournamentName:
 
     if (candidateDecks.length === 0) throw new Error('No candidate decklists in tournament');
 
-    // 3. Fetch full decklists for the top 6-8 decks
     const finalDecks = [];
     for (const c of candidateDecks.slice(0, 8)) {
       try {
         const dResp = await fetch(`https://limitlesstcg.com${c.listPath}`, {
-          headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' }
+          headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' },
+          cache: 'no-store'
         });
         if (!dResp.ok) continue;
         const dHtml = await dResp.text();
 
-        // Extract Title and Meta
         const ogTitle = dHtml.match(/<meta property="og:title" content="([^"]+)"/i);
         const cardRegex = /class="decklist-card"[^>]*data-set="([^"]*)"[^>]*data-number="([^"]*)"[\s\S]*?<span class="card-count">(\d+)<\/span>[\s\S]*?<span class="card-name">([^<]+)<\/span>/gi;
 
@@ -902,7 +995,6 @@ async function fetchFromLimitlessLive(): Promise<{ decks: any[]; tournamentName:
           count: cd.count
         }));
 
-        // Pick an ace Pokémon card for image
         const aceCard = cards.find(cd => cd.name.toLowerCase().includes('ex') || cd.name.toLowerCase().includes('vstar')) || cards[0];
         const imageUrl = resolveCardImageUrl(aceCard.name, aceCard.set, aceCard.number);
 
@@ -933,7 +1025,8 @@ async function fetchFromLimitlessLive(): Promise<{ decks: any[]; tournamentName:
     if (finalDecks.length > 0) {
       return {
         decks: finalDecks,
-        tournamentName: `${tournamentName} (Limitless Premier Metagame)`
+        tournamentName: `${tournamentName} (Limitless Premier Metagame)`,
+        tournamentDate: new Date().toISOString().split('T')[0]
       };
     }
     return null;
@@ -944,11 +1037,16 @@ async function fetchFromLimitlessLive(): Promise<{ decks: any[]; tournamentName:
 }
 
 app.get('/api/pokemon/meta', async (req, res) => {
-  const forceRefresh = req.query.refresh === 'true';
-  const now = Date.now();
-  const ONE_HOUR = 60 * 60 * 1000;
+  // Desativa expressivamente qualquer cache HTTP
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
 
-  if (!forceRefresh && limitlessMetaCache && (now - limitlessMetaCache.timestamp < ONE_HOUR)) {
+  const forceRefresh = req.query.refresh === 'true' || req.headers['cache-control'] === 'no-cache';
+  const now = Date.now();
+  const SHORT_TTL = 3 * 60 * 1000; // Máximo 3 minutos caso não seja force-refresh
+
+  if (!forceRefresh && limitlessMetaCache && (now - limitlessMetaCache.timestamp < SHORT_TTL)) {
     return res.json(limitlessMetaCache.data);
   }
 
@@ -962,10 +1060,11 @@ app.get('/api/pokemon/meta', async (req, res) => {
     return res.json(liveData);
   }
 
-  // Fallback to our high-quality modern 2026 World Championship decks
+  // Fallback apenas se indisponível na internet
   const fallbackResponse = {
     decks: metaDecks,
-    tournamentName: 'Pokémon World Championships (Limitless Standard Format)'
+    tournamentName: 'Pokémon World Championships (Modo Offline)',
+    tournamentDate: new Date().toISOString().split('T')[0]
   };
   return res.json(fallbackResponse);
 });
