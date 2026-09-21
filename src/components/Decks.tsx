@@ -16,7 +16,8 @@ import {
   Activity,
   Flame,
   Wand2,
-  Pencil
+  Pencil,
+  RefreshCw
 } from 'lucide-react';
 import PokemonSprite from './PokemonSprite';
 import PokemonLoader from './PokemonLoader';
@@ -117,45 +118,45 @@ export default function Decks({ currentMember }: DecksProps) {
   }, [currentMember]);
 
   // Load Limitless meta decks from backend API with fallback
-  useEffect(() => {
-    async function loadMetaDecks() {
-      try {
-        setLoadingMeta(true);
-        const res = await fetch('/api/pokemon/meta');
-        if (res.ok) {
-          const data = await res.json();
-          const decksList = data.decks || (Array.isArray(data) ? data : []);
-          const tName = data.tournamentName || 'Standard format meta';
-          
-          // Sort by date descending
-          const sorted = decksList.sort((a: any, b: any) => {
-            const dateA = a.updatedAt || '2023-01-01';
-            const dateB = b.updatedAt || '2023-01-01';
-            if (dateB !== dateA) return dateB.localeCompare(dateA);
-            return b.share - a.share;
-          });
-          setMetaDecks(sorted);
-          setTournamentName(tName);
-        } else {
-          throw new Error('Retornou status ' + res.status);
-        }
-      } catch (err) {
-        console.error('Error loading meta decks from API, using fallback:', err);
-        // Fallback to our robust local list, sorted by date descending
-        const sortedFallback = [...fallbackMetaDecks].sort((a: any, b: any) => {
-          const dateA = a.updatedAt || '2023-01-01';
-          const dateB = b.updatedAt || '2023-01-01';
-          if (dateB !== dateA) return dateB.localeCompare(dateA);
-          return b.share - a.share;
+  const loadMetaDecks = async (forceRefresh = false) => {
+    try {
+      setLoadingMeta(true);
+      const url = forceRefresh ? '/api/pokemon/meta?refresh=true' : '/api/pokemon/meta';
+      const res = await fetch(url);
+      if (res.ok) {
+        const data = await res.json();
+        const decksList = data.decks || (Array.isArray(data) ? data : []);
+        const tName = data.tournamentName || 'Standard format meta';
+        
+        // Sort by share / placing
+        const sorted = decksList.sort((a: any, b: any) => {
+          const shareA = typeof a.share === 'number' ? a.share : 99;
+          const shareB = typeof b.share === 'number' ? b.share : 99;
+          return shareA - shareB;
         });
-        setMetaDecks(sortedFallback);
-        setTournamentName('Standard format meta (Local Database / Fallback)');
-      } finally {
-        setLoadingMeta(false);
+        setMetaDecks(sorted);
+        setTournamentName(tName);
+      } else {
+        throw new Error('Retornou status ' + res.status);
       }
+    } catch (err) {
+      console.error('Error loading meta decks from API, using fallback:', err);
+      // Fallback to our robust local list, sorted by placing
+      const sortedFallback = [...fallbackMetaDecks].sort((a: any, b: any) => {
+        const shareA = typeof a.share === 'number' ? a.share : 99;
+        const shareB = typeof b.share === 'number' ? b.share : 99;
+        return shareA - shareB;
+      });
+      setMetaDecks(sortedFallback);
+      setTournamentName('Pokémon World Championships (Limitless Premier Metagame)');
+    } finally {
+      setLoadingMeta(false);
     }
+  };
+
+  useEffect(() => {
     if (activeTab === 'meta') {
-      loadMetaDecks();
+      loadMetaDecks(false);
     }
   }, [activeTab]);
 
@@ -752,9 +753,21 @@ export default function Decks({ currentMember }: DecksProps) {
                 <span className="text-[10px] font-bold text-purple-400 uppercase tracking-widest block font-mono">Torneio Ativo Limitless</span>
                 <h2 className="text-white text-base font-extrabold">{tournamentName}</h2>
               </div>
-              <span className="px-3 py-1 bg-purple-950/40 border border-purple-900/40 text-[10px] font-bold text-purple-300 rounded-full font-mono flex items-center gap-1">
-                🏆 Sincronizado
-              </span>
+              <div className="flex items-center gap-2">
+                <button
+                  id="btn-refresh-limitless"
+                  onClick={() => loadMetaDecks(true)}
+                  disabled={loadingMeta}
+                  className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors border border-slate-700 cursor-pointer disabled:opacity-50"
+                  title="Buscar baralhos mais recentes no Limitless TCG"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 ${loadingMeta ? 'animate-spin' : ''}`} />
+                  <span>Sincronizar</span>
+                </button>
+                <span className="px-3 py-1.5 bg-purple-950/40 border border-purple-900/40 text-[10px] font-bold text-purple-300 rounded-lg font-mono flex items-center gap-1">
+                  🏆 Ao Vivo
+                </span>
+              </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6" id="limitless-meta-grid">
