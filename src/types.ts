@@ -79,6 +79,8 @@ export interface DeckRecord {
   userName: string;
   deckName: string;
   archetype: string;
+  pokemon1?: string;
+  pokemon2?: string;
   rawList: string;
   parsedCards: ParsedDeckCard[];
   createdAt: string;

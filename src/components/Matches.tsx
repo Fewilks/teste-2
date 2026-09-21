@@ -705,8 +705,8 @@ export default function Matches({ currentMember, setActiveTab, initialSubTab = '
                               setDeckName(foundDeck.deckName);
                               setDeckArchetype(foundDeck.archetype);
                               const parts = getArchetypeSprites(foundDeck.archetype);
-                              setDeckPokemon1(parts[0] || 'substitute');
-                              setDeckPokemon2(parts[1] || '');
+                              setDeckPokemon1(foundDeck.pokemon1 || parts[0] || 'substitute');
+                              setDeckPokemon2(foundDeck.pokemon2 || parts[1] || '');
                             } else {
                               setDeckName('');
                               setDeckPokemon1('charizard');

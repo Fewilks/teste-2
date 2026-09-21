@@ -19,8 +19,57 @@ import {
 } from 'lucide-react';
 import PokemonSprite from './PokemonSprite';
 import PokemonLoader from './PokemonLoader';
+import { getArchetypeSprites } from './Matches';
 import { fallbackMetaDecks } from '../data/fallbackDecks';
 import { normalizePokemonCard, parsePTCGLDeckList, getPTCGLId } from '../services/cardNormalizationService';
+
+function detectPokemonsFromDeckText(text: string): { p1?: string; p2?: string } {
+  if (!text) return {};
+  const lines = text.split('\n');
+  const detected: string[] = [];
+
+  let inPokemonSection = false;
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (!trimmed) continue;
+    if (/^(pokémon|pokemon)\b/i.test(trimmed)) {
+      inPokemonSection = true;
+      continue;
+    }
+    if (/^(treinador|trainer|energia|energy)\b/i.test(trimmed)) {
+      inPokemonSection = false;
+      break;
+    }
+
+    const match = trimmed.match(/^\d+\s+([A-Za-z0-9\s\-\'\.]+?)(?:\s+[A-Z0-9]{2,5}\s+\d+.*)?$/i);
+    if (match) {
+      const rawName = match[1].trim();
+      if (!/energia|energy/i.test(rawName) && rawName.length > 2) {
+        if (!detected.includes(rawName)) {
+          detected.push(rawName);
+        }
+      }
+    }
+  }
+
+  detected.sort((a, b) => {
+    const aScore = /\b(ex|vstar|vmax|v)\b/i.test(a) ? 2 : 1;
+    const bScore = /\b(ex|vstar|vmax|v)\b/i.test(b) ? 2 : 1;
+    return bScore - aScore;
+  });
+
+  return {
+    p1: detected[0] || '',
+    p2: detected[1] || ''
+  };
+}
+
+const getDeckSprites = (deck: { archetype: string; pokemon1?: string; pokemon2?: string }): string[] => {
+  if (deck.pokemon1) {
+    return deck.pokemon2 ? [deck.pokemon1, deck.pokemon2] : [deck.pokemon1];
+  }
+  return getArchetypeSprites(deck.archetype);
+};
 
 interface DecksProps {
   currentMember: Member;
@@ -41,32 +90,12 @@ export default function Decks({ currentMember }: DecksProps) {
   const [showImportModal, setShowImportModal] = useState(false);
   const [rawText, setRawText] = useState('');
   const [deckName, setDeckName] = useState('');
-  const [archetype, setArchetype] = useState('Charizard ex');
+  const [pokemon1, setPokemon1] = useState('');
+  const [pokemon2, setPokemon2] = useState('');
   const [parsing, setParsing] = useState(false);
 
   // Active Deck Detail view
   const [activeDeck, setActiveDeck] = useState<DeckRecord | null>(null);
-
-  const archetypes = [
-    'Charizard ex',
-    'Regidrago VSTAR',
-    'Raging Bolt ex',
-    'Gardevoir ex',
-    'Lugia VSTAR',
-    'Roaring Moon ex',
-    'Miraidon ex',
-    'Dragapult ex',
-    'Chien-Pao ex',
-    'Snorlax Block',
-    'Gholdengo ex',
-    'Iron Valiant ex',
-    'Terapagos ex',
-    'Mega Lucario ex (Heróis Excelsos)',
-    'Mega Charizard X ex (Fogo Fantasmagórico)',
-    'Mega Zygarde ex (Ordem Perfeita)',
-    'Eevee / Stellar Sylveon ex (Evoluções Prismáticas)',
-    'Outro'
-  ];
 
   useEffect(() => {
     async function loadDecks() {
@@ -174,11 +203,17 @@ export default function Decks({ currentMember }: DecksProps) {
         };
       });
       
+      const metaParts = (metaDeck.name || '').split(/[\/\+]/);
+      const p1 = (metaParts[0] || metaDeck.name || '').trim();
+      const p2 = (metaParts[1] || '').trim();
+
       const newDeck: Omit<DeckRecord, 'id'> = {
         userId: currentMember.id,
         userName: currentMember.name,
         deckName: `Meta - ${metaDeck.name}`,
         archetype: metaDeck.name,
+        pokemon1: p1,
+        pokemon2: p2,
         rawList: metaDeck.rawList,
         parsedCards: normalizedCards,
         createdAt: new Date().toISOString()
@@ -204,6 +239,10 @@ export default function Decks({ currentMember }: DecksProps) {
     e.preventDefault();
     if (!rawText.trim() || !deckName.trim()) {
       alert('Preencha o nome do deck e cole a lista de cartas!');
+      return;
+    }
+    if (!pokemon1.trim()) {
+      alert('Por favor, informe o nome do Pokémon 1 para identificar o arquétipo do baralho!');
       return;
     }
 
@@ -246,11 +285,17 @@ export default function Decks({ currentMember }: DecksProps) {
         };
       });
 
+      const cleanP1 = pokemon1.trim();
+      const cleanP2 = pokemon2.trim();
+      const computedArchetype = cleanP2 ? `${cleanP1} / ${cleanP2}` : cleanP1;
+
       const newDeck: Omit<DeckRecord, 'id'> = {
         userId: currentMember.id,
         userName: currentMember.name,
-        deckName: deckName,
-        archetype: archetype,
+        deckName: deckName.trim(),
+        archetype: computedArchetype,
+        pokemon1: cleanP1,
+        pokemon2: cleanP2,
         rawList: rawText,
         parsedCards: normalizedCards,
         createdAt: new Date().toISOString()
@@ -262,6 +307,8 @@ export default function Decks({ currentMember }: DecksProps) {
       setShowImportModal(false);
       setRawText('');
       setDeckName('');
+      setPokemon1('');
+      setPokemon2('');
       alert('Deck analisado e cadastrado com sucesso!');
     } catch (err) {
       console.error('Error importing deck:', err);
@@ -313,6 +360,8 @@ export default function Decks({ currentMember }: DecksProps) {
           onClick={() => {
             setDeckName('');
             setRawText('');
+            setPokemon1('');
+            setPokemon2('');
             setShowImportModal(true);
           }}
           className="px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white rounded-lg font-bold text-sm flex items-center gap-2 shadow-lg shadow-purple-950/40 cursor-pointer transition-all duration-300"
@@ -367,7 +416,13 @@ export default function Decks({ currentMember }: DecksProps) {
             </p>
             <button
               id="empty-decks-add"
-              onClick={() => setShowImportModal(true)}
+              onClick={() => {
+                setDeckName('');
+                setRawText('');
+                setPokemon1('');
+                setPokemon2('');
+                setShowImportModal(true);
+              }}
               className="mt-6 px-4 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-semibold text-sm cursor-pointer"
             >
               Importar Meu Primeiro Deck
@@ -392,7 +447,11 @@ export default function Decks({ currentMember }: DecksProps) {
                     id={`deck-item-${deck.id}`}
                   >
                     <div className="min-w-0 flex items-center gap-3">
-                      <PokemonSprite name={deck.archetype} size="sm" />
+                      <div className="flex items-center -space-x-2 shrink-0">
+                        {getDeckSprites(deck).map((spriteName, idx) => (
+                          <PokemonSprite key={idx} name={spriteName} size="sm" />
+                        ))}
+                      </div>
                       <div className="min-w-0">
                         <h3 className="text-white font-extrabold text-sm truncate" title={deck.deckName}>{deck.deckName}</h3>
                         <div className="flex items-center gap-1.5 mt-1 text-[11px] text-slate-400">
@@ -436,7 +495,11 @@ export default function Decks({ currentMember }: DecksProps) {
                   {/* Header info sheet */}
                   <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-850 pb-5">
                     <div className="flex items-center gap-4">
-                      <PokemonSprite name={activeDeck.archetype} size="md" />
+                      <div className="flex items-center -space-x-3 shrink-0">
+                        {getDeckSprites(activeDeck).map((spriteName, idx) => (
+                          <PokemonSprite key={idx} name={spriteName} size="md" />
+                        ))}
+                      </div>
                       <div>
                         <span className="text-[10px] font-mono font-bold text-purple-400 uppercase">Arquétipo: {activeDeck.archetype}</span>
                         <h2 className="text-xl font-extrabold text-white mt-0.5">{activeDeck.deckName}</h2>
@@ -763,18 +826,94 @@ export default function Decks({ currentMember }: DecksProps) {
                 />
               </div>
 
-              <div className="space-y-1.5">
-                <label className="block text-xs font-bold text-slate-300 uppercase">Arquétipo correspondente:</label>
-                <select
-                  id="import-deck-archetype"
-                  value={archetype}
-                  onChange={(e) => setArchetype(e.target.value)}
-                  className="w-full p-2.5 bg-slate-950 border border-slate-850 focus:border-purple-500 rounded-lg text-white text-sm outline-none"
-                >
-                  {archetypes.map(a => (
-                    <option key={a} value={a}>{a}</option>
-                  ))}
-                </select>
+              {/* Identificação do Arquétipo por Pokémon 1 e Pokémon 2 */}
+              <div className="bg-slate-950/60 p-4 rounded-xl border border-slate-850 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-slate-300 uppercase tracking-wide flex items-center gap-1.5">
+                    <span>⚡</span> Identificação do Arquétipo
+                  </span>
+                  {rawText.trim() && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const detected = detectPokemonsFromDeckText(rawText);
+                        if (detected.p1) setPokemon1(detected.p1);
+                        if (detected.p2) setPokemon2(detected.p2);
+                      }}
+                      className="text-[11px] text-purple-400 hover:text-purple-300 font-semibold cursor-pointer flex items-center gap-1 hover:underline"
+                    >
+                      <Sparkles className="w-3 h-3 text-purple-400" /> Detectar da Lista
+                    </button>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {/* Pokémon 1 (Principal) */}
+                  <div className="space-y-1.5">
+                    <label className="block text-xs font-semibold text-slate-300">
+                      Pokémon 1 (Principal): <span className="text-purple-400">*</span>
+                    </label>
+                    <div className="relative">
+                      <input
+                        id="import-deck-pokemon1"
+                        type="text"
+                        placeholder="ex: Charizard ex, Lugia VSTAR"
+                        value={pokemon1}
+                        onChange={(e) => setPokemon1(e.target.value)}
+                        className="w-full p-2.5 pl-10 bg-slate-900 border border-slate-800 focus:border-purple-500 rounded-lg text-white text-sm outline-none font-medium"
+                        required
+                      />
+                      <div className="absolute left-2.5 top-1/2 -translate-y-1/2 flex items-center justify-center pointer-events-none">
+                        <PokemonSprite name={pokemon1 || 'substitute'} size="sm" className="w-5 h-5 scale-125" />
+                      </div>
+                    </div>
+                    <p className="text-[10px] text-slate-500">Atacante principal ou foco do deck</p>
+                  </div>
+
+                  {/* Pokémon 2 (Secundário / Suporte) */}
+                  <div className="space-y-1.5">
+                    <div className="flex justify-between items-center">
+                      <label className="block text-xs font-semibold text-slate-300">
+                        Pokémon 2 (Secundário):
+                      </label>
+                      <span className="text-[10px] text-slate-500 font-mono">Opcional</span>
+                    </div>
+                    <div className="relative">
+                      <input
+                        id="import-deck-pokemon2"
+                        type="text"
+                        placeholder="ex: Pidgeot ex, Dusclops"
+                        value={pokemon2}
+                        onChange={(e) => setPokemon2(e.target.value)}
+                        className="w-full p-2.5 pl-10 bg-slate-900 border border-slate-800 focus:border-purple-500 rounded-lg text-white text-sm outline-none font-medium"
+                      />
+                      <div className="absolute left-2.5 top-1/2 -translate-y-1/2 flex items-center justify-center pointer-events-none">
+                        {pokemon2.trim() ? (
+                          <PokemonSprite name={pokemon2} size="sm" className="w-5 h-5 scale-125" />
+                        ) : (
+                          <div className="w-4 h-4 rounded-full border border-dashed border-slate-700" />
+                        )}
+                      </div>
+                    </div>
+                    <p className="text-[10px] text-slate-500">Suporte ou parceiro estratégico</p>
+                  </div>
+                </div>
+
+                {/* Live Archetype Banner */}
+                <div className="pt-2.5 border-t border-slate-850/80 flex items-center justify-between text-xs">
+                  <span className="text-slate-400 font-mono text-[11px]">Arquétipo Identificado:</span>
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center -space-x-1.5">
+                      <PokemonSprite name={pokemon1 || 'substitute'} size="xs" />
+                      {pokemon2.trim() && <PokemonSprite name={pokemon2} size="xs" />}
+                    </div>
+                    <span className="font-bold text-purple-300 font-mono text-xs">
+                      {pokemon1.trim() 
+                        ? (pokemon2.trim() ? `${pokemon1.trim()} / ${pokemon2.trim()}` : pokemon1.trim())
+                        : 'Digite o Pokémon 1...'}
+                    </span>
+                  </div>
+                </div>
               </div>
 
               {/* Paste box */}
@@ -793,7 +932,15 @@ Pokémon: 3
 3 Charmander OBF 26
 ...`}
                   value={rawText}
-                  onChange={(e) => setRawText(e.target.value)}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setRawText(val);
+                    if (!pokemon1.trim() && val.trim()) {
+                      const detected = detectPokemonsFromDeckText(val);
+                      if (detected.p1) setPokemon1(detected.p1);
+                      if (detected.p2) setPokemon2(detected.p2);
+                    }
+                  }}
                   className="w-full p-3 bg-slate-950 border border-slate-850 focus:border-purple-500 rounded-lg text-white text-xs font-mono outline-none resize-none leading-relaxed"
                   required
                 />

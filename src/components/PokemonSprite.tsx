@@ -5,6 +5,7 @@ interface PokemonSpriteProps {
   name: string;
   className?: string;
   size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl';
+  key?: React.Key;
 }
 
 export const getPokemonSpriteUrl = (pokemonName: string): string => {

@@ -94,6 +94,8 @@
         "userName": { "type": "string", "description": "Creator's name" },
         "deckName": { "type": "string", "description": "Name of the deck" },
         "archetype": { "type": "string", "description": "Deck archetype" },
+        "pokemon1": { "type": "string", "description": "Primary Pokemon identifying the archetype" },
+        "pokemon2": { "type": "string", "description": "Secondary Pokemon identifying the archetype (optional)" },
         "rawList": { "type": "string", "description": "Raw copy-pasted decklist text" },
         "parsedCards": { "type": "array", "description": "Parsed card items with counts and categories" },
         "createdAt": { "type": "string", "description": "Deck registry creation timestamp" }
