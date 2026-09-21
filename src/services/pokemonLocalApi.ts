@@ -457,22 +457,77 @@ async function handleLocalApi(url: string, init?: RequestInit): Promise<Response
 export function installPokemonApiInterceptor(): void {
   if (typeof window === 'undefined') return;
   if (_installed) return;
-  _installed = true;
 
-  const originalFetch = window.fetch.bind(window);
+  try {
+    const originalFetch = window.fetch ? window.fetch.bind(window) : fetch.bind(globalThis);
 
-  window.fetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
-    let url = '';
-    if (typeof input === 'string') url = input;
-    else if (input instanceof URL) url = input.toString();
-    else if (input && typeof input === 'object' && 'url' in input) url = (input as Request).url;
+    const customFetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
+      let url = '';
+      if (typeof input === 'string') url = input;
+      else if (input instanceof URL) url = input.toString();
+      else if (input && typeof input === 'object' && 'url' in input) url = (input as Request).url;
 
-    if (/\/api\/pokemon\//.test(url) || /\/api\/health/.test(url)) {
-      return handleLocalApi(url, init);
+      if (/\/api\/pokemon\//.test(url) || /\/api\/health/.test(url)) {
+        // Tenta o servidor real primeiro se acessível
+        try {
+          const resp = await originalFetch(input, init);
+          if (resp && resp.ok) {
+            return resp;
+          }
+        } catch {
+          // Servidor indisponível ou ambiente estático (ex: GitHub Pages ou mobile sem backend)
+        }
+        return handleLocalApi(url, init);
+      }
+
+      return originalFetch(input, init);
+    };
+
+    let overridden = false;
+
+    // 1. Tentar Object.defineProperty no window
+    try {
+      Object.defineProperty(window, 'fetch', {
+        value: customFetch,
+        writable: true,
+        configurable: true,
+      });
+      overridden = true;
+    } catch {
+      // Ignora erro se window.fetch for getter-only ou protegido
     }
 
-    return originalFetch(input, init);
-  };
+    // 2. Se não conseguiu, tentar no Window.prototype
+    if (!overridden && typeof Window !== 'undefined' && Window.prototype) {
+      try {
+        Object.defineProperty(Window.prototype, 'fetch', {
+          value: customFetch,
+          writable: true,
+          configurable: true,
+        });
+        overridden = true;
+      } catch {
+        // Ignora erro
+      }
+    }
 
-  console.info('[pokemonLocalApi] interceptor instalado — /api/pokemon/* agora é local');
+    // 3. Tentar globalThis como fallback
+    if (!overridden && typeof globalThis !== 'undefined') {
+      try {
+        (globalThis as any).fetch = customFetch;
+        overridden = true;
+      } catch {
+        // Ignora erro
+      }
+    }
+
+    _installed = true;
+    if (overridden) {
+      console.info('[pokemonLocalApi] interceptor instalado com sucesso');
+    } else {
+      console.warn('[pokemonLocalApi] fetch nativo protegido — prosseguindo normalmente sem interceptor');
+    }
+  } catch (err) {
+    console.warn('[pokemonLocalApi] Falha suave ao registrar interceptor:', err);
+  }
 }

@@ -4,7 +4,11 @@ import App from './App';
 import './index.css';
 import { installPokemonApiInterceptor } from './services/pokemonLocalApi';
 
-installPokemonApiInterceptor();
+try {
+  installPokemonApiInterceptor();
+} catch (e) {
+  console.warn('Falha ao instalar interceptor local:', e);
+}
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
