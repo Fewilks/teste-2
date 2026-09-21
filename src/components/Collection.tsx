@@ -16,6 +16,7 @@ import {
   Info
 } from 'lucide-react';
 import PokemonSprite from './PokemonSprite';
+import PokemonLoader from './PokemonLoader';
 import { getAuthenticCardImageUrl, getCardScanHierarchy, POKEMON_CARD_BACK, registerCollectionCards } from '../utils/cardImages';
 import { 
   normalizePokemonCard, 
@@ -300,10 +301,11 @@ export default function Collection({ currentMember }: CollectionProps) {
 
       {/* 2. Collection Content Grid */}
       {loading ? (
-        <div className="flex flex-col items-center justify-center py-20">
-          <PokemonSprite name="charizard" size="lg" className="animate-spin" />
-          <p className="mt-4 text-purple-300 font-mono text-xs animate-pulse">Carregando acervo...</p>
-        </div>
+        <PokemonLoader 
+          pokemon="charizard" 
+          title="Carregando acervo de cartas..." 
+          subtitle="Sincronizando inventário e cartas físicas do time..." 
+        />
       ) : collectionCards.length === 0 ? (
         <div className="text-center py-16 bg-slate-900/30 rounded-2xl border border-slate-800 p-8 flex flex-col items-center justify-center backdrop-blur-md" id="empty-collection-state">
           <div className="text-5xl mb-4">🎴</div>

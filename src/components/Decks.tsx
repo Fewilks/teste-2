@@ -18,6 +18,7 @@ import {
   Wand2
 } from 'lucide-react';
 import PokemonSprite from './PokemonSprite';
+import PokemonLoader from './PokemonLoader';
 import { fallbackMetaDecks } from '../data/fallbackDecks';
 import { normalizePokemonCard, parsePTCGLDeckList, getPTCGLId } from '../services/cardNormalizationService';
 
@@ -352,10 +353,11 @@ export default function Decks({ currentMember }: DecksProps) {
 
       {activeTab === 'my' ? (
         loading ? (
-          <div className="flex flex-col items-center justify-center py-20">
-            <PokemonSprite name="mewtwo" size="lg" className="animate-pulse" />
-            <p className="mt-4 text-purple-300 font-mono text-xs">Acessando decklists do time...</p>
-          </div>
+          <PokemonLoader 
+            pokemon="mewtwo" 
+            title="Acessando decklists do time..." 
+            subtitle="Carregando baralhos competitivos e listas registradas..." 
+          />
         ) : decks.length === 0 ? (
           <div className="text-center py-16 bg-slate-900/40 rounded-2xl border border-slate-800 p-8 flex flex-col items-center justify-center">
             <div className="text-5xl mb-4">🗂️</div>

@@ -17,6 +17,7 @@ import {
   X
 } from 'lucide-react';
 import PokemonSprite from './PokemonSprite';
+import PokemonLoader from './PokemonLoader';
 import { normalizeCollectionCards, getPTCGLId } from '../services/cardNormalizationService';
 import { getAuthenticCardImageUrl } from '../utils/cardImages';
 
@@ -366,10 +367,11 @@ export default function Loans({ currentMember }: LoansProps) {
       )}
 
       {loading ? (
-        <div className="flex flex-col items-center justify-center py-20 bg-slate-900/40 rounded-2xl border border-slate-800/80">
-          <PokemonSprite name="alakazam" size="lg" className="animate-bounce" />
-          <p className="mt-4 text-purple-300 font-mono text-xs animate-pulse">Carregando acervo e empréstimos...</p>
-        </div>
+        <PokemonLoader 
+          pokemon="alakazam" 
+          title="Consultando contratos de empréstimo..." 
+          subtitle="Carregando acervo compartilhado e solicitações ativas..." 
+        />
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           

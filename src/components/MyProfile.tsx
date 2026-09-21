@@ -22,6 +22,7 @@ import {
   Trophy
 } from 'lucide-react';
 import PokemonSprite from './PokemonSprite';
+import { POPULAR_POKEMON_AVATARS, PokemonAvatarOption } from '../utils/pokemonSprites';
 
 interface MyProfileProps {
   currentMember: Member;
@@ -173,26 +174,57 @@ export default function MyProfile({ currentMember, setCurrentMember, onMemberUpd
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 border-t border-slate-850 pt-5">
-              {/* Avatar input */}
-              <div className="space-y-1.5">
-                <label className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider">Pokémon do Avatar (Em Inglês)</label>
-                <div className="relative">
-                  <Flame className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+            <div className="space-y-4 border-t border-slate-850 pt-5">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+                <div>
+                  <label className="block text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
+                    <Flame className="w-4 h-4 text-purple-400" />
+                    Escolha seu Avatar Pokémon
+                  </label>
+                  <p className="text-[10px] text-slate-400 mt-0.5">
+                    Selecione um dos favoritos da equipe ou digite o nome de qualquer Pokémon em inglês.
+                  </p>
+                </div>
+                <div className="w-full sm:w-auto">
                   <input 
                     type="text" 
                     id="profile-edit-avatar"
                     value={avatarSprite}
                     onChange={(e) => setAvatarSprite(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
-                    placeholder="Ex: pikachu, charizard, gengar"
-                    className="w-full bg-slate-950/60 border border-slate-850 focus:border-purple-500/50 rounded-xl py-2.5 pl-10 pr-4 text-xs font-medium text-white placeholder-slate-600 focus:outline-none transition-colors"
+                    placeholder="Outro: ex. eevee, mew, dialga..."
+                    className="w-full sm:w-56 bg-slate-950/80 border border-slate-800 focus:border-purple-500 rounded-xl py-2 px-3 text-xs text-white placeholder-slate-600 focus:outline-none transition-colors"
                   />
                 </div>
-                <p className="text-[10px] text-slate-500 font-mono mt-1">Conecta-se ao banco do Showdown para carregar o GIF animado correspondente.</p>
+              </div>
+
+              {/* Avatar Preset Grid */}
+              <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2 max-h-56 overflow-y-auto p-2 bg-slate-950/50 rounded-xl border border-slate-850/80">
+                {POPULAR_POKEMON_AVATARS.map(pkmn => {
+                  const isSelected = avatarSprite.toLowerCase() === pkmn.id;
+                  return (
+                    <button
+                      key={pkmn.id}
+                      type="button"
+                      id={`avatar-option-${pkmn.id}`}
+                      onClick={() => setAvatarSprite(pkmn.id)}
+                      className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all cursor-pointer border ${
+                        isSelected 
+                          ? 'bg-purple-950/60 border-purple-500 shadow-md shadow-purple-950/50 scale-105' 
+                          : 'bg-slate-900/50 border-slate-800/80 hover:border-slate-700 hover:bg-slate-900'
+                      }`}
+                      title={pkmn.name}
+                    >
+                      <PokemonSprite name={pkmn.id} size="sm" className="w-9 h-9" />
+                      <span className={`text-[9px] mt-1 truncate max-w-full font-medium ${isSelected ? 'text-purple-300 font-bold' : 'text-slate-400'}`}>
+                        {pkmn.name}
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
 
               {/* Simulation Rank Selector */}
-              <div className="space-y-1.5">
+              <div className="space-y-1.5 pt-2">
                 <label className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider">Meu Level / Evolução Competitiva</label>
                 <select 
                   id="profile-edit-role"

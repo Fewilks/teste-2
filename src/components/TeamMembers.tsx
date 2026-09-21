@@ -19,6 +19,7 @@ import {
   Trash2
 } from 'lucide-react';
 import PokemonSprite from './PokemonSprite';
+import PokemonLoader from './PokemonLoader';
 
 interface TeamMembersProps {
   currentMember: Member;
@@ -314,10 +315,11 @@ export default function TeamMembers({ currentMember, setCurrentMember, onMemberU
 
       {/* Roster list */}
       {loading ? (
-        <div className="flex flex-col items-center justify-center py-20">
-          <PokemonSprite name="lucario" size="lg" className="animate-bounce" />
-          <p className="mt-4 text-purple-300 font-mono text-xs">Convocando conselho dos Spirits...</p>
-        </div>
+        <PokemonLoader 
+          pokemon="lucario" 
+          title="Convocando conselho dos Spirits..." 
+          subtitle="Carregando mestres e classificações do time..." 
+        />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="roster-grid">
           {members.map((mem, idx) => (

@@ -28,6 +28,7 @@ import {
   FileText
 } from 'lucide-react';
 import PokemonSprite from './components/PokemonSprite';
+import PokemonLoader from './components/PokemonLoader';
 import { getRoleBadge } from './utils';
 
 export function getRoleRankValue(role: string): number {
@@ -193,17 +194,12 @@ export default function App() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center text-center p-4">
-        {/* Stylized spectral loading circle */}
-        <div className="relative flex items-center justify-center">
-          <div className="absolute w-24 h-24 border-4 border-purple-500/20 border-t-purple-500 rounded-full animate-spin"></div>
-          <div className="w-16 h-16 bg-purple-900/30 rounded-full flex items-center justify-center border border-purple-500/30">
-            <span className="text-3xl animate-pulse">🔮</span>
-          </div>
-        </div>
-        <h2 className="text-white font-extrabold text-xl mt-6 tracking-tight">Canalizando Spirits Portal...</h2>
-        <p className="text-slate-550 text-xs mt-2 font-mono">Conectando ao Firebase Firestore e APIs de metagame...</p>
-      </div>
+      <PokemonLoader 
+        pokemon="gengar" 
+        fullScreen 
+        title="Canalizando Spirits Portal..." 
+        subtitle="Sincronizando estatísticas, winrate e TrainerLog..." 
+      />
     );
   }
 
@@ -214,9 +210,10 @@ export default function App() {
 
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, minRank: 1 },
-    { id: 'colecao', label: 'Minha Coleção', icon: Layers, minRank: 2 },
-    { id: 'emprestimos', label: 'Empréstimos', icon: ArrowLeftRight, minRank: 3 },
-    { id: 'partidas', label: 'Partidas', icon: Swords, minRank: 3 },
+    { id: 'partidas', label: 'Partidas & Winrate', icon: Swords, minRank: 1 },
+    { id: 'trainerlog', label: 'TrainerLog Replay', icon: FileText, minRank: 1 },
+    { id: 'colecao', label: 'Minha Coleção', icon: Layers, minRank: 1 },
+    { id: 'emprestimos', label: 'Empréstimos', icon: ArrowLeftRight, minRank: 1 },
     { id: 'decks', label: 'Meus Decks', icon: Trophy, minRank: 1 },
     { id: 'perfil', label: 'Meu Perfil', icon: User, minRank: 1 },
     { id: 'time', label: 'Time Spirits', icon: Users, minRank: 1 },

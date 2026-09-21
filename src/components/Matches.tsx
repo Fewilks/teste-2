@@ -16,6 +16,7 @@ import {
   RotateCcw
 } from 'lucide-react';
 import PokemonSprite from './PokemonSprite';
+import PokemonLoader from './PokemonLoader';
 import TrainerLog from './TrainerLog/TrainerLog';
 
 interface MatchesProps {
@@ -476,10 +477,11 @@ export default function Matches({ currentMember, setActiveTab, initialSubTab = '
 
           {/* Main List */}
           {loading ? (
-            <div className="flex flex-col items-center justify-center py-20">
-              <PokemonSprite name="scizor" size="lg" className="animate-spin" />
-              <p className="mt-4 text-purple-300 font-mono text-xs animate-pulse">Consultando registro de combates...</p>
-            </div>
+            <PokemonLoader 
+              pokemon="scizor" 
+              title="Consultando registro de combates..." 
+              subtitle="Sincronizando partidas, estatísticas e winrates..." 
+            />
           ) : filteredMatches.length === 0 ? (
             <div className="text-center py-16 bg-slate-900/40 rounded-2xl border border-slate-800 text-slate-400">
               <Swords className="w-12 h-12 text-slate-600 mx-auto mb-3" />
